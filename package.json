@@ -20,9 +20,11 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.65.0",
+    "react-moveable": "^0.56.0",
     "styled-components": "^6.1.19"
   },
   "devDependencies": {
+    "@ianvs/prettier-plugin-sort-imports": "^4.7.0",
     "@types/node": "^20.19.23",
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.1",
