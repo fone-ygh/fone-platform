@@ -1,0 +1,4 @@
+features 폴더는 실제 페이지에서 사용할 컴포넌트, api, store 등 기능을 작성하는 곳입니다.
+
+features 하위에 페이지 폴더를 만들어서 사용 합니다.
+taskhub처럼 api, lib, components 폴더를 만들어서 사용 합니다.
