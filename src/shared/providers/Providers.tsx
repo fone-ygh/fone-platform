@@ -1,6 +1,6 @@
 "use client";
 
-import { DesignSystemProvider } from "fone-design-system_v2";
+import { DesignSystemProvider } from "fone-design-system_v1";
 
 import EmotionProvider from "@/shared/providers/emotion-provider";
 
