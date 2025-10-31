@@ -21,10 +21,6 @@
     ],
     "paths": {
       "@/*": ["./src/*"]
-
-      // "fone-design-system_v1": [
-      //  "C:/Users/hee39/Documents/fone-design-system/src/index.ts"
-      // ]
     }
   },
   "include": [
