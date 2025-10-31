@@ -222,30 +222,30 @@ function SettingArea() {
             id: "canvas-size",
             // title: "캔버스 크기",
             content: (
-              <div>
+              <Flex flexDirection="column" spacing="1rem">
                 <Flex spacing="1.2rem">
-                  <Row>
-                    <Label htmlFor="w">W</Label>
-                    <Input
-                      id="w"
+                  <Flex flexDirection="column">
+                    <span>W</span>
+                    <input
                       type="number"
                       value={canvasW}
                       min={1}
                       onChange={e => handleCanvasW(Number(e.target.value))}
+                      style={{ display: "block", width: "100%" }}
                     />
-                    <div />
-                  </Row>
-                  <Row>
-                    <Label htmlFor="h">H</Label>
-                    <Input
-                      id="h"
+                  </Flex>
+
+                  <Flex flexDirection="column">
+                    <label htmlFor="h">H</label>
+                    <input
                       type="number"
                       value={canvasH}
                       min={1}
                       onChange={e => handleCanvasH(Number(e.target.value))}
+                      style={{ display: "block", width: "100%" }}
                     />
                     <div />
-                  </Row>
+                  </Flex>
                 </Flex>
 
                 <Flex
@@ -261,14 +261,14 @@ function SettingArea() {
                   <SmallNote>현재 비율: {Number(ratio.toFixed(3))}</SmallNote>
                 </Flex>
 
-                <Hr />
-
                 <Flex spacing=".8rem">
-                  <Button variant="outlined" onClick={resetCanvas}>
+                  <Button variant="outlined" onClick={resetCanvas} size="sm">
                     리셋(1200×800)
                   </Button>
                   <Button
                     variant="contained"
+                    color="#0075F6"
+                    size="sm"
                     onClick={() =>
                       console.log("적용", { width: canvasW, height: canvasH })
                     }
@@ -276,7 +276,7 @@ function SettingArea() {
                     적용
                   </Button>
                 </Flex>
-              </div>
+              </Flex>
             ),
           },
         ]}
@@ -286,10 +286,10 @@ function SettingArea() {
       <AccordionCard
         title="JSON 내보내기/불러오기"
         defaultOpenAll
+        hideControls
         items={[
           {
             id: "json-io",
-            title: "프로젝트 설정",
             content: (
               <div>
                 <Flex spacing=".8rem">
@@ -308,7 +308,7 @@ function SettingArea() {
                   />
                 </Flex>
                 <SmallNote style={{ marginTop: ".6rem" }}>
-                  현재 상태를 JSON으로 저장/복원할 수 있어.
+                  현재 상태를 JSON으로 저장/복원할 수 있습니다.
                 </SmallNote>
               </div>
             ),
@@ -319,24 +319,27 @@ function SettingArea() {
       {/* Server Save */}
       <AccordionCard
         title="서버 저장"
-        defaultOpenAll={false}
+        defaultOpenAll
+        hideControls
         items={[
           {
             id: "server",
-            title: "API 연동",
+            // title: "API 연동",
             content: (
               <div>
                 <Flex spacing=".8rem">
-                  <Button variant="contained" onClick={serverSave}>
+                  <Button
+                    variant="contained"
+                    onClick={serverSave}
+                    color="#0075F6"
+                    size="sm"
+                  >
                     저장
                   </Button>
-                  <Button variant="outlined" onClick={serverLoad}>
+                  <Button variant="outlined" onClick={serverLoad} size="sm">
                     불러오기
                   </Button>
                 </Flex>
-                <SmallNote style={{ marginTop: ".6rem" }}>
-                  실제 API 연동은 프로젝트에 맞게 핸들러만 교체하면 돼.
-                </SmallNote>
               </div>
             ),
           },
@@ -354,20 +357,21 @@ function SettingArea() {
             content: (
               <div>
                 <Flex spacing=".8rem" alignItems="center">
-                  <Button variant="text" onClick={zoomOut}>
+                  <Button variant="outlined" onClick={zoomOut} size="sm">
                     −
                   </Button>
-                  <Input
+                  <input
                     type="number"
                     value={zoom}
                     min={25}
                     max={200}
                     onChange={e => setZoom(clampZoom(Number(e.target.value)))}
+                    style={{ width: "100%" }}
                   />
-                  <Button variant="text" onClick={zoomIn}>
+                  <Button variant="outlined" onClick={zoomIn} size="sm">
                     ＋
                   </Button>
-                  <Button variant="outlined" onClick={zoomReset}>
+                  <Button variant="outlined" onClick={zoomReset} size="sm">
                     100%
                   </Button>
                 </Flex>
