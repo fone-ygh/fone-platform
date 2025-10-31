@@ -1,11 +1,8 @@
-import {
-  Button as DsButton,
-  ButtonProps as DsButtonProps,
-} from "fone-design-system_v1";
+import { Box as DsBox, BoxProps as DsBoxProps } from "fone-design-system_v1";
 
 import ResizeContainer from "../resize/ResizeContainer";
 
-interface ResizeButtonProps extends Omit<DsButtonProps, "ref"> {
+interface ResizeBoxProps extends Omit<DsBoxProps, "ref"> {
   id?: string;
   resizable?: boolean;
   draggable?: boolean;
@@ -20,7 +17,7 @@ interface ResizeButtonProps extends Omit<DsButtonProps, "ref"> {
   y?: number;
 }
 
-export default function Button({
+export default function Box({
   id,
   resizable,
   draggable,
@@ -35,7 +32,7 @@ export default function Button({
   x,
   y,
   ...props
-}: ResizeButtonProps) {
+}: ResizeBoxProps) {
   return (
     <ResizeContainer
       id={id}
@@ -50,20 +47,11 @@ export default function Button({
       height={height}
       x={x}
       y={y}
-      renderDirections={["e", "w"]} // ["nw", "n", "ne", "w", "e", "sw", "s", "se"]
+      renderDirections={["nw", "n", "ne", "w", "e", "sw", "s", "se"]} // ["nw", "n", "ne", "w", "e", "sw", "s", "se"]
     >
-      <div
-        // 투명 오버레이로 Select 상호작용을 차단 (버블링은 허용하여 컨테이너 활성화/드래그 영향 최소화)
-        style={{
-          position: "absolute",
-          inset: 0,
-          zIndex: 1,
-          background: "transparent",
-        }}
-      />
-      <DsButton style={{ width: "100%", height: height && "100%" }} {...props}>
+      <DsBox style={{ width: "100%", height: height && "100%" }} {...props}>
         {children}
-      </DsButton>
+      </DsBox>
     </ResizeContainer>
   );
 }

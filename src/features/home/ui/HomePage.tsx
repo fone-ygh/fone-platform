@@ -289,8 +289,8 @@ export default function Page() {
               <Button color="inherit" href="/grid">
                 그리드
               </Button>
-              <Button color="inherit" href="#links">
-                바로가기
+              <Button color="inherit" href="/resize">
+                리사이즈
               </Button>
               <Button color="inherit" href="#updates">
                 공지
