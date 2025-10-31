@@ -1,0 +1,1 @@
+import { AccordionCard } from "./CardAccordion";
