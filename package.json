@@ -12,17 +12,21 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^6.5.0",
     "@mui/material": "^6.5.0",
     "@mui/system": "^7.3.3",
     "@radix-ui/react-scroll-area": "^1.2.10",
-    "fone-design-system_v2": "^1.0.51",
+    "@types/lodash-es": "^4.17.12",
+    "fone-design-system_v1": "^2.0.0",
+    "lodash-es": "^4.17.21",
     "next": "16.0.0",
     "react": "^18.3.1",
     "react-data-grid": "^7.0.0-beta.47",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.65.0",
     "react-moveable": "^0.56.0",
-    "styled-components": "^6.1.19"
+    "styled-components": "^6.1.19",
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@ianvs/prettier-plugin-sort-imports": "^4.7.0",

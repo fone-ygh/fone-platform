@@ -1,12 +1,5 @@
-"use client";
-
-import styled from "@emotion/styled";
+import ResizePage from "@/features/resize/ui/ResizePage";
 
 export default function Page() {
-  return <ResizePage>Resize Page</ResizePage>;
+  return <ResizePage />;
 }
-
-const ResizePage = styled.div`
-  width: 100%;
-  height: 100%;
-`;

@@ -5,7 +5,6 @@ import { ReactNode, useState } from "react";
 import { useServerInsertedHTML } from "next/navigation";
 import createCache from "@emotion/cache";
 import { CacheProvider, ThemeProvider } from "@emotion/react";
-import { DesignSystemProvider } from "fone-design-system_v2";
 
 import theme from "@/shared/styles/theme";
 
@@ -44,9 +43,7 @@ export default function EmotionProvider({ children }: { children: ReactNode }) {
 
   return (
     <CacheProvider value={cache}>
-      <ThemeProvider theme={theme}>
-        <DesignSystemProvider>{children}</DesignSystemProvider>
-      </ThemeProvider>
+      <ThemeProvider theme={theme}>{children}</ThemeProvider>
     </CacheProvider>
   );
 }

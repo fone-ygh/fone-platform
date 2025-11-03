@@ -1,7 +1,7 @@
 'use client';
 
 import Table, { CellKeyboardEvent, CellKeyDownArgs, CellSelectArgs, Column, ColumnGroup, DataGridHandle, RenderCellProps, RenderEditCellProps } from "react-data-grid";
-import { Button } from "fone-design-system_v2";
+import { Button } from "fone-design-system_v1";
 import { useRef, useState } from "react";
 import styled from "@emotion/styled";
 
