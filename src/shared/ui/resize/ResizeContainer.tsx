@@ -65,9 +65,10 @@ export default function ResizeContainer({
   x: propX = 0,
   y: propY = 0,
 }: Props) {
-  const moveableRef = useOutsideClick(() => setActive(false));
-
+  
   const [active, setActive] = useState(false);
+  
+  const moveableRef = useOutsideClick(() => setActive(false));
 
   const { resize, setResize, setId } = useResizeStore();
 
@@ -100,7 +101,7 @@ export default function ResizeContainer({
     <>
       {active && (
         <Moveable
-          target={moveableRef.current}
+          target={moveableRef}
           resizable={resizable}
           draggable={draggable}
           throttleResize={throttleResize}

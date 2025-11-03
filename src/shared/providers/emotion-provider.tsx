@@ -21,7 +21,6 @@ export default function EmotionProvider({ children }: { children: ReactNode }) {
     // Enable compatibility mode to ensure styles are inserted in the correct order on SSR
     // and avoid mismatches during hydration.
     // See: https://emotion.sh/docs/ssr#manual-setup
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - compat exists at runtime
     c.compat = true;
     return c;

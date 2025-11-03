@@ -286,7 +286,7 @@ export default function Page() {
                   생성하기
                 </MenuItem>
               </Menu> */}
-              <Button color="inherit" href="/grid">
+              <Button color="inherit" href="/table">
                 그리드
               </Button>
               <Button color="inherit" href="/resize">
