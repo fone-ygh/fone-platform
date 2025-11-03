@@ -9,17 +9,6 @@ import { AccordionCard } from "@/shared/ui/cardAccordion/CardAccordion";
 import { AsideStyle } from "./AsideStyle";
 
 /* ───────────────── styled inputs (가벼운 베이스) ───────────────── */
-const Row = styled.div`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.8rem;
-
-  @media (min-width: 760px) {
-    grid-template-columns: auto 1fr auto;
-    align-items: center;
-    column-gap: 1rem;
-  }
-`;
 const Label = styled.label`
   font-size: 1.25rem;
   color: #334155;
@@ -214,38 +203,38 @@ function SettingArea() {
     <AsideStyle data-side="left">
       {/* Canvas */}
       <AccordionCard
-        title="Canvas"
+        title="Setting"
         defaultOpenAll
         hideControls
         items={[
           {
             id: "canvas-size",
-            // title: "캔버스 크기",
+            title: "캔버스크기",
             content: (
-              <div>
+              <Flex flexDirection="column" spacing="1rem">
                 <Flex spacing="1.2rem">
-                  <Row>
-                    <Label htmlFor="w">W</Label>
-                    <Input
-                      id="w"
+                  <Flex flexDirection="column">
+                    <span>W</span>
+                    <input
                       type="number"
                       value={canvasW}
                       min={1}
                       onChange={e => handleCanvasW(Number(e.target.value))}
+                      style={{ display: "block", width: "100%" }}
                     />
-                    <div />
-                  </Row>
-                  <Row>
-                    <Label htmlFor="h">H</Label>
-                    <Input
-                      id="h"
+                  </Flex>
+
+                  <Flex flexDirection="column">
+                    <label htmlFor="h">H</label>
+                    <input
                       type="number"
                       value={canvasH}
                       min={1}
                       onChange={e => handleCanvasH(Number(e.target.value))}
+                      style={{ display: "block", width: "100%" }}
                     />
                     <div />
-                  </Row>
+                  </Flex>
                 </Flex>
 
                 <Flex
@@ -261,14 +250,14 @@ function SettingArea() {
                   <SmallNote>현재 비율: {Number(ratio.toFixed(3))}</SmallNote>
                 </Flex>
 
-                <Hr />
-
                 <Flex spacing=".8rem">
-                  <Button variant="outlined" onClick={resetCanvas}>
+                  <Button variant="outlined" onClick={resetCanvas} size="sm">
                     리셋(1200×800)
                   </Button>
                   <Button
                     variant="contained"
+                    color="#0075F6"
+                    size="sm"
                     onClick={() =>
                       console.log("적용", { width: canvasW, height: canvasH })
                     }
@@ -276,20 +265,12 @@ function SettingArea() {
                     적용
                   </Button>
                 </Flex>
-              </div>
+              </Flex>
             ),
           },
-        ]}
-      />
-
-      {/* JSON Export/Import */}
-      <AccordionCard
-        title="JSON 내보내기/불러오기"
-        defaultOpenAll
-        items={[
           {
             id: "json-io",
-            title: "프로젝트 설정",
+            title: "JSON 내보내기/불러오기",
             content: (
               <div>
                 <Flex spacing=".8rem">
@@ -308,66 +289,53 @@ function SettingArea() {
                   />
                 </Flex>
                 <SmallNote style={{ marginTop: ".6rem" }}>
-                  현재 상태를 JSON으로 저장/복원할 수 있어.
+                  현재 상태를 JSON으로 저장/복원할 수 있습니다.
                 </SmallNote>
               </div>
             ),
           },
-        ]}
-      />
-
-      {/* Server Save */}
-      <AccordionCard
-        title="서버 저장"
-        defaultOpenAll={false}
-        items={[
           {
             id: "server",
-            title: "API 연동",
+            title: "서버저장",
             content: (
               <div>
                 <Flex spacing=".8rem">
-                  <Button variant="contained" onClick={serverSave}>
+                  <Button
+                    variant="contained"
+                    onClick={serverSave}
+                    color="#0075F6"
+                    size="sm"
+                  >
                     저장
                   </Button>
-                  <Button variant="outlined" onClick={serverLoad}>
+                  <Button variant="outlined" onClick={serverLoad} size="sm">
                     불러오기
                   </Button>
                 </Flex>
-                <SmallNote style={{ marginTop: ".6rem" }}>
-                  실제 API 연동은 프로젝트에 맞게 핸들러만 교체하면 돼.
-                </SmallNote>
               </div>
             ),
           },
-        ]}
-      />
-
-      {/* Zoom */}
-      <AccordionCard
-        title="Zoom"
-        defaultOpenAll
-        items={[
           {
             id: "zoom",
             title: "확대/축소",
             content: (
               <div>
                 <Flex spacing=".8rem" alignItems="center">
-                  <Button variant="text" onClick={zoomOut}>
+                  <Button variant="outlined" onClick={zoomOut} size="sm">
                     −
                   </Button>
-                  <Input
+                  <input
                     type="number"
                     value={zoom}
                     min={25}
                     max={200}
                     onChange={e => setZoom(clampZoom(Number(e.target.value)))}
+                    style={{ width: "100%" }}
                   />
-                  <Button variant="text" onClick={zoomIn}>
+                  <Button variant="outlined" onClick={zoomIn} size="sm">
                     ＋
                   </Button>
-                  <Button variant="outlined" onClick={zoomReset}>
+                  <Button variant="outlined" onClick={zoomReset} size="sm">
                     100%
                   </Button>
                 </Flex>
@@ -375,17 +343,9 @@ function SettingArea() {
               </div>
             ),
           },
-        ]}
-      />
-
-      {/* Grid */}
-      <AccordionCard
-        title="Grid"
-        defaultOpenAll
-        items={[
           {
             id: "grid",
-            title: "격자",
+            title: "그리드",
             content: (
               <div>
                 <Flex spacing="1.2rem" alignItems="center">
@@ -428,17 +388,9 @@ function SettingArea() {
               </div>
             ),
           },
-        ]}
-      />
-
-      {/* Snap */}
-      <AccordionCard
-        title="Snap"
-        defaultOpenAll={false}
-        items={[
           {
             id: "snap",
-            title: "스냅 옵션",
+            title: "스냅",
             content: (
               <div>
                 <Flex spacing="1.2rem" alignItems="center">
@@ -493,14 +445,6 @@ function SettingArea() {
               </div>
             ),
           },
-        ]}
-      />
-
-      {/* Guide */}
-      <AccordionCard
-        title="Guide"
-        defaultOpenAll={false}
-        items={[
           {
             id: "guide",
             title: "가이드/룰러",
