@@ -9,17 +9,6 @@ import { AccordionCard } from "@/shared/ui/cardAccordion/CardAccordion";
 import { AsideStyle } from "./AsideStyle";
 
 /* ───────────────── styled inputs (가벼운 베이스) ───────────────── */
-const Row = styled.div`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.8rem;
-
-  @media (min-width: 760px) {
-    grid-template-columns: auto 1fr auto;
-    align-items: center;
-    column-gap: 1rem;
-  }
-`;
 const Label = styled.label`
   font-size: 1.25rem;
   color: #334155;
@@ -214,13 +203,13 @@ function SettingArea() {
     <AsideStyle data-side="left">
       {/* Canvas */}
       <AccordionCard
-        title="Canvas"
+        title="Setting"
         defaultOpenAll
         hideControls
         items={[
           {
             id: "canvas-size",
-            // title: "캔버스 크기",
+            title: "캔버스크기",
             content: (
               <Flex flexDirection="column" spacing="1rem">
                 <Flex spacing="1.2rem">
@@ -279,17 +268,9 @@ function SettingArea() {
               </Flex>
             ),
           },
-        ]}
-      />
-
-      {/* JSON Export/Import */}
-      <AccordionCard
-        title="JSON 내보내기/불러오기"
-        defaultOpenAll
-        hideControls
-        items={[
           {
             id: "json-io",
+            title: "JSON 내보내기/불러오기",
             content: (
               <div>
                 <Flex spacing=".8rem">
@@ -313,18 +294,9 @@ function SettingArea() {
               </div>
             ),
           },
-        ]}
-      />
-
-      {/* Server Save */}
-      <AccordionCard
-        title="서버 저장"
-        defaultOpenAll
-        hideControls
-        items={[
           {
             id: "server",
-            // title: "API 연동",
+            title: "서버저장",
             content: (
               <div>
                 <Flex spacing=".8rem">
@@ -343,14 +315,6 @@ function SettingArea() {
               </div>
             ),
           },
-        ]}
-      />
-
-      {/* Zoom */}
-      <AccordionCard
-        title="Zoom"
-        defaultOpenAll
-        items={[
           {
             id: "zoom",
             title: "확대/축소",
@@ -379,17 +343,9 @@ function SettingArea() {
               </div>
             ),
           },
-        ]}
-      />
-
-      {/* Grid */}
-      <AccordionCard
-        title="Grid"
-        defaultOpenAll
-        items={[
           {
             id: "grid",
-            title: "격자",
+            title: "그리드",
             content: (
               <div>
                 <Flex spacing="1.2rem" alignItems="center">
@@ -432,17 +388,9 @@ function SettingArea() {
               </div>
             ),
           },
-        ]}
-      />
-
-      {/* Snap */}
-      <AccordionCard
-        title="Snap"
-        defaultOpenAll={false}
-        items={[
           {
             id: "snap",
-            title: "스냅 옵션",
+            title: "스냅",
             content: (
               <div>
                 <Flex spacing="1.2rem" alignItems="center">
@@ -497,14 +445,6 @@ function SettingArea() {
               </div>
             ),
           },
-        ]}
-      />
-
-      {/* Guide */}
-      <AccordionCard
-        title="Guide"
-        defaultOpenAll={false}
-        items={[
           {
             id: "guide",
             title: "가이드/룰러",
