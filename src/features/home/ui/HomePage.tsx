@@ -4,8 +4,8 @@
 import React, { useEffect, useState } from "react";
 import { css } from "@emotion/react";
 import styled from "@emotion/styled";
-
-import { Button } from "@/shared/ui/button2/Button2";
+// import { Button } from "@/shared/ui/button2/Button2";
+import { Button } from "fone-design-system_v1";
 
 /* ───────────────── Tokens / Const ───────────────── */
 const SOFT_SHADOW =
@@ -251,12 +251,6 @@ const SectionTitle = styled.h2`
   letter-spacing: -0.01rem;
 `;
 
-const SectionSub = styled.p`
-  text-align: center;
-  color: var(--ds-text-subtle, #6b7280);
-  font-size: var(--ds-font-size-base, 1.5rem);
-`;
-
 /* FAQ */
 const Accordion = styled.details`
   border-radius: 0.8rem;
@@ -367,7 +361,7 @@ export default function Page() {
                 { label: "공지", href: "#updates" },
                 { label: "FAQ", href: "#faq" },
               ].map(item => (
-                <Button key={item.href} variant="ghost" href={item.href}>
+                <Button key={item.href} variant="text" href={item.href}>
                   {item.label}
                 </Button>
               ))}
@@ -396,12 +390,7 @@ export default function Page() {
                     flexWrap: "wrap",
                   }}
                 >
-                  <Button
-                    variant="solid"
-                    color="primary"
-                    as="a"
-                    href="/app/projects/new"
-                  >
+                  <Button variant="contained" href="/app/projects/new">
                     지금 시작하기
                     <span aria-hidden style={{ display: "inline-flex" }}>
                       <svg viewBox="0 0 24 24" width="18" height="18">
@@ -415,12 +404,7 @@ export default function Page() {
                       </svg>
                     </span>
                   </Button>
-                  <Button
-                    as="a"
-                    variant="outline"
-                    color="primary"
-                    href="#preview"
-                  >
+                  <Button variant="outlined" href="#preview">
                     라이브 미리보기
                   </Button>
                 </div>
@@ -523,7 +507,6 @@ export default function Page() {
         <SectionWrap id="features" $tone="white">
           <Container>
             <SectionTitle>기능</SectionTitle>
-            <SectionSub>필요한 기능만 담아 단순하게.</SectionSub>
 
             <Cards3>
               {[
@@ -628,19 +611,13 @@ export default function Page() {
                   style={{ display: "flex", gap: "1.2rem", flexWrap: "wrap" }}
                 >
                   <Button
-                    as="a"
-                    variant="solid"
+                    variant="contained"
                     color="primary"
                     href="/app/projects"
                   >
                     프로젝트 보기
                   </Button>
-                  <Button
-                    as="a"
-                    variant="outline"
-                    color="primary"
-                    href="/templates"
-                  >
+                  <Button variant="outlined" color="primary" href="/templates">
                     템플릿 갤러리
                   </Button>
                 </div>
@@ -708,7 +685,6 @@ export default function Page() {
         <SectionWrap id="links" $tone="tint">
           <Container>
             <SectionTitle>바로가기</SectionTitle>
-            <SectionSub>자주 쓰는 내부 리소스.</SectionSub>
 
             <div
               style={{
@@ -748,8 +724,7 @@ export default function Page() {
                     ].map(l => (
                       <Button
                         key={l.name}
-                        as="a"
-                        variant="outline"
+                        variant="outlined"
                         color="primary"
                         href={l.href}
                         fullWidth
