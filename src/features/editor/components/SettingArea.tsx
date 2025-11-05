@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import styled from "@emotion/styled";
-import { Button, Checkbox, Flex, Switch } from "fone-design-system_v1";
+import { Checkbox, Flex } from "fone-design-system_v1";
 
+import { Button } from "@/shared/ui/button2/Button2";
 import { AccordionCard } from "@/shared/ui/cardAccordion/CardAccordion";
 
+import { useEDITORActions, useEDITORStore } from "../_lib/store";
 import { AsideStyle } from "./AsideStyle";
 
 /* ───────────────── styled inputs (가벼운 베이스) ───────────────── */
@@ -47,35 +49,30 @@ const Hr = styled.hr`
 
 /* ───────────────── component ───────────────── */
 function SettingArea() {
+  const { setCanvasWidth, setCanvasHeight, setZoom } = useEDITORActions();
+  const { canvasWidth, canvasHeight, zoom } = useEDITORStore();
+
   /* Canvas */
-  const [canvasW, setCanvasW] = useState(1200);
-  const [canvasH, setCanvasH] = useState(800);
-  const [lockRatio, setLockRatio] = useState(true);
-  const ratio = useMemo(
-    () => (canvasH ? canvasW / canvasH : 1.5),
-    [canvasW, canvasH],
-  );
+  // const [canvasWidth, setCanvasWidth] = useState(1200);
+  // const [canvasHeight, setCanvasH] = useState(800);
 
   const handleCanvasW = (v: number) => {
-    setCanvasW(v);
-    if (lockRatio && ratio) setCanvasH(Math.max(1, Math.round(v / ratio)));
+    setCanvasWidth(v);
   };
   const handleCanvasH = (v: number) => {
-    setCanvasH(v);
-    if (lockRatio && ratio) setCanvasW(Math.max(1, Math.round(v * ratio)));
+    setCanvasHeight(v);
   };
   const resetCanvas = () => {
-    setCanvasW(1200);
-    setCanvasH(800);
-    setLockRatio(true);
+    setCanvasWidth(1200);
+    setCanvasHeight(800);
   };
 
   /* Zoom */
-  const [zoom, setZoom] = useState(100);
+  const [canvasZoom, setCanvasZoom] = useState(100);
   const clampZoom = (z: number) => Math.min(200, Math.max(25, Math.round(z)));
-  const zoomIn = () => setZoom(z => clampZoom(z + 10));
-  const zoomOut = () => setZoom(z => clampZoom(z - 10));
-  const zoomReset = () => setZoom(100);
+  const zoomIn = () => setCanvasZoom(z => clampZoom(z + 10));
+  const zoomOut = () => setCanvasZoom(z => clampZoom(z - 10));
+  const zoomReset = () => setCanvasZoom(100);
 
   /* Grid */
   const [showGrid, setShowGrid] = useState(true);
@@ -94,12 +91,17 @@ function SettingArea() {
   const addVGuide = () => console.log("TODO: add vertical guide");
   const addHGuide = () => console.log("TODO: add horizontal guide");
 
+  /* Zoom */
+  useEffect(() => {
+    setZoom(canvasZoom);
+  }, [canvasZoom]);
+
   /* JSON Export/Import */
   const fileRef = useRef<HTMLInputElement>(null);
   const currentSettings = useMemo(
     () => ({
-      canvas: { width: canvasW, height: canvasH, lockRatio },
-      zoom,
+      canvas: { width: canvasWidth, height: canvasHeight },
+      canvasZoom,
       grid: { show: showGrid, size: gridSize, color: gridColor },
       snap: {
         toGrid: snapToGrid,
@@ -111,10 +113,9 @@ function SettingArea() {
       _meta: { exportedAt: new Date().toISOString() },
     }),
     [
-      canvasW,
-      canvasH,
-      lockRatio,
-      zoom,
+      canvasWidth,
+      canvasHeight,
+      canvasZoom,
       showGrid,
       gridSize,
       gridColor,
@@ -149,13 +150,12 @@ function SettingArea() {
         const data = JSON.parse(String(reader.result || "{}"));
         if (data?.canvas) {
           if (typeof data.canvas.width === "number")
-            setCanvasW(data.canvas.width);
+            setCanvasWidth(data.canvas.width);
           if (typeof data.canvas.height === "number")
-            setCanvasH(data.canvas.height);
-          if (typeof data.canvas.lockRatio === "boolean")
-            setLockRatio(data.canvas.lockRatio);
+            setCanvasHeight(data.canvas.height);
         }
-        if (typeof data?.zoom === "number") setZoom(clampZoom(data.zoom));
+        if (typeof data?.canvasZoom === "number")
+          setZoom(clampZoom(data.canvasZoom));
         if (data?.grid) {
           if (typeof data.grid.show === "boolean") setShowGrid(data.grid.show);
           if (typeof data.grid.size === "number") setGridSize(data.grid.size);
@@ -214,10 +214,10 @@ function SettingArea() {
               <Flex flexDirection="column" spacing="1rem">
                 <Flex spacing="1.2rem">
                   <Flex flexDirection="column">
-                    <span>W</span>
+                    <label>W</label>
                     <input
                       type="number"
-                      value={canvasW}
+                      value={canvasWidth}
                       min={1}
                       onChange={e => handleCanvasW(Number(e.target.value))}
                       style={{ display: "block", width: "100%" }}
@@ -228,7 +228,7 @@ function SettingArea() {
                     <label htmlFor="h">H</label>
                     <input
                       type="number"
-                      value={canvasH}
+                      value={canvasHeight}
                       min={1}
                       onChange={e => handleCanvasH(Number(e.target.value))}
                       style={{ display: "block", width: "100%" }}
@@ -237,34 +237,9 @@ function SettingArea() {
                   </Flex>
                 </Flex>
 
-                <Flex
-                  spacing="1.2rem"
-                  alignItems="center"
-                  style={{ marginTop: ".6rem" }}
-                >
-                  <Checkbox
-                    checked={lockRatio}
-                    onChange={(e: any) => setLockRatio(!!e?.target?.checked)}
-                  />
-                  <Label style={{ margin: 0 }}>비율 잠금</Label>
-                  <SmallNote>현재 비율: {Number(ratio.toFixed(3))}</SmallNote>
-                </Flex>
-
-                <Flex spacing=".8rem">
-                  <Button variant="outlined" onClick={resetCanvas} size="sm">
-                    리셋(1200×800)
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="#0075F6"
-                    size="sm"
-                    onClick={() =>
-                      console.log("적용", { width: canvasW, height: canvasH })
-                    }
-                  >
-                    적용
-                  </Button>
-                </Flex>
+                <Button onClick={resetCanvas} size="sm" variant="outline">
+                  리셋(1200×800)
+                </Button>
               </Flex>
             ),
           },
@@ -274,10 +249,10 @@ function SettingArea() {
             content: (
               <div>
                 <Flex spacing=".8rem">
-                  <Button variant="outlined" onClick={exportJSON}>
+                  <Button size="sm" variant="outline" onClick={exportJSON}>
                     내보내기(JSON)
                   </Button>
-                  <Button variant="outlined" onClick={openImport}>
+                  <Button size="sm" variant="outline" onClick={openImport}>
                     불러오기(JSON)
                   </Button>
                   <input
@@ -300,15 +275,10 @@ function SettingArea() {
             content: (
               <div>
                 <Flex spacing=".8rem">
-                  <Button
-                    variant="contained"
-                    onClick={serverSave}
-                    color="#0075F6"
-                    size="sm"
-                  >
+                  <Button onClick={serverSave} variant="outline" size="sm">
                     저장
                   </Button>
-                  <Button variant="outlined" onClick={serverLoad} size="sm">
+                  <Button onClick={serverLoad} variant="outline" size="sm">
                     불러오기
                   </Button>
                 </Flex>
@@ -321,21 +291,21 @@ function SettingArea() {
             content: (
               <div>
                 <Flex spacing=".8rem" alignItems="center">
-                  <Button variant="outlined" onClick={zoomOut} size="sm">
+                  <Button onClick={zoomOut} size="sm" variant="outline">
                     −
                   </Button>
                   <input
                     type="number"
-                    value={zoom}
+                    value={canvasZoom}
                     min={25}
                     max={200}
                     onChange={e => setZoom(clampZoom(Number(e.target.value)))}
                     style={{ width: "100%" }}
                   />
-                  <Button variant="outlined" onClick={zoomIn} size="sm">
+                  <Button onClick={zoomIn} size="sm" variant="outline">
                     ＋
                   </Button>
-                  <Button variant="outlined" onClick={zoomReset} size="sm">
+                  <Button onClick={zoomReset} size="sm" variant="outline">
                     100%
                   </Button>
                 </Flex>
@@ -349,10 +319,10 @@ function SettingArea() {
             content: (
               <div>
                 <Flex spacing="1.2rem" alignItems="center">
-                  <Switch
+                  {/* <Switch
                     checked={showGrid}
                     onChange={(e: any) => setShowGrid(!!e?.target?.checked)}
-                  />
+                  /> */}
                   <Label style={{ margin: 0 }}>격자 표시</Label>
                 </Flex>
 
@@ -451,10 +421,10 @@ function SettingArea() {
             content: (
               <div>
                 <Flex spacing="1.2rem" alignItems="center">
-                  <Switch
+                  {/* <Switch
                     checked={showRulers}
                     onChange={(e: any) => setShowRulers(!!e?.target?.checked)}
-                  />
+                  /> */}
                   <Label style={{ margin: 0 }}>룰러 표시</Label>
                 </Flex>
                 <Flex
@@ -462,20 +432,20 @@ function SettingArea() {
                   alignItems="center"
                   style={{ marginTop: ".4rem" }}
                 >
-                  <Switch
+                  {/* <Switch
                     checked={showGuides}
                     onChange={(e: any) => setShowGuides(!!e?.target?.checked)}
-                  />
+                  /> */}
                   <Label style={{ margin: 0 }}>가이드 표시</Label>
                 </Flex>
 
                 <Hr />
 
                 <Flex spacing=".8rem">
-                  <Button variant="outlined" onClick={addVGuide}>
+                  <Button onClick={addVGuide} variant="outline" size="sm">
                     세로 가이드 추가
                   </Button>
-                  <Button variant="outlined" onClick={addHGuide}>
+                  <Button onClick={addHGuide} variant="outline" size="sm">
                     가로 가이드 추가
                   </Button>
                 </Flex>
