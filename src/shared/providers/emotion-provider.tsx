@@ -1,63 +1,49 @@
-// shared/providers/emotion-provider.tsx
+// components/EmotionProvider.tsx
 "use client";
 
-import { ReactNode, useState } from "react";
+import React, { useState } from "react";
 import { useServerInsertedHTML } from "next/navigation";
 import createCache from "@emotion/cache";
-import { CacheProvider, css, Global, ThemeProvider } from "@emotion/react";
+import { CacheProvider } from "@emotion/react";
 
-import { AppTheme, theme } from "../styles/theme";
+// (1) 캐시 생성 함수(같은 파일에 포함)
+function createEmotionCache() {
+  let insertionPoint: HTMLElement | undefined;
+  if (typeof document !== "undefined") {
+    insertionPoint = document.querySelector(
+      'meta[name="emotion-insertion-point"]',
+    ) as HTMLElement | undefined;
+  }
+  const cache = createCache({ key: "mui", prepend: true, insertionPoint });
+  (cache as any).compat = true; // 선택: 다중 Emotion 환경 호환
+  return cache;
+}
 
-type Props = {
-  children: ReactNode;
-  /** 외부 프로젝트 테마 주입 (없으면 defaultTheme 사용) */
-  appTheme?: AppTheme;
-};
+// (2) Provider (요청별 캐시 + SSR 스타일 즉시 주입)
+export default function EmotionProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  // SSR에 안전: 요청마다 새 캐시, 클라이언트 전환 동안엔 1회 유지
+  const [cache] = useState(() => createEmotionCache());
 
-export default function EmotionProvider({ children, appTheme }: Props) {
-  const [cache] = useState(() => {
-    let insertionPoint: HTMLElement | undefined;
-    if (typeof document !== "undefined") {
-      const meta = document.querySelector(
-        'meta[name="emotion-insertion-point"]',
-      ) as HTMLElement | null;
-      insertionPoint = meta ?? undefined;
-    }
-    const c = createCache({ key: "css", prepend: true, insertionPoint });
-    c.compat = true;
-    return c;
-  });
-
+  // 서버 렌더 중, 캐시에 쌓인 CSS를 <style>로 즉시 삽입 → FOUC/불일치 방지
   useServerInsertedHTML(() => {
-    const inserted = (
-      cache as unknown as { inserted: Record<string, string>; key: string }
-    ).inserted;
+    const { inserted, key } = cache as unknown as {
+      inserted: Record<string, string>;
+      key: string;
+    };
     const names = Object.keys(inserted);
     if (names.length === 0) return null;
     const styles = names.map(n => inserted[n]).join(" ");
     return (
       <style
-        data-emotion={`${cache.key} ${names.join(" ")}`}
+        data-emotion={`${key} ${names.join(" ")}`}
         dangerouslySetInnerHTML={{ __html: styles }}
       />
     );
   });
 
-  // 사용할 테마(외부 주입 > 기본 테마)
-
-  return (
-    <CacheProvider value={cache}>
-      <ThemeProvider theme={theme}>
-        {/* 전역 베이스: 루트 10px 고정 */}
-        <Global
-          styles={css`
-            html {
-              font-size: 10px;
-            }
-          `}
-        />
-        {children}
-      </ThemeProvider>
-    </CacheProvider>
-  );
+  return <CacheProvider value={cache}>{children}</CacheProvider>;
 }
