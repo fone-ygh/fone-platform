@@ -5,6 +5,8 @@ import React, { useEffect, useState } from "react";
 import { css } from "@emotion/react";
 import styled from "@emotion/styled";
 
+import { Button } from "@/shared/ui/button2/Button2";
+
 /* ───────────────── Tokens / Const ───────────────── */
 const SOFT_SHADOW =
   "0 1px 2px rgba(16,24,40,.04), 0 8px 24px rgba(16,24,40,.06)";
@@ -45,157 +47,6 @@ function ExpandMoreIcon(props: React.SVGProps<SVGSVGElement>) {
         fill="none"
       />
     </svg>
-  );
-}
-
-/* ───────────────── Local Button (Emotion only) ───────────────── */
-type ButtonVariant = "contained" | "outlined" | "text";
-type ButtonColor = "primary";
-type ButtonBaseProps = {
-  variant?: ButtonVariant;
-  color?: ButtonColor;
-  fullWidth?: boolean;
-  startIcon?: React.ReactNode;
-  endIcon?: React.ReactNode;
-  cssVars?: Record<string, string>;
-} & React.ButtonHTMLAttributes<HTMLButtonElement> &
-  React.AnchorHTMLAttributes<HTMLAnchorElement> & {
-    as?: "a" | "button";
-    href?: string;
-  };
-
-const ButtonRoot = styled.button<{
-  "data-variant": ButtonVariant;
-  "data-color": ButtonColor;
-  "data-full": boolean;
-}>`
-  --_btn-h: var(--ds-btn-h, 3.8rem);
-  --_btn-fz: var(--ds-btn-fz, var(--ds-font-size-base, 1.5rem));
-  --_btn-px: var(--ds-btn-px, 1.6rem);
-  --_btn-radius: var(--ds-btn-radius, var(--ds-radius-md, 0.8rem));
-  --_ring-w: var(--ds-ring-width, 3px);
-  --_ring-c: var(--ds-ring-color, rgba(0, 132, 254, 0.32));
-
-  --_color: var(--ds-color-primary, #1f6feb);
-  --_color-hover: var(--ds-color-primary-hover, #0084fe);
-  --_fg-on: var(--ds-color-primary-contrast, #fff);
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.6rem;
-  height: var(--_btn-h);
-  padding: 0 var(--_btn-px);
-  font-size: var(--_btn-fz);
-  line-height: 1;
-  font-weight: var(--ds-font-weight-medium, 500);
-  font-family: var(
-    --ds-font-family,
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    "Segoe UI",
-    Roboto,
-    "Noto Sans KR",
-    Arial,
-    sans-serif
-  );
-  border-radius: var(--_btn-radius);
-  transition:
-    background-color 0.15s ease,
-    box-shadow 0.15s ease,
-    transform 0.02s linear;
-  cursor: pointer;
-  text-decoration: none;
-
-  width: ${({ "data-full": full }) => (full ? "100%" : "auto")};
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--_color);
-
-  &[data-variant="contained"] {
-    background: var(--_color);
-    color: var(--_fg-on);
-    border-color: var(--_color);
-  }
-  &[data-variant="contained"]:hover {
-    background: var(--_color-hover);
-    border-color: var(--_color-hover);
-  }
-
-  &[data-variant="outlined"] {
-    border-color: var(--_color);
-    color: var(--_color);
-    background: transparent;
-  }
-  &[data-variant="outlined"]:hover {
-    background: color-mix(in srgb, var(--_color) 8%, transparent);
-  }
-
-  &[data-variant="text"] {
-    border-color: transparent;
-    color: var(--_color);
-    background: transparent;
-  }
-  &[data-variant="text"]:hover {
-    background: color-mix(in srgb, var(--_color) 8%, transparent);
-  }
-
-  &:focus-visible {
-    outline: 0;
-    box-shadow: 0 0 0 var(--_ring-w) var(--_ring-c);
-  }
-  &:active {
-    transform: translateY(0.5px);
-  }
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  .btn__icon {
-    display: inline-flex;
-    align-items: center;
-    line-height: 0;
-  }
-`;
-
-function Button(props: ButtonBaseProps) {
-  const {
-    as,
-    href,
-    variant = "contained",
-    color = "primary",
-    fullWidth,
-    startIcon,
-    endIcon,
-    cssVars,
-    style,
-    children,
-    ...rest
-  } = props;
-
-  const isLink = as === "a" || (!!href && as !== "button");
-  const Comp: any = isLink ? "a" : "button";
-
-  // cssVars를 인라인 style 변수로 주입
-  const mergedStyle = { ...(style || {}), ...(cssVars as any) };
-
-  return (
-    <ButtonRoot
-      as={Comp}
-      href={isLink ? href : undefined}
-      role={isLink ? "link" : undefined}
-      data-variant={variant}
-      data-color={color}
-      data-full={!!fullWidth}
-      style={mergedStyle}
-      {...rest}
-    >
-      {startIcon ? <span className="btn__icon">{startIcon}</span> : null}
-      <span className="btn__label">{children}</span>
-      {endIcon ? <span className="btn__icon">{endIcon}</span> : null}
-    </ButtonRoot>
   );
 }
 
@@ -516,7 +367,7 @@ export default function Page() {
                 { label: "공지", href: "#updates" },
                 { label: "FAQ", href: "#faq" },
               ].map(item => (
-                <Button key={item.href} variant="text" href={item.href}>
+                <Button key={item.href} variant="ghost" href={item.href}>
                   {item.label}
                 </Button>
               ))}
@@ -546,41 +397,29 @@ export default function Page() {
                   }}
                 >
                   <Button
-                    variant="contained"
+                    variant="solid"
                     color="primary"
                     as="a"
                     href="/app/projects/new"
-                    endIcon={
-                      <span aria-hidden style={{ display: "inline-flex" }}>
-                        <svg viewBox="0 0 24 24" width="18" height="18">
-                          <path
-                            d="M5 12h14M13 5l7 7-7 7"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            fill="none"
-                          />
-                        </svg>
-                      </span>
-                    }
-                    cssVars={{
-                      "--ds-btn-h": "4.2rem",
-                      "--ds-btn-fz": "var(--ds-font-size-base, 1.5rem)",
-                      "--ds-btn-px": "1.6rem",
-                    }}
                   >
                     지금 시작하기
+                    <span aria-hidden style={{ display: "inline-flex" }}>
+                      <svg viewBox="0 0 24 24" width="18" height="18">
+                        <path
+                          d="M5 12h14M13 5l7 7-7 7"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          fill="none"
+                        />
+                      </svg>
+                    </span>
                   </Button>
                   <Button
                     as="a"
-                    variant="outlined"
+                    variant="outline"
                     color="primary"
                     href="#preview"
-                    cssVars={{
-                      "--ds-btn-h": "4.2rem",
-                      "--ds-btn-fz": "var(--ds-font-size-base, 1.5rem)",
-                      "--ds-btn-px": "1.6rem",
-                    }}
                   >
                     라이브 미리보기
                   </Button>
@@ -790,7 +629,7 @@ export default function Page() {
                 >
                   <Button
                     as="a"
-                    variant="contained"
+                    variant="solid"
                     color="primary"
                     href="/app/projects"
                   >
@@ -798,7 +637,7 @@ export default function Page() {
                   </Button>
                   <Button
                     as="a"
-                    variant="outlined"
+                    variant="outline"
                     color="primary"
                     href="/templates"
                   >
@@ -910,18 +749,13 @@ export default function Page() {
                       <Button
                         key={l.name}
                         as="a"
-                        variant="outlined"
+                        variant="outline"
                         color="primary"
                         href={l.href}
                         fullWidth
                         style={{
                           justifyContent: "flex-start",
                           border: "1px solid rgba(18,24,40,0.10)",
-                        }}
-                        cssVars={{
-                          "--ds-btn-fz": "var(--ds-font-size-base, 1.5rem)",
-                          "--ds-btn-h": "3.8rem",
-                          "--ds-btn-px": "1.2rem",
                         }}
                       >
                         <CheckIcon width={16} height={16} />
