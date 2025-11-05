@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-
 import Providers from "@/shared/providers/Providers";
+import "react-data-grid/lib/styles.css";
 
 import "@/app/assets/global.css";
 
