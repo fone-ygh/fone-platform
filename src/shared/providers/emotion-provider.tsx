@@ -4,11 +4,17 @@
 import { ReactNode, useState } from "react";
 import { useServerInsertedHTML } from "next/navigation";
 import createCache from "@emotion/cache";
-import { CacheProvider, ThemeProvider } from "@emotion/react";
+import { CacheProvider, css, Global, ThemeProvider } from "@emotion/react";
 
-import theme from "@/shared/styles/theme";
+import { AppTheme, theme } from "../styles/theme";
 
-export default function EmotionProvider({ children }: { children: ReactNode }) {
+type Props = {
+  children: ReactNode;
+  /** 외부 프로젝트 테마 주입 (없으면 defaultTheme 사용) */
+  appTheme?: AppTheme;
+};
+
+export default function EmotionProvider({ children, appTheme }: Props) {
   const [cache] = useState(() => {
     let insertionPoint: HTMLElement | undefined;
     if (typeof document !== "undefined") {
@@ -18,11 +24,6 @@ export default function EmotionProvider({ children }: { children: ReactNode }) {
       insertionPoint = meta ?? undefined;
     }
     const c = createCache({ key: "css", prepend: true, insertionPoint });
-    // Enable compatibility mode to ensure styles are inserted in the correct order on SSR
-    // and avoid mismatches during hydration.
-    // See: https://emotion.sh/docs/ssr#manual-setup
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - compat exists at runtime
     c.compat = true;
     return c;
   });
@@ -33,7 +34,7 @@ export default function EmotionProvider({ children }: { children: ReactNode }) {
     ).inserted;
     const names = Object.keys(inserted);
     if (names.length === 0) return null;
-    const styles = names.map(name => inserted[name]).join(" ");
+    const styles = names.map(n => inserted[n]).join(" ");
     return (
       <style
         data-emotion={`${cache.key} ${names.join(" ")}`}
@@ -42,9 +43,21 @@ export default function EmotionProvider({ children }: { children: ReactNode }) {
     );
   });
 
+  // 사용할 테마(외부 주입 > 기본 테마)
+
   return (
     <CacheProvider value={cache}>
-      <ThemeProvider theme={theme}>{children}</ThemeProvider>
+      <ThemeProvider theme={theme}>
+        {/* 전역 베이스: 루트 10px 고정 */}
+        <Global
+          styles={css`
+            html {
+              font-size: 10px;
+            }
+          `}
+        />
+        {children}
+      </ThemeProvider>
     </CacheProvider>
   );
 }

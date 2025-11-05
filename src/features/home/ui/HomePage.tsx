@@ -1,58 +1,15 @@
+// src/app/page.tsx
 "use client";
 
-import * as React from "react";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  AppBar,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Container,
-  createTheme,
-  CssBaseline,
-  Divider,
-  Grid,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Menu,
-  MenuItem,
-  Link as MLink,
-  Paper,
-  Stack,
-  SvgIcon,
-  ThemeProvider,
-  Toolbar,
-  Typography,
-  useScrollTrigger,
-} from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { css } from "@emotion/react";
+import styled from "@emotion/styled";
 
-/* Icons */
-function CheckIcon(props: any) {
-  return (
-    <SvgIcon {...props} viewBox="0 0 24 24">
-      <path
-        d="M5 13l4 4L19 7"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        fill="none"
-      />
-    </SvgIcon>
-  );
-}
-
-/* Tokens */
-const PRIMARY = "#1f6feb";
-const RADIUS = 12;
-const TONE_WHITE = "#ffffff";
-const TONE_NEUTRAL = "#F7F9FC";
-const TONE_TINT = "#F3F7FF";
+/* ───────────────── Tokens / Const ───────────────── */
+const SOFT_SHADOW =
+  "0 1px 2px rgba(16,24,40,.04), 0 8px 24px rgba(16,24,40,.06)";
+const HOVER_SHADOW =
+  "0 2px 6px rgba(16,24,40,.06), 0 16px 48px rgba(16,24,40,.08)";
 const GRID_BG =
   'url("data:image/svg+xml;utf8,' +
   encodeURIComponent(
@@ -62,852 +19,1216 @@ const GRID_BG =
     </svg>`,
   ) +
   '")';
-const SOFT_SHADOW =
-  "0 1px 2px rgba(16,24,40,.04), 0 8px 24px rgba(16,24,40,.06)";
-const HOVER_SHADOW =
-  "0 2px 6px rgba(16,24,40,.06), 0 16px 48px rgba(16,24,40,.08)";
 
-/* Theme */
-const theme = createTheme({
-  palette: {
-    mode: "light",
-    primary: { main: PRIMARY },
-    divider: "rgba(18,24,40,0.10)",
-    background: { default: "#ffffff", paper: "#ffffff" },
-  },
-  shape: { borderRadius: RADIUS },
-  typography: {
-    htmlFontSize: 10,
-    fontFamily:
-      '-apple-system, BlinkMacSystemFont, "Pretendard Variable", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Segoe UI Symbol", sans-serif',
-    h1: { fontSize: "3.6rem", fontWeight: 900, letterSpacing: -0.2 },
-    h2: { fontSize: "2.4rem", fontWeight: 800, letterSpacing: -0.1 },
-    h4: { fontSize: "2.0rem", fontWeight: 800 },
-  },
-  components: {
-    MuiButton: {
-      defaultProps: { disableElevation: true },
-      styleOverrides: {
-        root: { textTransform: "none", fontWeight: 700, borderRadius: RADIUS },
-      },
-    },
-    MuiPaper: {
-      styleOverrides: {
-        root: { borderRadius: RADIUS },
-        outlined: { borderColor: "transparent" }, // 섹션 보더 X
-      },
-    },
-    MuiAccordion: {
-      styleOverrides: {
-        root: {
-          boxShadow: "none",
-          border: "none",
-          "&::before": { display: "none" },
-        },
-        gutters: { paddingLeft: 0, paddingRight: 0 },
-      },
-    },
-  },
-});
-
-/* Section */
-type Tone = "white" | "neutral" | "tint";
-const toneToColor: Record<Tone, string> = {
-  white: TONE_WHITE,
-  neutral: TONE_NEUTRAL,
-  tint: TONE_TINT,
-};
-function Section({
-  id,
-  tone = "white",
-  children,
-}: {
-  id?: string;
-  tone?: Tone;
-  children: React.ReactNode;
-}) {
+/* ───────────────── Icons ───────────────── */
+function CheckIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
-    <Box
-      component="section"
-      id={id}
-      sx={{ bgcolor: toneToColor[tone], py: { xs: 6, md: 8 } }}
-    >
-      <Container maxWidth="lg">{children}</Container>
-    </Box>
+    <svg {...props} viewBox="0 0 24 24" aria-hidden>
+      <path
+        d="M5 13l4 4L19 7"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        fill="none"
+      />
+    </svg>
+  );
+}
+function ExpandMoreIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...props} viewBox="0 0 24 24" aria-hidden>
+      <path
+        d="M6 9l6 6 6-6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        fill="none"
+      />
+    </svg>
   );
 }
 
-export default function Page() {
-  const [menuEl, setMenuEl] = React.useState<null | HTMLElement>(null);
-  const open = Boolean(menuEl);
-  const onOpen = (e: React.MouseEvent<HTMLElement>) =>
-    setMenuEl(e.currentTarget);
-  const onClose = () => setMenuEl(null);
-  const elevate = useScrollTrigger({ disableHysteresis: true, threshold: 4 });
+/* ───────────────── Local Button (Emotion only) ───────────────── */
+type ButtonVariant = "contained" | "outlined" | "text";
+type ButtonColor = "primary";
+type ButtonBaseProps = {
+  variant?: ButtonVariant;
+  color?: ButtonColor;
+  fullWidth?: boolean;
+  startIcon?: React.ReactNode;
+  endIcon?: React.ReactNode;
+  cssVars?: Record<string, string>;
+} & React.ButtonHTMLAttributes<HTMLButtonElement> &
+  React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+    as?: "a" | "button";
+    href?: string;
+  };
+
+const ButtonRoot = styled.button<{
+  "data-variant": ButtonVariant;
+  "data-color": ButtonColor;
+  "data-full": boolean;
+}>`
+  --_btn-h: var(--ds-btn-h, 3.8rem);
+  --_btn-fz: var(--ds-btn-fz, var(--ds-font-size-base, 1.5rem));
+  --_btn-px: var(--ds-btn-px, 1.6rem);
+  --_btn-radius: var(--ds-btn-radius, var(--ds-radius-md, 0.8rem));
+  --_ring-w: var(--ds-ring-width, 3px);
+  --_ring-c: var(--ds-ring-color, rgba(0, 132, 254, 0.32));
+
+  --_color: var(--ds-color-primary, #1f6feb);
+  --_color-hover: var(--ds-color-primary-hover, #0084fe);
+  --_fg-on: var(--ds-color-primary-contrast, #fff);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  height: var(--_btn-h);
+  padding: 0 var(--_btn-px);
+  font-size: var(--_btn-fz);
+  line-height: 1;
+  font-weight: var(--ds-font-weight-medium, 500);
+  font-family: var(
+    --ds-font-family,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    "Noto Sans KR",
+    Arial,
+    sans-serif
+  );
+  border-radius: var(--_btn-radius);
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.02s linear;
+  cursor: pointer;
+  text-decoration: none;
+
+  width: ${({ "data-full": full }) => (full ? "100%" : "auto")};
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--_color);
+
+  &[data-variant="contained"] {
+    background: var(--_color);
+    color: var(--_fg-on);
+    border-color: var(--_color);
+  }
+  &[data-variant="contained"]:hover {
+    background: var(--_color-hover);
+    border-color: var(--_color-hover);
+  }
+
+  &[data-variant="outlined"] {
+    border-color: var(--_color);
+    color: var(--_color);
+    background: transparent;
+  }
+  &[data-variant="outlined"]:hover {
+    background: color-mix(in srgb, var(--_color) 8%, transparent);
+  }
+
+  &[data-variant="text"] {
+    border-color: transparent;
+    color: var(--_color);
+    background: transparent;
+  }
+  &[data-variant="text"]:hover {
+    background: color-mix(in srgb, var(--_color) 8%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 var(--_ring-w) var(--_ring-c);
+  }
+  &:active {
+    transform: translateY(0.5px);
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .btn__icon {
+    display: inline-flex;
+    align-items: center;
+    line-height: 0;
+  }
+`;
+
+function Button(props: ButtonBaseProps) {
+  const {
+    as,
+    href,
+    variant = "contained",
+    color = "primary",
+    fullWidth,
+    startIcon,
+    endIcon,
+    cssVars,
+    style,
+    children,
+    ...rest
+  } = props;
+
+  const isLink = as === "a" || (!!href && as !== "button");
+  const Comp: any = isLink ? "a" : "button";
+
+  // cssVars를 인라인 style 변수로 주입
+  const mergedStyle = { ...(style || {}), ...(cssVars as any) };
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
+    <ButtonRoot
+      as={Comp}
+      href={isLink ? href : undefined}
+      role={isLink ? "link" : undefined}
+      data-variant={variant}
+      data-color={color}
+      data-full={!!fullWidth}
+      style={mergedStyle}
+      {...rest}
+    >
+      {startIcon ? <span className="btn__icon">{startIcon}</span> : null}
+      <span className="btn__label">{children}</span>
+      {endIcon ? <span className="btn__icon">{endIcon}</span> : null}
+    </ButtonRoot>
+  );
+}
 
-      {/* 전역 격자 */}
-      <Box
-        aria-hidden
-        sx={{
-          position: "fixed",
-          inset: 0,
-          zIndex: -1,
-          backgroundImage: GRID_BG,
-          backgroundRepeat: "repeat",
-          backgroundSize: "24px 24px",
-          opacity: 0.1,
-        }}
-      />
+/* ───────────────── Primitives ───────────────── */
+const BackgroundGrid = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: ${GRID_BG};
+  background-repeat: repeat;
+  background-size: 24px 24px;
+  opacity: 0.1;
+`;
 
-      {/* Skip link */}
-      <Box
-        component="a"
-        href="#main"
-        sx={{
-          position: "absolute",
-          left: -9999,
-          top: 8,
-          bgcolor: "primary.main",
-          color: "#fff",
-          px: 2,
-          py: 1,
-          borderRadius: 1,
-          "&:focus": { left: "50%", transform: "translateX(-50%)" },
-        }}
-      >
-        Skip to content
-      </Box>
+const SkipLink = styled.a`
+  position: absolute;
+  left: -9999px;
+  top: 0.8rem;
+  background: var(--ds-color-primary, #1f6feb);
+  color: #fff;
+  padding: 0.8rem 1.2rem;
+  border-radius: 0.8rem;
+  &:focus {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+`;
+
+const Container = styled.div`
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-left: var(--space-page-x, 1.6rem);
+  padding-right: var(--space-page-x, 1.6rem);
+`;
+
+const HeaderBar = styled.header<{ $elevate: boolean }>`
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: ${({ $elevate }) =>
+    $elevate ? "rgba(255,255,255,0.86)" : "rgba(255,255,255,0.9)"};
+  backdrop-filter: blur(8px);
+  transition: all 0.2s ease;
+  border-bottom: 1px solid rgba(18, 24, 40, 0.1);
+`;
+
+const Toolbar = styled.div`
+  min-height: 6.4rem;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+`;
+
+const Brand = styled.a`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+  color: inherit;
+  text-decoration: none;
+  &:focus-visible {
+    outline: 2px solid var(--ds-color-primary, #1f6feb);
+    outline-offset: 2px;
+  }
+`;
+
+const BrandBadge = styled.div`
+  width: 3.2rem;
+  height: 3.2rem;
+  border-radius: 0.9rem;
+  background: var(--ds-color-primary, #1f6feb);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+`;
+
+const BrandName = styled.span`
+  font-weight: 800;
+  font-size: var(--ds-font-size-base, 1.5rem);
+  letter-spacing: 0.01rem;
+  color: var(--ds-text-default, #2d2d2d);
+`;
+
+const Nav = styled.nav`
+  margin-left: auto;
+  display: flex;
+  gap: 0.4rem;
+  & a.btn {
+    text-decoration: none;
+  }
+`;
+
+const Paper = styled.div`
+  padding: 2rem;
+  border-radius: 1.2rem;
+  box-shadow: ${SOFT_SHADOW};
+  transition:
+    box-shadow 0.2s,
+    transform 0.2s,
+    border-color 0.2s;
+  background: #fff;
+  border: 1px solid rgba(18, 24, 40, 0.06);
+  &:hover {
+    box-shadow: ${HOVER_SHADOW};
+    transform: translateY(-2px);
+    border-color: rgba(18, 24, 40, 0.12);
+  }
+`;
+
+const SectionWrap = styled.section<{ $tone: "white" | "neutral" | "tint" }>`
+  padding: 6rem 0;
+  background: ${({ $tone }) =>
+    $tone === "tint" ? "#F3F7FF" : $tone === "neutral" ? "#F7F9FC" : "#ffffff"};
+  ${({ $tone }) =>
+    $tone === "tint"
+      ? css`
+          background-image:
+            radial-gradient(
+              60rem 30rem at 10% -10%,
+              color-mix(
+                in srgb,
+                var(--ds-color-primary, #1f6feb) 10%,
+                transparent
+              ),
+              transparent 60%
+            ),
+            radial-gradient(
+              50rem 28rem at 90% -20%,
+              color-mix(
+                in srgb,
+                var(--ds-color-primary, #1f6feb) 12%,
+                transparent
+              ),
+              transparent 60%
+            );
+          background-blend-mode: screen;
+        `
+      : undefined};
+  @media (min-width: 900px) {
+    padding: 8rem 0;
+  }
+`;
+
+/* Grid utils */
+const TwoCol = styled.div`
+  display: grid;
+  gap: 4.8rem;
+  grid-template-columns: 1fr;
+  align-items: center;
+  @media (min-width: 900px) {
+    grid-template-columns: 1fr 1fr;
+  }
+`;
+const Cards3 = styled.div`
+  display: grid;
+  gap: 2.4rem;
+  grid-template-columns: 1fr;
+  @media (min-width: 900px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+`;
+const SimpleGrid = styled.div<{ $colsSm?: number; $colsMd?: number }>`
+  display: grid;
+  gap: 1.2rem;
+  grid-template-columns: repeat(${({ $colsSm = 2 }) => $colsSm}, 1fr);
+  @media (min-width: 600px) {
+    grid-template-columns: repeat(${({ $colsSm = 2 }) => $colsSm}, 1fr);
+  }
+  @media (min-width: 900px) {
+    grid-template-columns: repeat(${({ $colsMd = 3 }) => $colsMd}, 1fr);
+  }
+`;
+
+/* Typography */
+const Kicker = styled.div`
+  letter-spacing: 0.12rem;
+  font-weight: 800;
+  font-size: var(--ds-font-size-sm, 1.3rem);
+  color: var(--ds-color-primary, #1f6feb);
+  margin-bottom: 0.6rem;
+  text-transform: uppercase;
+`;
+
+const HeroTitle = styled.h1`
+  font-size: var(--ds-font-size-display, 3.2rem);
+  font-weight: 900;
+  margin: 0 0 1rem 0;
+  letter-spacing: -0.02rem;
+`;
+
+const Muted = styled.p`
+  color: var(--ds-text-subtle, #6b7280);
+  font-size: var(--ds-font-size-base, 1.5rem);
+`;
+
+const SectionTitle = styled.h2`
+  font-size: var(--ds-font-size-heading, 2rem);
+  font-weight: 800;
+  margin: 0 0 1.2rem 0;
+  text-align: center;
+  letter-spacing: -0.01rem;
+`;
+
+const SectionSub = styled.p`
+  text-align: center;
+  color: var(--ds-text-subtle, #6b7280);
+  font-size: var(--ds-font-size-base, 1.5rem);
+`;
+
+/* FAQ */
+const Accordion = styled.details`
+  border-radius: 0.8rem;
+  background: #fff;
+  border: 1px solid rgba(18, 24, 40, 0.1);
+  &[open] summary svg {
+    transform: rotate(180deg);
+  }
+`;
+const AccordionSummary = styled.summary`
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+  padding: 1.2rem 1.6rem;
+  font-weight: 700;
+  font-size: 1.5rem;
+  &::-webkit-details-marker {
+    display: none;
+  }
+  svg {
+    width: 1.8rem;
+    height: 1.8rem;
+    transition: transform 0.2s;
+    margin-left: auto;
+  }
+`;
+const AccordionDetails = styled.div`
+  padding: 0 1.6rem 1.6rem 1.6rem;
+  color: var(--ds-text-subtle, #6b7280);
+  font-size: var(--ds-font-size-base, 1.5rem);
+`;
+
+/* Stat pill */
+const StatPill = styled.div`
+  padding: 1rem 1.6rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: saturate(140%) blur(2px);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  box-shadow: ${SOFT_SHADOW};
+  border: 1px solid rgba(18, 24, 40, 0.06);
+`;
+const Dot = styled.span`
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ds-color-primary, #1f6feb);
+  flex: 0 0 auto;
+`;
+
+/* ───────────────── Page ───────────────── */
+export default function Page() {
+  const [elevate, setElevate] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setElevate(window.scrollY > 4);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  return (
+    <>
+      <BackgroundGrid />
+      <SkipLink href="#main">Skip to content</SkipLink>
 
       {/* Top note */}
-      <Box
-        sx={{
-          borderBottom: "1px solid",
-          borderColor: "divider",
-          bgcolor: "grey.50",
+      <div
+        style={{
+          borderBottom: "1px solid rgba(18,24,40,0.10)",
+          background: "#f8fafc",
         }}
       >
-        <Container
-          maxWidth="lg"
-          sx={{ minHeight: 36, display: "flex", alignItems: "center" }}
-        >
-          <Typography variant="caption" color="text.secondary">
-            사내 전용 · 외부 공유 금지 · 접속 로그 기록
-          </Typography>
+        <Container>
+          <div style={{ minHeight: 36, display: "flex", alignItems: "center" }}>
+            <span
+              style={
+                {
+                  color: "#6b7280",
+                  fontSize: "var(--ds-font-size-sm, 1.3rem)",
+                } as React.CSSProperties
+              }
+            >
+              사내 전용 · 외부 공유 금지 · 접속 로그 기록
+            </span>
+          </div>
         </Container>
-      </Box>
+      </div>
 
-      {/* Header — sticky (이전 상태) */}
-      <AppBar
-        position="sticky"
-        color="transparent"
-        elevation={0}
-        sx={{
-          bgcolor: elevate ? "rgba(255,255,255,0.86)" : "rgba(255,255,255,0.9)",
-          backdropFilter: "blur(8px)",
-          transition: "all .2s ease",
-        }}
-      >
-        <Toolbar disableGutters sx={{ minHeight: 64 }}>
-          <Container
-            maxWidth="lg"
-            sx={{ display: "flex", alignItems: "center", gap: 2 }}
-          >
-            <MLink
-              href="/"
-              underline="none"
-              aria-label="Ultra Layout 홈"
-              sx={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 1,
-                color: "text.primary",
-              }}
-            >
-              <Box
-                sx={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 2,
-                  bgcolor: "primary.main",
-                  color: "#fff",
-                  display: "grid",
-                  placeItems: "center",
-                  fontWeight: 900,
-                }}
-              >
-                UL
-              </Box>
-              <Typography variant="subtitle1" fontWeight={800}>
-                Ultra Layout
-              </Typography>
-            </MLink>
+      {/* Header */}
+      <HeaderBar $elevate={elevate}>
+        <Container>
+          <Toolbar>
+            <Brand href="/" aria-label="Ultra Layout 홈">
+              <BrandBadge>UL</BrandBadge>
+              <BrandName>Ultra Layout</BrandName>
+            </Brand>
 
-            <Stack
-              direction="row"
-              spacing={1}
-              component="nav"
-              aria-label="주요"
-              sx={{ ml: 2 }}
-            >
-              <Button
-                color="inherit"
-                onMouseEnter={onOpen}
-                // onClick={onOpen}
-                aria-controls={open ? "layout" : undefined}
-                href="/editor"
-              >
-                레이아웃
-              </Button>
-              {/* <Menu
-                id="layout"
-                anchorEl={menuEl}
-                open={open}
-                onClose={onClose}
-                MenuListProps={{ onMouseLeave: onClose }}
-                anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-                transformOrigin={{ vertical: "top", horizontal: "left" }}
-              >
-                <MenuItem
-                  component={MLink}
-                  href="/layout/layoutitem7/ddd"
-                  onClick={onClose}
-                >
-                  all
-                </MenuItem>
-                <MenuItem
-                  component={MLink}
-                  href="/app/projects/new"
-                  onClick={onClose}
-                >
-                  생성하기
-                </MenuItem>
-              </Menu> */}
-              <Button color="inherit" href="/grid">
-                그리드
-              </Button>
-              <Button color="inherit" href="/resize">
-                리사이즈
-              </Button>
-              <Button color="inherit" href="#updates">
-                공지
-              </Button>
-              <Button color="inherit" href="#faq">
-                FAQ
-              </Button>
-            </Stack>
+            <Nav aria-label="주요">
+              {[
+                { label: "레이아웃", href: "/editor" },
+                { label: "그리드", href: "/grid" },
+                { label: "리사이즈", href: "/resize" },
+                { label: "공지", href: "#updates" },
+                { label: "FAQ", href: "#faq" },
+              ].map(item => (
+                <Button key={item.href} variant="text" href={item.href}>
+                  {item.label}
+                </Button>
+              ))}
+            </Nav>
+          </Toolbar>
+        </Container>
+      </HeaderBar>
 
-            <Stack direction="row" spacing={1} sx={{ ml: "auto" }}>
-              <Button color="inherit" href="#preview">
-                라이브 미리보기
-              </Button>
-              <Button variant="contained" href="/app/projects/new">
-                새 프로젝트
-              </Button>
-            </Stack>
-          </Container>
-        </Toolbar>
-      </AppBar>
-
-      <Box component="main" id="main">
+      <main id="main">
         {/* Hero — tint */}
-        <Section id="home" tone="tint">
-          <Grid container spacing={6} alignItems="center">
-            <Grid item xs={12} md={6}>
-              <Typography
-                variant="overline"
-                sx={{
-                  color: "primary.main",
-                  fontWeight: 800,
-                  letterSpacing: 1.2,
-                }}
-              >
-                Ultra Layout Editor
-              </Typography>
-              <Typography variant="h1" sx={{ mb: 1 }}>
-                레이아웃 편집 도구
-              </Typography>
-              <Typography
-                variant="subtitle1"
-                color="text.secondary"
-                sx={{ mb: 3 }}
-              >
-                드래그 배치, 스냅, 템플릿 재사용. 사내 페이지 제작을 단순하게.
-              </Typography>
+        <SectionWrap id="home" $tone="tint">
+          <Container>
+            <TwoCol>
+              <div>
+                <Kicker>Ultra Layout Editor</Kicker>
+                <HeroTitle>레이아웃 편집 도구</HeroTitle>
+                <Muted style={{ marginBottom: "3rem" }}>
+                  드래그 배치, 스냅, 템플릿 재사용. 사내 페이지 제작을 단순하게.
+                </Muted>
 
-              <Stack direction="row" spacing={1.2} sx={{ mb: 3 }}>
-                <Button
-                  variant="contained"
-                  href="/app/projects/new"
-                  endIcon={
-                    <SvgIcon viewBox="0 0 24 24">
-                      <path
-                        d="M5 12h14M13 5l7 7-7 7"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        fill="none"
-                      />
-                    </SvgIcon>
-                  }
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "1.2rem",
+                    marginBottom: "3rem",
+                    flexWrap: "wrap",
+                  }}
                 >
-                  지금 시작하기
-                </Button>
-                <Button variant="outlined" href="#preview">
-                  라이브 미리보기
-                </Button>
-              </Stack>
-
-              <Stack direction="row" spacing={1.2} flexWrap="wrap">
-                {[
-                  { n: "1,284", k: "활성 프로젝트" },
-                  { n: "10/24", k: "최근 배포" },
-                  { n: "정상", k: "시스템 상태" },
-                ].map(s => (
-                  <Box
-                    key={s.k}
-                    sx={{
-                      px: 1.6,
-                      py: 1,
-                      borderRadius: 999,
-                      bgcolor: "rgba(255,255,255,.85)",
-                      backdropFilter: "saturate(140%) blur(2px)",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 1,
-                      boxShadow: SOFT_SHADOW,
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    as="a"
+                    href="/app/projects/new"
+                    endIcon={
+                      <span aria-hidden style={{ display: "inline-flex" }}>
+                        <svg viewBox="0 0 24 24" width="18" height="18">
+                          <path
+                            d="M5 12h14M13 5l7 7-7 7"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            fill="none"
+                          />
+                        </svg>
+                      </span>
+                    }
+                    cssVars={{
+                      "--ds-btn-h": "4.2rem",
+                      "--ds-btn-fz": "var(--ds-font-size-base, 1.5rem)",
+                      "--ds-btn-px": "1.6rem",
                     }}
                   >
-                    <Box
-                      sx={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: "50%",
-                        bgcolor: "primary.main",
-                      }}
-                    />
-                    <Typography fontWeight={800} color="primary.main">
-                      {s.n}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {s.k}
-                    </Typography>
-                  </Box>
-                ))}
-              </Stack>
-            </Grid>
+                    지금 시작하기
+                  </Button>
+                  <Button
+                    as="a"
+                    variant="outlined"
+                    color="primary"
+                    href="#preview"
+                    cssVars={{
+                      "--ds-btn-h": "4.2rem",
+                      "--ds-btn-fz": "var(--ds-font-size-base, 1.5rem)",
+                      "--ds-btn-px": "1.6rem",
+                    }}
+                  >
+                    라이브 미리보기
+                  </Button>
+                </div>
 
-            <Grid item xs={12} md={6}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 2,
-                  borderRadius: 2,
-                  boxShadow: SOFT_SHADOW,
-                  transition: "box-shadow .2s, transform .2s",
-                  "&:hover": {
-                    boxShadow: HOVER_SHADOW,
-                    transform: "translateY(-2px)",
-                  },
-                  bgcolor: "#fff",
-                }}
-              >
-                <Box sx={{ px: 1.5, py: 1 }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Preview
-                  </Typography>
-                </Box>
-                <Card elevation={0} sx={{ borderRadius: 2 }}>
-                  <CardContent sx={{ p: 2 }}>
-                    <Grid container spacing={1.2}>
-                      <Grid item xs={12}>
-                        <Box
-                          sx={{
+                <div
+                  style={{ display: "flex", gap: "1.2rem", flexWrap: "wrap" }}
+                >
+                  {[
+                    { n: "1,284", k: "활성 프로젝트" },
+                    { n: "10/24", k: "최근 배포" },
+                    { n: "정상", k: "시스템 상태" },
+                  ].map(s => (
+                    <StatPill key={s.k}>
+                      <Dot aria-hidden />
+                      <strong
+                        style={
+                          {
+                            color: "var(--ds-color-primary, #1f6feb)",
+                            fontWeight: 800,
+                            fontSize: "var(--ds-font-size-base, 1.5rem)",
+                          } as React.CSSProperties
+                        }
+                      >
+                        {s.n}
+                      </strong>
+                      <span
+                        style={
+                          {
+                            fontSize: "var(--ds-font-size-sm, 1.3rem)",
+                            color: "var(--ds-text-subtle, #6b7280)",
+                          } as React.CSSProperties
+                        }
+                      >
+                        {s.k}
+                      </span>
+                    </StatPill>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Paper>
+                  <div style={{ padding: "1rem 1.5rem" }}>
+                    <span
+                      style={
+                        {
+                          fontSize: "var(--ds-font-size-sm, 1.3rem)",
+                          color: "var(--ds-text-subtle, #6b7280)",
+                        } as React.CSSProperties
+                      }
+                    >
+                      Preview
+                    </span>
+                  </div>
+
+                  <div style={{ borderRadius: "1.2rem", overflow: "hidden" }}>
+                    <div style={{ padding: "2rem" }}>
+                      <div style={{ display: "grid", gap: "1.2rem" }}>
+                        <div
+                          style={{
                             height: 56,
-                            bgcolor: "grey.50",
-                            borderRadius: 2,
+                            background: "#f9fafb",
+                            borderRadius: "1.2rem",
                           }}
                         />
-                      </Grid>
-                      {[...Array(3)].map((_, i) => (
-                        <Grid item xs={12} sm={4} key={i}>
-                          <Box
-                            sx={{
-                              height: 72,
-                              bgcolor: "grey.50",
-                              borderRadius: 2,
-                            }}
-                          />
-                        </Grid>
-                      ))}
-                      {[...Array(8)].map((_, i) => (
-                        <Grid item xs={6} sm={3} key={i}>
-                          <Box
-                            sx={{
-                              height: 56,
-                              bgcolor: "grey.50",
-                              borderRadius: 2,
-                            }}
-                          />
-                        </Grid>
-                      ))}
-                    </Grid>
-                  </CardContent>
-                </Card>
-              </Paper>
-            </Grid>
-          </Grid>
-        </Section>
+                        <SimpleGrid $colsSm={3} $colsMd={3}>
+                          {[...Array(3)].map((_, i) => (
+                            <div
+                              key={i}
+                              style={{
+                                height: 72,
+                                background: "#f9fafb",
+                                borderRadius: "1.2rem",
+                              }}
+                            />
+                          ))}
+                        </SimpleGrid>
+                        <SimpleGrid $colsSm={2} $colsMd={4}>
+                          {[...Array(8)].map((_, i) => (
+                            <div
+                              key={i}
+                              style={{
+                                height: 56,
+                                background: "#f9fafb",
+                                borderRadius: "1.2rem",
+                              }}
+                            />
+                          ))}
+                        </SimpleGrid>
+                      </div>
+                    </div>
+                  </div>
+                </Paper>
+              </div>
+            </TwoCol>
+          </Container>
+        </SectionWrap>
 
         {/* Features — white */}
-        <Section id="features" tone="white">
-          <Box sx={{ textAlign: "center", mb: 3 }}>
-            <Typography variant="h2">기능</Typography>
-            <Typography color="text.secondary">
-              필요한 기능만 담아 단순하게.
-            </Typography>
-          </Box>
+        <SectionWrap id="features" $tone="white">
+          <Container>
+            <SectionTitle>기능</SectionTitle>
+            <SectionSub>필요한 기능만 담아 단순하게.</SectionSub>
 
-          <Grid container spacing={2.4}>
-            {[
-              { t: "정밀 편집", d: "룰러·스냅·멀티 선택으로 빠른 배치." },
-              {
-                t: "레이어/페이지",
-                d: "트리 레이어·탭으로 대형 레이아웃 정리.",
-              },
-              { t: "템플릿", d: "자주 쓰는 섹션을 저장·재사용." },
-              { t: "컬러 시스템", d: "라이트/다크 테마 일괄 관리." },
-              { t: "공유/내보내기", d: "프리뷰 공유, HTML/JSON 출력." },
-              { t: "저장/이력", d: "자동 저장·되돌리기·감사 로그." },
-            ].map(f => (
-              <Grid item xs={12} sm={6} md={4} key={f.t}>
+            <Cards3>
+              {[
+                { t: "정밀 편집", d: "룰러·스냅·멀티 선택으로 빠른 배치." },
+                {
+                  t: "레이어/페이지",
+                  d: "트리 레이어·탭으로 대형 레이아웃 정리.",
+                },
+                { t: "템플릿", d: "자주 쓰는 섹션을 저장·재사용." },
+                { t: "컬러 시스템", d: "라이트/다크 테마 일괄 관리." },
+                { t: "공유/내보내기", d: "프리뷰 공유, HTML/JSON 출력." },
+                { t: "저장/이력", d: "자동 저장·되돌리기·감사 로그." },
+              ].map(f => (
                 <Paper
-                  elevation={0}
-                  sx={{
-                    p: 2,
+                  key={f.t}
+                  style={{
                     height: "100%",
                     display: "flex",
                     flexDirection: "column",
-                    gap: 0.6,
-                    boxShadow: SOFT_SHADOW,
-                    transition: "box-shadow .2s, transform .2s",
-                    "&:hover": {
-                      boxShadow: HOVER_SHADOW,
-                      transform: "translateY(-2px)",
-                    },
+                    gap: ".6rem",
                   }}
                 >
-                  <Box
-                    sx={{
-                      width: 26,
-                      height: 26,
+                  <div
+                    aria-hidden
+                    style={{
+                      width: 28,
+                      height: 28,
                       borderRadius: "50%",
-                      bgcolor: "primary.main",
+                      background: "var(--ds-color-primary, #1f6feb)",
                       color: "#fff",
                       display: "grid",
                       placeItems: "center",
-                      mb: 0.4,
+                      marginBottom: "0.6rem",
                     }}
-                    aria-hidden
                   >
-                    <CheckIcon fontSize="small" />
-                  </Box>
-                  <Typography fontWeight={800}>{f.t}</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {f.d}
-                  </Typography>
+                    <CheckIcon width={14} height={14} />
+                  </div>
+                  <strong
+                    style={
+                      {
+                        fontWeight: 800,
+                        fontSize: "var(--ds-font-size-base, 1.5rem)",
+                      } as React.CSSProperties
+                    }
+                  >
+                    {f.t}
+                  </strong>
+                  <Muted style={{ margin: 0 }}>{f.d}</Muted>
                 </Paper>
-              </Grid>
-            ))}
-          </Grid>
-        </Section>
+              ))}
+            </Cards3>
+          </Container>
+        </SectionWrap>
 
         {/* Preview — neutral */}
-        <Section id="preview" tone="neutral">
-          <Grid container spacing={6} alignItems="center">
-            <Grid item xs={12} md={6}>
-              <Typography variant="h2" sx={{ mb: 1.2 }}>
-                미리보기
-              </Typography>
-              <Typography color="text.secondary" sx={{ mb: 2 }}>
-                실제 편집 화면과 동일한 그리드/가이드로 결과를 빠르게 확인.
-              </Typography>
-              <List dense sx={{ mb: 2 }}>
-                {[
-                  "정렬/분배 스냅",
-                  "레이어 잠금/숨김",
-                  "단축키(⌘D, ⌘G, ⌘S)",
-                ].map(k => (
-                  <ListItem key={k} sx={{ py: 0.2 }}>
-                    <ListItemIcon sx={{ minWidth: 28 }}>
+        <SectionWrap id="preview" $tone="neutral">
+          <Container>
+            <TwoCol>
+              <div>
+                <SectionTitle style={{ textAlign: "left" }}>
+                  미리보기
+                </SectionTitle>
+                <Muted style={{ marginBottom: "2rem" }}>
+                  실제 편집 화면과 동일한 그리드/가이드로 결과를 빠르게 확인.
+                </Muted>
+                <ul style={{ marginBottom: "2rem", padding: 0 }}>
+                  {[
+                    "정렬/분배 스냅",
+                    "레이어 잠금/숨김",
+                    "단축키(⌘D, ⌘G, ⌘S)",
+                  ].map(k => (
+                    <li
+                      key={k}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.8rem",
+                        padding: ".2rem 0",
+                      }}
+                    >
                       <CheckIcon
-                        sx={{ color: "primary.main" }}
-                        fontSize="small"
+                        width={14}
+                        height={14}
+                        style={{
+                          color: "var(--ds-color-primary, #1f6feb)",
+                          flex: "0 0 auto",
+                        }}
                       />
-                    </ListItemIcon>
-                    <ListItemText
-                      primaryTypographyProps={{ variant: "body2" }}
-                      primary={k}
-                    />
-                  </ListItem>
-                ))}
-              </List>
-              <Stack direction="row" spacing={1.2}>
-                <Button variant="contained" href="/app/projects">
-                  프로젝트 보기
-                </Button>
-                <Button variant="outlined" href="/templates">
-                  템플릿 갤러리
-                </Button>
-              </Stack>
-            </Grid>
+                      <span
+                        style={
+                          {
+                            fontSize: "var(--ds-font-size-base, 1.5rem)",
+                          } as React.CSSProperties
+                        }
+                      >
+                        {k}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <div
+                  style={{ display: "flex", gap: "1.2rem", flexWrap: "wrap" }}
+                >
+                  <Button
+                    as="a"
+                    variant="contained"
+                    color="primary"
+                    href="/app/projects"
+                  >
+                    프로젝트 보기
+                  </Button>
+                  <Button
+                    as="a"
+                    variant="outlined"
+                    color="primary"
+                    href="/templates"
+                  >
+                    템플릿 갤러리
+                  </Button>
+                </div>
+              </div>
 
-            <Grid item xs={12} md={6}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 2,
-                  borderRadius: 2,
-                  boxShadow: SOFT_SHADOW,
-                  transition: "box-shadow .2s, transform .2s",
-                  "&:hover": {
-                    boxShadow: HOVER_SHADOW,
-                    transform: "translateY(-2px)",
-                  },
-                  bgcolor: "#fff",
-                }}
-              >
-                <Box sx={{ px: 1.5, py: 1 }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Preview
-                  </Typography>
-                </Box>
-                <Card elevation={0} sx={{ borderRadius: 2 }}>
-                  <CardContent sx={{ p: 2 }}>
-                    <Grid container spacing={1.2}>
-                      <Grid item xs={12}>
-                        <Box
-                          sx={{
+              <div>
+                <Paper>
+                  <div style={{ padding: "1rem 1.5rem" }}>
+                    <span
+                      style={
+                        {
+                          fontSize: "var(--ds-font-size-sm, 1.3rem)",
+                          color: "var(--ds-text-subtle, #6b7280)",
+                        } as React.CSSProperties
+                      }
+                    >
+                      Preview
+                    </span>
+                  </div>
+
+                  <div style={{ borderRadius: "1.2rem", overflow: "hidden" }}>
+                    <div style={{ padding: "2rem" }}>
+                      <div style={{ display: "grid", gap: "1.2rem" }}>
+                        <div
+                          style={{
                             height: 56,
-                            bgcolor: "grey.50",
-                            borderRadius: 2,
+                            background: "#f9fafb",
+                            borderRadius: "1.2rem",
                           }}
                         />
-                      </Grid>
-                      {[...Array(3)].map((_, i) => (
-                        <Grid item xs={12} sm={4} key={i}>
-                          <Box
-                            sx={{
-                              height: 72,
-                              bgcolor: "grey.50",
-                              borderRadius: 2,
-                            }}
-                          />
-                        </Grid>
-                      ))}
-                      {[...Array(8)].map((_, i) => (
-                        <Grid item xs={6} sm={3} key={i}>
-                          <Box
-                            sx={{
-                              height: 56,
-                              bgcolor: "grey.50",
-                              borderRadius: 2,
-                            }}
-                          />
-                        </Grid>
-                      ))}
-                    </Grid>
-                  </CardContent>
-                </Card>
-              </Paper>
-            </Grid>
-          </Grid>
-        </Section>
+                        <SimpleGrid $colsSm={3} $colsMd={3}>
+                          {[...Array(3)].map((_, i) => (
+                            <div
+                              key={i}
+                              style={{
+                                height: 72,
+                                background: "#f9fafb",
+                                borderRadius: "1.2rem",
+                              }}
+                            />
+                          ))}
+                        </SimpleGrid>
+                        <SimpleGrid $colsSm={2} $colsMd={4}>
+                          {[...Array(8)].map((_, i) => (
+                            <div
+                              key={i}
+                              style={{
+                                height: 56,
+                                background: "#f9fafb",
+                                borderRadius: "1.2rem",
+                              }}
+                            />
+                          ))}
+                        </SimpleGrid>
+                      </div>
+                    </div>
+                  </div>
+                </Paper>
+              </div>
+            </TwoCol>
+          </Container>
+        </SectionWrap>
 
         {/* Links — tint */}
-        <Section id="links" tone="tint">
-          <Box sx={{ textAlign: "center", mb: 3 }}>
-            <Typography variant="h2">바로가기</Typography>
-            <Typography color="text.secondary">
-              자주 쓰는 내부 리소스.
-            </Typography>
-          </Box>
+        <SectionWrap id="links" $tone="tint">
+          <Container>
+            <SectionTitle>바로가기</SectionTitle>
+            <SectionSub>자주 쓰는 내부 리소스.</SectionSub>
 
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 2,
-                  boxShadow: SOFT_SHADOW,
-                  transition: "box-shadow .2s, transform .2s",
-                  "&:hover": {
-                    boxShadow: HOVER_SHADOW,
-                    transform: "translateY(-2px)",
-                  },
-                  bgcolor: "#fff",
-                }}
-              >
-                <Typography variant="h4" sx={{ mb: 1.2 }}>
-                  시작
-                </Typography>
-                <Grid container spacing={1.2} sx={{ mt: 0.4 }}>
-                  {[
-                    { name: "새 프로젝트", href: "/app/projects/new" },
-                    { name: "내 프로젝트", href: "/app/projects" },
-                    { name: "템플릿 갤러리", href: "/templates" },
-                    { name: "문서", href: "/docs" },
-                    { name: "릴리즈 노트", href: "/changelog" },
-                    { name: "시스템 상태", href: "/status" },
-                  ].map(l => (
-                    <Grid item xs={12} sm={6} key={l.name}>
-                      <Button
-                        variant="outlined"
-                        fullWidth
-                        startIcon={<CheckIcon />}
-                        href={l.href}
-                        sx={{
-                          justifyContent: "flex-start",
-                          borderColor: "divider",
-                        }}
-                      >
-                        {l.name}
-                      </Button>
-                    </Grid>
-                  ))}
-                </Grid>
-              </Paper>
-            </Grid>
-
-            <Grid item xs={12} md={6} sx={{ display: "grid", gap: 1.5 }}>
-              <Paper
-                elevation={0}
-                sx={{ p: 2, boxShadow: SOFT_SHADOW, bgcolor: "#fff" }}
-              >
-                <Typography variant="h4" sx={{ mb: 1.2 }}>
-                  공지
-                </Typography>
-                <Stack divider={<Divider />} spacing={1}>
-                  <Stack
-                    direction="row"
-                    spacing={2}
-                    alignItems="flex-start"
-                    py={0.6}
+            <div
+              style={{
+                display: "grid",
+                gap: "3rem",
+                gridTemplateColumns: "1fr",
+              }}
+            >
+              <div>
+                <Paper>
+                  <h4
+                    style={
+                      {
+                        fontSize: "var(--ds-font-size-heading, 2rem)",
+                        fontWeight: 800,
+                        marginBottom: "1.2rem",
+                      } as React.CSSProperties
+                    }
                   >
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      width={80}
-                    >
-                      2025-10-10
-                    </Typography>
-                    <Box>
-                      <Typography fontWeight={800}>
-                        에디터 단축키 업데이트
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        중복(⌘D)·그룹(⌘G) 개선, 커맨드 검색(⌘K) 추가.
-                      </Typography>
-                    </Box>
-                  </Stack>
-                  <Stack
-                    direction="row"
-                    spacing={2}
-                    alignItems="flex-start"
-                    py={0.6}
-                  >
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      width={80}
-                    >
-                      2025-10-02
-                    </Typography>
-                    <Box>
-                      <Typography fontWeight={800}>
-                        템플릿 갤러리 보강
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        대시보드/리포트 기본 템플릿 6종 추가.
-                      </Typography>
-                    </Box>
-                  </Stack>
-                </Stack>
-              </Paper>
-
-              <Paper
-                elevation={0}
-                sx={{ p: 2, boxShadow: SOFT_SHADOW, bgcolor: "#fff" }}
-              >
-                <Typography variant="h4" sx={{ mb: 1.2 }}>
-                  시스템 상태
-                </Typography>
-                {["Core API", "Editor", "Auth (SSO)", "Export"].map(svc => (
-                  <Stack
-                    key={svc}
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    sx={{
-                      py: 1,
-                      borderBottom: "1px dashed",
-                      borderColor: "divider",
-                      "&:last-of-type": { borderBottom: "none" },
+                    시작
+                  </h4>
+                  <div
+                    style={{
+                      display: "grid",
+                      gap: "1.2rem",
+                      marginTop: ".4rem",
+                      gridTemplateColumns: "repeat(3, 1fr)",
                     }}
                   >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Box
-                        sx={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: "50%",
-                          bgcolor: "primary.main",
+                    {[
+                      { name: "새 프로젝트", href: "/app/projects/new" },
+                      { name: "내 프로젝트", href: "/app/projects" },
+                      { name: "템플릿 갤러리", href: "/templates" },
+                      { name: "문서", href: "/docs" },
+                      { name: "릴리즈 노트", href: "/changelog" },
+                      { name: "시스템 상태", href: "/status" },
+                    ].map(l => (
+                      <Button
+                        key={l.name}
+                        as="a"
+                        variant="outlined"
+                        color="primary"
+                        href={l.href}
+                        fullWidth
+                        style={{
+                          justifyContent: "flex-start",
+                          border: "1px solid rgba(18,24,40,0.10)",
                         }}
-                      />
-                      <Typography>{svc}</Typography>
-                    </Box>
-                    <Typography color="primary.main" fontWeight={800}>
-                      정상
-                    </Typography>
-                  </Stack>
-                ))}
-              </Paper>
-            </Grid>
-          </Grid>
-        </Section>
+                        cssVars={{
+                          "--ds-btn-fz": "var(--ds-font-size-base, 1.5rem)",
+                          "--ds-btn-h": "3.8rem",
+                          "--ds-btn-px": "1.2rem",
+                        }}
+                      >
+                        <CheckIcon width={16} height={16} />
+                        {l.name}
+                      </Button>
+                    ))}
+                  </div>
+                </Paper>
+              </div>
 
-        {/* FAQ — neutral */}
-        <Section id="faq" tone="neutral">
-          <Box sx={{ textAlign: "center", mb: 3 }}>
-            <Typography variant="h2">FAQ</Typography>
-          </Box>
-          <Stack gap={1}>
-            {[
-              {
-                q: "브라우저에서만 사용?",
-                a: "설치 없이 브라우저로 사용. Next.js 프로젝트에 임베드 가능.",
-              },
-              {
-                q: "권한/협업은?",
-                a: "SSO 연동. 조직/그룹 단위 보기·편집 권한 제공.",
-              },
-              {
-                q: "데이터 저장 위치?",
-                a: "사내 스토리지. 자동 저장·버전 이력·감사 로그 기록.",
-              },
-              {
-                q: "외부 반출?",
-                a: "기본 차단. 필요 시 보안 승인 절차를 따른다.",
-              },
-            ].map(it => (
-              <Accordion key={it.q} disableGutters>
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography fontWeight={700}>{it.q}</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Typography variant="body2" color="text.secondary">
-                    {it.a}
-                  </Typography>
-                </AccordionDetails>
-              </Accordion>
-            ))}
-          </Stack>
-        </Section>
-      </Box>
-
-      {/* Footer */}
-      <Box component="footer" sx={{ py: 5, bgcolor: TONE_WHITE }}>
-        <Container maxWidth="lg">
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={8}>
-              <MLink
-                href="/"
-                aria-label="Ultra Layout 홈"
-                underline="none"
-                sx={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 1,
-                  color: "text.primary",
+              <div
+                style={{
+                  display: "grid",
+                  gap: "1.5rem",
+                  gridTemplateColumns: "repeat(2, 1fr)",
                 }}
               >
-                <Box
-                  sx={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: 2,
-                    bgcolor: "primary.main",
-                    color: "#fff",
-                    display: "grid",
-                    placeItems: "center",
-                    fontWeight: 900,
-                  }}
+                <Paper>
+                  <h4
+                    style={
+                      {
+                        fontSize: "var(--ds-font-size-heading, 2rem)",
+                        fontWeight: 800,
+                        marginBottom: "1.2rem",
+                      } as React.CSSProperties
+                    }
+                  >
+                    공지
+                  </h4>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "1rem",
+                    }}
+                  >
+                    {[
+                      {
+                        date: "2025-10-10",
+                        title: "에디터 단축키 업데이트",
+                        desc: "중복(⌘D)·그룹(⌘G) 개선, 커맨드 검색(⌘K) 추가.",
+                      },
+                      {
+                        date: "2025-10-02",
+                        title: "템플릿 갤러리 보강",
+                        desc: "대시보드/리포트 기본 템플릿 6종 추가.",
+                      },
+                    ].map((n, i, a) => (
+                      <div
+                        key={n.date}
+                        style={{
+                          display: "flex",
+                          gap: "2rem",
+                          alignItems: "flex-start",
+                          padding: ".6rem 0",
+                          borderBottom:
+                            i !== a.length - 1
+                              ? "1px dashed rgba(18,24,40,0.10)"
+                              : "none",
+                        }}
+                      >
+                        <span
+                          style={
+                            {
+                              width: 80,
+                              color: "var(--ds-text-subtle, #6b7280)",
+                              fontSize: "var(--ds-font-size-sm, 1.3rem)",
+                            } as React.CSSProperties
+                          }
+                        >
+                          {n.date}
+                        </span>
+                        <div>
+                          <strong
+                            style={
+                              {
+                                fontWeight: 800,
+                                fontSize: "var(--ds-font-size-base, 1.5rem)",
+                              } as React.CSSProperties
+                            }
+                          >
+                            {n.title}
+                          </strong>
+                          <Muted style={{ marginTop: ".2rem" }}>{n.desc}</Muted>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Paper>
+
+                <Paper>
+                  <h4
+                    style={
+                      {
+                        fontSize: "var(--ds-font-size-heading, 2rem)",
+                        fontWeight: 800,
+                        marginBottom: "1.2rem",
+                      } as React.CSSProperties
+                    }
+                  >
+                    시스템 상태
+                  </h4>
+                  {["Core API", "Editor", "Auth (SSO)", "Export"].map(
+                    (svc, i, a) => (
+                      <div
+                        key={svc}
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          padding: "1rem 0",
+                          borderBottom:
+                            i !== a.length - 1
+                              ? "1px dashed rgba(18,24,40,0.10)"
+                              : "none",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.8rem",
+                          }}
+                        >
+                          <span
+                            aria-hidden
+                            style={{
+                              width: 8,
+                              height: 8,
+                              borderRadius: "50%",
+                              background: "var(--ds-color-primary, #1f6feb)",
+                            }}
+                          />
+                          <span
+                            style={
+                              {
+                                fontSize: "var(--ds-font-size-base, 1.5rem)",
+                              } as React.CSSProperties
+                            }
+                          >
+                            {svc}
+                          </span>
+                        </div>
+                        <strong
+                          style={
+                            {
+                              color: "var(--ds-color-primary, #1f6feb)",
+                              fontSize: "var(--ds-font-size-base, 1.5rem)",
+                            } as React.CSSProperties
+                          }
+                        >
+                          정상
+                        </strong>
+                      </div>
+                    ),
+                  )}
+                </Paper>
+              </div>
+            </div>
+          </Container>
+        </SectionWrap>
+
+        {/* FAQ — neutral */}
+        <SectionWrap id="faq" $tone="neutral">
+          <Container>
+            <SectionTitle>FAQ</SectionTitle>
+            <div style={{ display: "grid", gap: "1rem" }}>
+              {[
+                {
+                  q: "브라우저에서만 사용?",
+                  a: "설치 없이 브라우저로 사용. Next.js 프로젝트에 임베드 가능.",
+                },
+                {
+                  q: "권한/협업은?",
+                  a: "SSO 연동. 조직/그룹 단위 보기·편집 권한 제공.",
+                },
+                {
+                  q: "데이터 저장 위치?",
+                  a: "사내 스토리지. 자동 저장·버전 이력·감사 로그 기록.",
+                },
+                {
+                  q: "외부 반출?",
+                  a: "기본 차단. 필요 시 보안 승인 절차를 따른다.",
+                },
+              ].map(it => (
+                <Accordion key={it.q}>
+                  <AccordionSummary>
+                    {it.q}
+                    <ExpandMoreIcon />
+                  </AccordionSummary>
+                  <AccordionDetails>{it.a}</AccordionDetails>
+                </Accordion>
+              ))}
+            </div>
+          </Container>
+        </SectionWrap>
+      </main>
+
+      {/* Footer */}
+      <footer style={{ padding: "5rem 0", background: "#fff" }}>
+        <Container>
+          <div
+            style={{ display: "grid", gap: "3rem", gridTemplateColumns: "1fr" }}
+          >
+            <div>
+              <Brand href="/" aria-label="Ultra Layout 홈">
+                <BrandBadge>UL</BrandBadge>
+                <span
+                  style={
+                    {
+                      fontWeight: 800,
+                      fontSize: "var(--ds-font-size-base, 1.5rem)",
+                    } as React.CSSProperties
+                  }
                 >
-                  UL
-                </Box>
-                <Typography fontWeight={800}>Ultra Layout</Typography>
-              </MLink>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  Ultra Layout
+                </span>
+              </Brand>
+              <Muted style={{ marginTop: "1rem" }}>
                 사내 레이아웃 편집과 페이지 제작을 위한 통합 도구입니다. 빠르게
                 만들고 안정적으로 배포하세요.
-              </Typography>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 800 }}>
+              </Muted>
+            </div>
+
+            <div>
+              <strong
+                style={
+                  {
+                    fontWeight: 800,
+                    marginBottom: "1.2rem",
+                    display: "block",
+                    fontSize: "var(--ds-font-size-base, 1.5rem)",
+                  } as React.CSSProperties
+                }
+              >
                 Links
-              </Typography>
-              <Stack direction="row" spacing={2} flexWrap="wrap">
-                <MLink href="/templates" underline="hover">
-                  템플릿
-                </MLink>
-                <MLink href="/docs" underline="hover">
-                  문서
-                </MLink>
-                <MLink href="/help" underline="hover">
-                  도움말
-                </MLink>
-                <MLink href="/settings" underline="hover">
-                  설정
-                </MLink>
-              </Stack>
-            </Grid>
-          </Grid>
+              </strong>
+              <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap" }}>
+                {[
+                  { name: "템플릿", href: "/templates" },
+                  { name: "문서", href: "/docs" },
+                  { name: "도움말", href: "/help" },
+                  { name: "설정", href: "/settings" },
+                ].map(l => (
+                  <a
+                    key={l.name}
+                    href={l.href}
+                    style={
+                      {
+                        textDecoration: "underline",
+                        textUnderlineOffset: "2px",
+                        fontSize: "var(--ds-font-size-base, 1.5rem)",
+                      } as React.CSSProperties
+                    }
+                  >
+                    {l.name}
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
 
-          <Divider sx={{ my: 3 }} />
+          <hr style={{ opacity: 0.2, margin: "3rem 0" }} />
 
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            justifyContent="space-between"
-            gap={1}
+          <div
+            style={{
+              display: "flex",
+              gap: "1rem",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
           >
-            <Typography variant="caption" color="text.secondary">
+            <span
+              style={
+                {
+                  color: "var(--ds-text-subtle, #6b7280)",
+                  fontSize: "var(--ds-font-size-sm, 1.3rem)",
+                } as React.CSSProperties
+              }
+            >
               © {new Date().getFullYear()} Ultra Layout. Internal use only.
-            </Typography>
-            <Stack direction="row" spacing={2}>
-              <MLink
-                href="/policies/privacy"
-                underline="hover"
-                variant="caption"
-              >
-                개인정보
-              </MLink>
-              <MLink
-                href="/policies/security"
-                underline="hover"
-                variant="caption"
-              >
-                보안
-              </MLink>
-              <MLink href="/policies/terms" underline="hover" variant="caption">
-                이용 약관
-              </MLink>
-            </Stack>
-          </Stack>
+            </span>
+            <div style={{ display: "flex", gap: "2rem" }}>
+              {[
+                { name: "개인정보", href: "/policies/privacy" },
+                { name: "보안", href: "/policies/security" },
+                { name: "이용 약관", href: "/policies/terms" },
+              ].map(l => (
+                <a
+                  key={l.name}
+                  href={l.href}
+                  style={
+                    {
+                      fontSize: "var(--ds-font-size-sm, 1.3rem)",
+                      textDecoration: "underline",
+                      textUnderlineOffset: "2px",
+                    } as React.CSSProperties
+                  }
+                >
+                  {l.name}
+                </a>
+              ))}
+            </div>
+          </div>
         </Container>
-      </Box>
-    </ThemeProvider>
+      </footer>
+    </>
   );
 }

@@ -1,18 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useMemo, useRef, useState } from "react";
 import styled from "@emotion/styled";
-import {
-  Accordion,
-  Button,
-  Checkbox,
-  Flex,
-  Switch,
-  Tabs,
-} from "fone-design-system_v1";
+import { Flex } from "fone-design-system_v1";
 
-import { AccordionCard } from "@/shared/ui/cardAccordion/CardAccordion";
+import { useWheelZoom } from "@/shared/hooks/useWheelZoom";
 
+import { useEDITORStore } from "./_lib/store";
 import ComponentArea from "./components/ComponentArea";
 import SettingArea from "./components/SettingArea";
 
@@ -38,8 +32,27 @@ const gridBg = (size: number, alpha = 0.06) => `
 `;
 
 export default function Page({ data }: any) {
-  console.log(data, "???");
-
+  const { canvasWidth, canvasHeight } = useEDITORStore();
+  const zoom = useEDITORStore(s => s.zoom); // 0~200 같은 퍼센트라 가정
+  const setZoom = useEDITORStore(s => s.actions.setZoom);
+  const outerRef = useRef<HTMLDivElement>(null);
+  const scale = useMemo(
+    () => Math.min(2, Math.max(0.25, (zoom || 100) / 100)),
+    [zoom],
+  );
+  useWheelZoom({
+    containerRef: outerRef,
+    getScale: () => scale,
+    setScale: updater =>
+      setZoom((prevZoom: number) => {
+        const prevScale = (prevZoom ?? 100) / 100;
+        const nextScale =
+          typeof updater === "function" ? updater(prevScale) : updater;
+        return Math.round(nextScale * 100); // %로 저장
+      }),
+    min: 0.25,
+    max: 2,
+  });
   return (
     <Container>
       <Flex
@@ -48,19 +61,28 @@ export default function Page({ data }: any) {
       >
         <ComponentArea />
         {/* ── Workspace(좌측 비움, 캔버스 고정) ── */}
-        <Viewport>
+        <Viewport ref={outerRef}>
           <StageFrame>
-            <Stage
+            <ScaledWrap
               style={{
-                width: 1200,
-                height: 800,
-                backgroundImage: gridBg(16),
-                backgroundSize: `16px 16px`,
-                backgroundPosition: "0 0",
+                width: canvasWidth * scale,
+                height: canvasHeight * scale,
               }}
-              role="figure"
-              aria-label="Canvas"
-            />
+            >
+              <Stage
+                style={{
+                  width: canvasWidth,
+                  height: canvasHeight,
+                  backgroundImage: gridBg(16),
+                  backgroundSize: `16px 16px`,
+
+                  transform: `scale(${zoom / 100})`,
+                  transformOrigin: "0 0",
+                }}
+                role="figure"
+                aria-label="Canvas"
+              />
+            </ScaledWrap>
           </StageFrame>
         </Viewport>
         <SettingArea />
@@ -112,7 +134,7 @@ const Viewport = styled.div`
 `;
 
 const StageFrame = styled.div`
-  background: rgba(255, 255, 255, 0.86);
+  background: #0075f60a;
   backdrop-filter: saturate(1.05) blur(4px);
   box-shadow:
     0 14px 10px rgba(15, 23, 42, 0.12),
@@ -121,7 +143,14 @@ const StageFrame = styled.div`
 
 const Stage = styled.div`
   background: #fff;
-  box-shadow:
+  border: 1px solid #0000001e;
+  user-select: none;
+  overflow: hidden;
+  border-radius: 12px;
+  /* box-shadow:
     0 12px 32px rgba(15, 23, 42, 0.1),
-    0 2px 8px rgba(15, 23, 42, 0.05);
+    0 2px 8px rgba(15, 23, 42, 0.05); */
+`;
+const ScaledWrap = styled.div`
+  position: relative;
 `;
