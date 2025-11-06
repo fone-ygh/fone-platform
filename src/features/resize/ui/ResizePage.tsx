@@ -2,12 +2,12 @@
 
 import styled from "@emotion/styled";
 
+import Box from "@/shared/components/ui/box/Box";
+import Button from "@/shared/components/ui/button/Button";
+import Select from "@/shared/components/ui/select/Select";
+import TextField from "@/shared/components/ui/textField/TextField";
+import TreeView from "@/shared/components/ui/treeView/TreeView";
 import useResizeStore from "@/shared/store/resize";
-import Box from "@/shared/ui/box/Box";
-import Button from "@/shared/ui/button/Button";
-import Select from "@/shared/ui/select/Select";
-import TextField from "@/shared/ui/textField/TextField";
-import TreeView from "@/shared/ui/treeView/TreeView";
 
 export default function ResizePage() {
   const { resize } = useResizeStore();
@@ -55,7 +55,7 @@ export default function ResizePage() {
         placeholder="Input"
       />
       <Box
-        id="box"
+        id="box1"
         resizable
         draggable
         width={200}
@@ -79,12 +79,34 @@ export default function ResizePage() {
         resizable
         draggable
         width={500}
+        minWidth={250}
         height={500}
+        minHeight={300}
         x={100}
         y={200}
         title="TreeView"
         defaultExpanded
       />
+      <Box
+        id="box2"
+        resizable
+        draggable
+        width={200}
+        height={50}
+        minWidth={200}
+        minHeight={50}
+        x={700}
+        y={200}
+        component="div"
+        sx={{
+          border: "1px solid black",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        Box
+      </Box>
     </StyledResizePage>
   );
 }
