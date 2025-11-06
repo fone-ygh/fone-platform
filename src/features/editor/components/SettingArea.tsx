@@ -2,13 +2,18 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import styled from "@emotion/styled";
-import { Checkbox, Flex } from "fone-design-system_v1";
+import {
+  Button,
+  Checkbox,
+  Flex,
+  Switch,
+  TextField2,
+} from "fone-design-system_v1";
 
-import { Button } from "@/shared/ui/button2/Button2";
-import { AccordionCard } from "@/shared/ui/cardAccordion/CardAccordion";
+import Aside from "@/shared/components/layout/aside/Aside";
+import { AccordionCard } from "@/shared/components/ui/cardAccordion/CardAccordion";
 
 import { useEDITORActions, useEDITORStore } from "../_lib/store";
-import { AsideStyle } from "./AsideStyle";
 
 /* ───────────────── styled inputs (가벼운 베이스) ───────────────── */
 const Label = styled.label`
@@ -50,12 +55,9 @@ const Hr = styled.hr`
 /* ───────────────── component ───────────────── */
 function SettingArea() {
   const { setCanvasWidth, setCanvasHeight, setZoom } = useEDITORActions();
-  const { canvasWidth, canvasHeight, zoom } = useEDITORStore();
+  const { canvasWidth, canvasHeight } = useEDITORStore();
 
   /* Canvas */
-  // const [canvasWidth, setCanvasWidth] = useState(1200);
-  // const [canvasHeight, setCanvasH] = useState(800);
-
   const handleCanvasW = (v: number) => {
     setCanvasWidth(v);
   };
@@ -94,6 +96,7 @@ function SettingArea() {
   /* Zoom */
   useEffect(() => {
     setZoom(canvasZoom);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canvasZoom]);
 
   /* JSON Export/Import */
@@ -200,7 +203,7 @@ function SettingArea() {
   };
 
   return (
-    <AsideStyle data-side="left">
+    <Aside position="right">
       {/* Canvas */}
       <AccordionCard
         title="Setting"
@@ -215,29 +218,29 @@ function SettingArea() {
                 <Flex spacing="1.2rem">
                   <Flex flexDirection="column">
                     <label>W</label>
-                    <input
+                    <TextField2
                       type="number"
+                      size="xs"
                       value={canvasWidth}
-                      min={1}
+                      inputProps={{ min: 1 }}
                       onChange={e => handleCanvasW(Number(e.target.value))}
-                      style={{ display: "block", width: "100%" }}
                     />
                   </Flex>
 
                   <Flex flexDirection="column">
                     <label htmlFor="h">H</label>
-                    <input
+                    <TextField2
                       type="number"
                       value={canvasHeight}
-                      min={1}
+                      inputProps={{ min: 1 }}
                       onChange={e => handleCanvasH(Number(e.target.value))}
-                      style={{ display: "block", width: "100%" }}
+                      size="xs"
                     />
                     <div />
                   </Flex>
                 </Flex>
 
-                <Button onClick={resetCanvas} size="sm" variant="outline">
+                <Button onClick={resetCanvas} size="xsmall" variant="outlined">
                   리셋(1200×800)
                 </Button>
               </Flex>
@@ -249,11 +252,11 @@ function SettingArea() {
             content: (
               <div>
                 <Flex spacing=".8rem">
-                  <Button size="sm" variant="outline" onClick={exportJSON}>
-                    내보내기(JSON)
+                  <Button size="xsmall" variant="outlined" onClick={exportJSON}>
+                    내보내기
                   </Button>
-                  <Button size="sm" variant="outline" onClick={openImport}>
-                    불러오기(JSON)
+                  <Button size="xsmall" variant="outlined" onClick={openImport}>
+                    불러오기
                   </Button>
                   <input
                     ref={fileRef}
@@ -275,10 +278,14 @@ function SettingArea() {
             content: (
               <div>
                 <Flex spacing=".8rem">
-                  <Button onClick={serverSave} variant="outline" size="sm">
+                  <Button
+                    onClick={serverSave}
+                    variant="contained"
+                    size="xsmall"
+                  >
                     저장
                   </Button>
-                  <Button onClick={serverLoad} variant="outline" size="sm">
+                  <Button onClick={serverLoad} variant="outlined" size="xsmall">
                     불러오기
                   </Button>
                 </Flex>
@@ -291,7 +298,7 @@ function SettingArea() {
             content: (
               <div>
                 <Flex spacing=".8rem" alignItems="center">
-                  <Button onClick={zoomOut} size="sm" variant="outline">
+                  <Button onClick={zoomOut} size="xsmall" variant="outlined">
                     −
                   </Button>
                   <input
@@ -302,10 +309,10 @@ function SettingArea() {
                     onChange={e => setZoom(clampZoom(Number(e.target.value)))}
                     style={{ width: "100%" }}
                   />
-                  <Button onClick={zoomIn} size="sm" variant="outline">
+                  <Button onClick={zoomIn} size="xsmall" variant="outlined">
                     ＋
                   </Button>
-                  <Button onClick={zoomReset} size="sm" variant="outline">
+                  <Button onClick={zoomReset} size="xsmall" variant="outlined">
                     100%
                   </Button>
                 </Flex>
@@ -319,11 +326,12 @@ function SettingArea() {
             content: (
               <div>
                 <Flex spacing="1.2rem" alignItems="center">
-                  {/* <Switch
+                  <Label style={{ margin: 0 }}>격자 표시</Label>
+                  <Switch
                     checked={showGrid}
                     onChange={(e: any) => setShowGrid(!!e?.target?.checked)}
-                  /> */}
-                  <Label style={{ margin: 0 }}>격자 표시</Label>
+                    size="small"
+                  />
                 </Flex>
 
                 <Flex
@@ -332,12 +340,12 @@ function SettingArea() {
                   style={{ marginTop: ".6rem" }}
                 >
                   <Label htmlFor="grid-size">Size</Label>
-                  <Input
+                  <TextField2
                     id="grid-size"
                     type="number"
                     value={gridSize}
-                    min={4}
-                    max={64}
+                    inputProps={{ min: 4, max: 64 }}
+                    size="xs"
                     onChange={e =>
                       setGridSize(
                         Math.max(4, Math.min(64, Number(e.target.value))),
@@ -347,12 +355,13 @@ function SettingArea() {
                   <Label htmlFor="grid-color" style={{ marginLeft: "1rem" }}>
                     Color
                   </Label>
-                  <Input
+                  <TextField2
                     id="grid-color"
                     type="color"
                     value={gridColor}
                     onChange={e => setGridColor(e.target.value)}
                     style={{ width: "4rem", padding: 0 }}
+                    size="xs"
                   />
                 </Flex>
               </div>
@@ -442,10 +451,10 @@ function SettingArea() {
                 <Hr />
 
                 <Flex spacing=".8rem">
-                  <Button onClick={addVGuide} variant="outline" size="sm">
+                  <Button onClick={addVGuide} variant="outlined" size="xsmall">
                     세로 가이드 추가
                   </Button>
-                  <Button onClick={addHGuide} variant="outline" size="sm">
+                  <Button onClick={addHGuide} variant="outlined" size="xsmall">
                     가로 가이드 추가
                   </Button>
                 </Flex>
@@ -454,7 +463,7 @@ function SettingArea() {
           },
         ]}
       />
-    </AsideStyle>
+    </Aside>
   );
 }
 
