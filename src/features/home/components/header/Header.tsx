@@ -15,7 +15,7 @@ export default function Header() {
           <Nav aria-label="주요">
             {[
               { label: "레이아웃", href: "/editor" },
-              { label: "그리드", href: "/grid" },
+              { label: "그리드", href: "/table" },
               { label: "리사이즈", href: "/resize" },
             ].map(item => (
               <Button key={item.href} variant="text" href={item.href}>
