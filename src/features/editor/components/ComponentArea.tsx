@@ -1,15 +1,13 @@
 // src/features/.../ComponentArea.tsx
 import styled from "@emotion/styled";
-import { Checkbox, Flex } from "fone-design-system_v1";
+import { Button, Checkbox, Flex } from "fone-design-system_v1";
 
-import { Button } from "@/shared/ui/button2/Button2";
-import { AccordionCard } from "@/shared/ui/cardAccordion/CardAccordion";
-
-import { AsideStyle } from "./AsideStyle";
+import Aside from "@/shared/components/layout/aside/Aside";
+import { AccordionCard } from "@/shared/components/ui/cardAccordion/CardAccordion";
 
 function ComponentArea() {
   return (
-    <AsideStyle>
+    <Aside position="left">
       <AccordionCard
         title="레이아웃 영역별 컴포넌트"
         defaultOpenAll
@@ -26,12 +24,24 @@ function ComponentArea() {
                 sx={{ overflowY: "auto" }}
                 aria-label="Header components"
               >
-                <Button>Logo</Button>
-                <Button>Topbar</Button>
-                <Button>Search</Button>
-                <Button>User Menu</Button>
-                <Button>Actions</Button>
-                <Button>Notice Bar</Button>
+                <Button variant="outlined" size="xsmall">
+                  Logo
+                </Button>
+                <Button variant="outlined" size="xsmall">
+                  Topbar
+                </Button>
+                <Button variant="outlined" size="xsmall">
+                  Search
+                </Button>
+                <Button variant="outlined" size="xsmall">
+                  User Menu
+                </Button>
+                <Button variant="outlined" size="xsmall">
+                  Actions
+                </Button>
+                <Button variant="outlined" size="xsmall">
+                  Notice Bar
+                </Button>
               </Flex>
             ),
           },
@@ -47,11 +57,21 @@ function ComponentArea() {
                 sx={{ overflowY: "auto" }}
                 aria-label="Navigation components"
               >
-                <Button>Global Nav</Button>
-                <Button>Side Nav</Button>
-                <Button>Tabs</Button>
-                <Button>Breadcrumbs</Button>
-                <Button>Quick Menu</Button>
+                <Button variant="outlined" size="xsmall">
+                  Global Nav
+                </Button>
+                <Button variant="outlined" size="xsmall">
+                  Side Nav
+                </Button>
+                <Button variant="outlined" size="xsmall">
+                  Tabs
+                </Button>
+                <Button variant="outlined" size="xsmall">
+                  Breadcrumbs
+                </Button>
+                <Button variant="outlined" size="xsmall">
+                  Quick Menu
+                </Button>
               </Flex>
             ),
           },
@@ -67,12 +87,24 @@ function ComponentArea() {
                 sx={{ overflowY: "auto" }}
                 aria-label="Main area components"
               >
-                <Button>Hero</Button>
-                <Button>Card</Button>
-                <Button>Table</Button>
-                <Button>Form</Button>
-                <Button>Chart</Button>
-                <Button>Grid</Button>
+                <Button variant="outlined" size="xsmall">
+                  Hero
+                </Button>
+                <Button variant="outlined" size="xsmall">
+                  Card
+                </Button>
+                <Button variant="outlined" size="xsmall">
+                  Table
+                </Button>
+                <Button variant="outlined" size="xsmall">
+                  Form
+                </Button>
+                <Button variant="outlined" size="xsmall">
+                  Chart
+                </Button>
+                <Button variant="outlined" size="xsmall">
+                  Grid
+                </Button>
               </Flex>
             ),
           },
@@ -88,12 +120,24 @@ function ComponentArea() {
                 sx={{ overflowY: "auto" }}
                 aria-label="Content widgets"
               >
-                <Button>Section</Button>
-                <Button>List</Button>
-                <Button>Accordion</Button>
-                <Button>Tabs</Button>
-                <Button>Pagination</Button>
-                <Button>Empty State</Button>
+                <Button variant="outlined" size="xsmall">
+                  Section
+                </Button>
+                <Button variant="outlined" size="xsmall">
+                  List
+                </Button>
+                <Button variant="outlined" size="xsmall">
+                  Accordion
+                </Button>
+                <Button variant="outlined" size="xsmall">
+                  Tabs
+                </Button>
+                <Button variant="outlined" size="xsmall">
+                  Pagination
+                </Button>
+                <Button variant="outlined" size="xsmall">
+                  Empty State
+                </Button>
                 <Checkbox />
               </Flex>
             ),
@@ -110,16 +154,24 @@ function ComponentArea() {
                 sx={{ overflowY: "auto" }}
                 aria-label="Footer components"
               >
-                <Button>Footer Links</Button>
-                <Button>Language</Button>
-                <Button>Legal</Button>
-                <Button>Status</Button>
+                <Button variant="outlined" size="xsmall">
+                  Footer Links
+                </Button>
+                <Button variant="outlined" size="xsmall">
+                  Language
+                </Button>
+                <Button variant="outlined" size="xsmall">
+                  Legal
+                </Button>
+                <Button variant="outlined" size="xsmall">
+                  Status
+                </Button>
               </Flex>
             ),
           },
         ]}
       />
-    </AsideStyle>
+    </Aside>
   );
 }
 

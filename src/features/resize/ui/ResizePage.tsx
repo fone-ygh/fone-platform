@@ -2,12 +2,12 @@
 
 import styled from "@emotion/styled";
 
+import Box from "@/shared/components/ui/box/Box";
+import Button from "@/shared/components/ui/button/Button";
+import Select from "@/shared/components/ui/select/Select";
+import TextField from "@/shared/components/ui/textField/TextField";
+import TreeView from "@/shared/components/ui/treeView/TreeView";
 import useResizeStore from "@/shared/store/resize";
-import Box from "@/shared/ui/box/Box";
-import Button from "@/shared/ui/button/Button";
-import Select from "@/shared/ui/select/Select";
-import TextField from "@/shared/ui/textField/TextField";
-import TreeView from "@/shared/ui/treeView/TreeView";
 
 export default function ResizePage() {
   const { resize } = useResizeStore();

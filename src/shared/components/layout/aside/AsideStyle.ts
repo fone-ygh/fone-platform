@@ -14,6 +14,7 @@ export const AsideStyle = styled.aside`
   --as-accent-color: #c7d2fe;
 
   position: relative; /* ::before/::after 분리선용 */
+  flex-shrink: 0;
   background: var(--as-bg);
   border: 1px solid var(--as-bd);
   border-radius: var(--as-radius);
@@ -22,7 +23,7 @@ export const AsideStyle = styled.aside`
     0 1px 0 rgba(15, 23, 42, 0.03) inset; /* top hairline */
 
   width: 100%;
-  max-width: clamp(260px, 18vw, 420px);
+  /* max-width: clamp(260px, 18vw, 420px); */
   padding: var(--as-pad);
 
   display: grid;
@@ -118,5 +119,54 @@ export const AsideStyle = styled.aside`
   }
   @media (max-width: 1200px) {
     max-width: clamp(240px, 24vw, 360px);
+  }
+
+  .resize-handle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 8px; /* 드래그 잡는 영역(넉넉하게) */
+    cursor: col-resize;
+    opacity: 0; /* 기본은 숨김 */
+    transition: opacity 0.15s ease;
+    /* 시각용 선 */
+  }
+  &:hover .resize-handle,
+  &[data-dragging="true"] .resize-handle {
+    opacity: 1; /* hover/drag 시 보이게 */
+  }
+
+  /* 좌/우 사이드에 따라 핸들 붙는 엣지 선택 */
+  .resize-handle[data-handle="left"] {
+    left: -4px;
+  } /* 약간 바깥으로 */
+  .resize-handle[data-handle="right"] {
+    right: -4px;
+  }
+
+  /* 얇은 가이드 라인(선) */
+  .resize-handle::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--ds-border, #e5e7eb);
+    opacity: 0.9;
+    /* 핸들 중앙에 선 */
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  /* 필요하면 드래그 중 outline 강조 */
+  &[data-dragging="true"]::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    /* 드래그 중 사이드바 경계선 강조 (선택) */
+    ${(p: any) => (p["data-side"] === "left" ? "right: 0;" : "left: 0;")}
+    width: 2px;
+    background: var(--ds-ring, rgba(0, 132, 254, 0.25));
   }
 `;
