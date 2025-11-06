@@ -55,7 +55,7 @@ export default function ResizePage() {
         placeholder="Input"
       />
       <Box
-        id="box"
+        id="box1"
         resizable
         draggable
         width={200}
@@ -79,12 +79,34 @@ export default function ResizePage() {
         resizable
         draggable
         width={500}
+        minWidth={250}
         height={500}
+        minHeight={300}
         x={100}
         y={200}
         title="TreeView"
         defaultExpanded
       />
+      <Box
+        id="box2"
+        resizable
+        draggable
+        width={200}
+        height={50}
+        minWidth={200}
+        minHeight={50}
+        x={700}
+        y={200}
+        component="div"
+        sx={{
+          border: "1px solid black",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        Box
+      </Box>
     </StyledResizePage>
   );
 }
