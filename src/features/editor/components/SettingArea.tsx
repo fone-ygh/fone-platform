@@ -301,13 +301,12 @@ function SettingArea() {
                   <Button onClick={zoomOut} size="xsmall" variant="outlined">
                     −
                   </Button>
-                  <input
+                  <TextField2
                     type="number"
                     value={canvasZoom}
-                    min={25}
-                    max={200}
+                    inputProps={{ min: 25, max: 200 }}
+                    size="xs"
                     onChange={e => setZoom(clampZoom(Number(e.target.value)))}
-                    style={{ width: "100%" }}
                   />
                   <Button onClick={zoomIn} size="xsmall" variant="outlined">
                     ＋
