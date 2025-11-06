@@ -7,14 +7,14 @@ interface ResizeBoxProps extends Omit<DsBoxProps, "ref"> {
   resizable?: boolean;
   draggable?: boolean;
   throttleResize?: number;
-  width?: number;
+  width: number;
   minWidth?: number;
   maxWidth?: number;
-  height?: number;
+  height: number;
   minHeight?: number;
   maxHeight?: number;
-  x?: number;
-  y?: number;
+  x: number;
+  y: number;
 }
 
 export default function Box({
@@ -49,7 +49,12 @@ export default function Box({
       y={y}
       renderDirections={["nw", "n", "ne", "w", "e", "sw", "s", "se"]} // ["nw", "n", "ne", "w", "e", "sw", "s", "se"]
     >
-      <DsBox style={{ width: "100%", height: height && "100%" }} {...props}>
+      <DsBox
+        width={"100%"}
+        height={height}
+        style={{ width: "100%", height: height && "100%" }}
+        {...props}
+      >
         {children}
       </DsBox>
     </ResizeContainer>
