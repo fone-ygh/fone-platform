@@ -4,7 +4,7 @@
 import React, { useEffect, useState } from "react";
 import { css } from "@emotion/react";
 import styled from "@emotion/styled";
-// import { Button } from "@/shared/ui/button2/Button2";
+// import { Button } from "@/shared/components/ui/button2/Button2";
 import { Button } from "fone-design-system_v1";
 
 /* ───────────────── Tokens / Const ───────────────── */
