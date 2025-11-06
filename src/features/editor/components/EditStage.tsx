@@ -24,13 +24,10 @@ const T = {
 };
 
 /* ========= Helpers (격자용) ========= */
-const gridBg = (size: number, alpha = 0.06) => `
-  linear-gradient(to right, rgba(0,0,0,${alpha}) 1px, transparent 1px),
-  linear-gradient(to bottom, rgba(0,0,0,${alpha}) 1px, transparent 1px)
-`;
 export default function EditStage() {
-  const [layout, setLayout] = useState<LayoutState>();
-  const { canvasWidth, canvasHeight } = useEDITORStore();
+  const itemRefs = useRef<any>();
+  const { canvasWidth, canvasHeight, showGrid, gridSize, gridColor } =
+    useEDITORStore();
   const zoom = useEDITORStore(s => s.zoom); // 0~200 같은 퍼센트라 가정
   const setZoom = useEDITORStore(s => s.actions.setZoom);
   const outerRef = useRef<HTMLDivElement>(null);
@@ -52,6 +49,10 @@ export default function EditStage() {
     max: 2,
   });
 
+  const gridBg = (color = gridColor) => `
+        linear-gradient(to right, ${color} 1px, transparent 1px),
+        linear-gradient(to bottom, ${color} 1px, transparent 1px)
+      `;
   const DEFAULT_SECTIONS: SectionItem[] = [
     {
       id: "section-1",
@@ -112,8 +113,9 @@ export default function EditStage() {
               position: "relative",
               width: canvasWidth,
               height: canvasHeight,
-              backgroundImage: gridBg(16),
-              backgroundSize: `16px 16px`,
+              backgroundImage: showGrid ? gridBg() : "unset",
+              backgroundSize:
+                showGrid && gridSize ? `${gridSize}px ${gridSize}px` : "unset",
 
               transform: `scale(${zoom / 100})`,
               transformOrigin: "0 0",
@@ -127,20 +129,31 @@ export default function EditStage() {
                   key={item?.id}
                   id={item?.id}
                   component="div"
+                  ref={itemRefs}
                   resizable
                   draggable
                   width={item?.width}
                   height={item?.height}
-                  // minWidth={10}
-                  // minHeight={10}
+                  minWidth={10}
+                  minHeight={10}
                   x={item?.x}
                   y={item?.y}
                   style={{
                     borderRadius: `${item?.radius}px`,
-                    border: "1px solid red",
+                    border: "1px solid #c5dfff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontWeight: "bold",
+                    fontSize: "2rem",
+                    backgroundColor: "#c5dfff6b",
                   }}
+                  snappable
+                  snapGridWidth={gridSize}
+                  snapGridHeight={gridSize}
+                  elementGuidelines={[itemRefs]}
                 >
-                  <div>{item?.title}</div>
+                  {item?.title}
                 </Box>
               );
             })}

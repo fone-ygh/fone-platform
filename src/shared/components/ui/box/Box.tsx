@@ -1,3 +1,4 @@
+import * as React from "react";
 import { Box as DsBox, BoxProps as DsBoxProps } from "fone-design-system_v1";
 
 import ResizeContainer from "../resize/ResizeContainer";
@@ -15,24 +16,35 @@ interface ResizeBoxProps extends Omit<DsBoxProps, "ref"> {
   maxHeight?: number;
   x: number;
   y: number;
+  snappable?: boolean | (string[] & false) | (string[] & true);
+  snapGridWidth?: number;
+  snapGridHeight?: number;
+  elementGuidelines?: any;
 }
 
-export default function Box({
-  id,
-  resizable,
-  draggable,
-  throttleResize,
-  minWidth,
-  maxWidth,
-  minHeight,
-  maxHeight,
-  children,
-  width,
-  height,
-  x,
-  y,
-  ...props
-}: ResizeBoxProps) {
+const Box = React.forwardRef<HTMLDivElement, ResizeBoxProps>(function Box(
+  {
+    id,
+    resizable,
+    draggable,
+    throttleResize,
+    minWidth,
+    maxWidth,
+    minHeight,
+    maxHeight,
+    children,
+    width,
+    height,
+    x,
+    y,
+    snappable,
+    snapGridWidth,
+    snapGridHeight,
+    elementGuidelines,
+    ...props
+  }: ResizeBoxProps,
+  ref,
+) {
   return (
     <ResizeContainer
       id={id}
@@ -47,16 +59,17 @@ export default function Box({
       height={height}
       x={x}
       y={y}
+      snappable={snappable}
+      snapGridWidth={snapGridWidth}
+      snapGridHeight={snapGridHeight}
+      elementGuidelines={ref}
       renderDirections={["nw", "n", "ne", "w", "e", "sw", "s", "se"]} // ["nw", "n", "ne", "w", "e", "sw", "s", "se"]
     >
-      <DsBox
-        width={"100%"}
-        height={height}
-        style={{ width: "100%", height: height && "100%" }}
-        {...props}
-      >
+      <DsBox ref={ref} width={"100%"} height={"100%"} {...props}>
         {children}
       </DsBox>
     </ResizeContainer>
   );
-}
+});
+
+export default Box;

@@ -54,8 +54,23 @@ const Hr = styled.hr`
 
 /* ───────────────── component ───────────────── */
 function SettingArea() {
-  const { setCanvasWidth, setCanvasHeight, setZoom } = useEDITORActions();
-  const { canvasWidth, canvasHeight } = useEDITORStore();
+  const {
+    setCanvasWidth,
+    setCanvasHeight,
+    setZoom,
+    setShowGrid,
+    setGridSize,
+    setGridColor,
+    setComponentTitle,
+  } = useEDITORActions();
+  const {
+    canvasWidth,
+    canvasHeight,
+    showGrid,
+    gridSize,
+    gridColor,
+    componentTitle,
+  } = useEDITORStore();
 
   /* Canvas */
   const handleCanvasW = (v: number) => {
@@ -77,9 +92,9 @@ function SettingArea() {
   const zoomReset = () => setCanvasZoom(100);
 
   /* Grid */
-  const [showGrid, setShowGrid] = useState(true);
-  const [gridSize, setGridSize] = useState(16);
-  const [gridColor, setGridColor] = useState("#e2e8f0");
+  // const [showGrid, setShowGrid] = useState(true);
+  // const [gridSize, setGridSize] = useState(16);
+  // const [gridColor, setGridColor] = useState("#e2e8f0");
 
   /* Snap */
   const [snapToGrid, setSnapToGrid] = useState(true);
@@ -210,6 +225,18 @@ function SettingArea() {
         defaultOpenAll
         hideControls
         items={[
+          {
+            id: "item-name",
+            title: "TITLE",
+            content: (
+              <TextField2
+                type="text"
+                size="xs"
+                value={componentTitle}
+                onChange={e => setComponentTitle(e.target.value)}
+              />
+            ),
+          },
           {
             id: "canvas-size",
             title: "캔버스크기",
