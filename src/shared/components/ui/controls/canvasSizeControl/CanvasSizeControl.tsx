@@ -1,6 +1,11 @@
+"use client";
+
 import { Button, Flex, TextField2 } from "fone-design-system_v1";
 
-import { useEDITORActions, useEDITORStore } from "@/features/editor/_lib/store";
+import {
+  useEDITORActions,
+  useEDITORStore,
+} from "@/features/editor/lib/store/store";
 
 export default function CanvasSizeControl() {
   const { setCanvasWidth, setCanvasHeight } = useEDITORActions();

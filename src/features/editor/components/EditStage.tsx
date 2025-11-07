@@ -6,8 +6,8 @@ import { useGuides, type GuideLine } from "@/shared/hooks/useGuides";
 import { useWheelZoom } from "@/shared/hooks/useWheelZoom";
 import useResizeStore from "@/shared/store/resize";
 
-import { useEDITORStore } from "../_lib/store";
 import { LayoutState, SectionItem } from "../layout/types/layout";
+import { useEDITORStore } from "../lib/store/store";
 
 /* ========= Tokens (스타일용 그대로) ========= */
 const T = {
