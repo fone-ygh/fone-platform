@@ -3,10 +3,7 @@
 import { useEffect } from "react";
 import { Button, Flex, TextField2 } from "fone-design-system_v1";
 
-import {
-  useEDITORActions,
-  useEDITORStore,
-} from "@/features/editor/lib/store/store";
+import { useEDITORActions, useEDITORStore } from "@/shared/store/control";
 import { SmallNoteStyle } from "@/shared/styles/control";
 
 export default function ZoomControl() {
