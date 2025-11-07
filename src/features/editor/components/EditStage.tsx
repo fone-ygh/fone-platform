@@ -1,7 +1,8 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef } from "react";
 import styled from "@emotion/styled";
 
 import Box from "@/shared/components/ui/box/Box";
+import { useGuides, type GuideLine } from "@/shared/hooks/useGuides";
 import { useWheelZoom } from "@/shared/hooks/useWheelZoom";
 import useResizeStore from "@/shared/store/resize";
 
@@ -23,14 +24,33 @@ const T = {
   radius: 12,
 };
 
-/* ========= Helpers (격자용) ========= */
+/* ========= Helpers ========= */
+type Rect = { x: number; y: number; w: number; h: number };
+function toRect(
+  targetEl: HTMLElement,
+  stageEl: HTMLElement,
+  scale: number,
+): Rect {
+  const pr = stageEl.getBoundingClientRect();
+  const r = targetEl.getBoundingClientRect(); // 회전 포함 AABB
+  return {
+    x: (r.left - pr.left) / scale,
+    y: (r.top - pr.top) / scale,
+    w: r.width / scale,
+    h: r.height / scale,
+  };
+}
+
+/* ========= Component ========= */
 export default function EditStage() {
   const itemRefs = useRef<any>();
   const { canvasWidth, canvasHeight, showGrid, gridSize, gridColor } =
     useEDITORStore();
-  const zoom = useEDITORStore(s => s.zoom); // 0~200 같은 퍼센트라 가정
+  const zoom = useEDITORStore(s => s.zoom); // 0~200 (%)
   const setZoom = useEDITORStore(s => s.actions.setZoom);
   const outerRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+
   const scale = useMemo(
     () => Math.min(2, Math.max(0.25, (zoom || 100) / 100)),
     [zoom],
@@ -53,6 +73,7 @@ export default function EditStage() {
         linear-gradient(to right, ${color} 1px, transparent 1px),
         linear-gradient(to bottom, ${color} 1px, transparent 1px)
       `;
+
   const DEFAULT_SECTIONS: SectionItem[] = [
     {
       id: "section-1",
@@ -99,6 +120,47 @@ export default function EditStage() {
       shadow: 0,
     },
   ];
+
+  /* === Guides hook 연결 ===
+     - columnLines: 현재는 컬럼 라인 없이(빈 배열). 필요하면 여기에 컬럼/그리드 라인 주입 가능.
+     - threshold: gridSize가 있으면 그 절반 정도로 자연스럽게.
+  */
+  const {
+    guideLines,
+    showForRect,
+    clear: clearGuides,
+  } = useGuides({
+    canvasWidth,
+    canvasHeight,
+    columnLines: [], // 예: [containerPadding, ...columnEdges, canvasWidth-containerPadding]
+    threshold: Math.max(4, Math.floor((gridSize || 10) / 2)),
+    enabled: true,
+  });
+
+  // Box(=Moveable wrapper) 드래그/리사이즈 중 가이드 표시
+  const handleLiveGuide = (e: any) => {
+    if (!stageRef.current) return;
+    const target = e?.target as HTMLElement;
+    if (!target) return;
+
+    const me = toRect(target, stageRef.current, scale);
+    const others: Rect[] = DEFAULT_SECTIONS.filter(s => s.id !== target.id).map(
+      s => ({
+        x: s.x,
+        y: s.y,
+        w: s.width,
+        h: s.height,
+      }),
+    );
+
+    // nearOnly = true → threshold 안에서만 보여줌
+    showForRect(me, others, true);
+  };
+
+  const handleEnd = () => {
+    clearGuides();
+  };
+
   return (
     <Viewport ref={outerRef}>
       <StageFrame>
@@ -109,6 +171,7 @@ export default function EditStage() {
           }}
         >
           <Stage
+            ref={stageRef}
             style={{
               position: "relative",
               width: canvasWidth,
@@ -116,14 +179,13 @@ export default function EditStage() {
               backgroundImage: showGrid ? gridBg() : "unset",
               backgroundSize:
                 showGrid && gridSize ? `${gridSize}px ${gridSize}px` : "unset",
-
               transform: `scale(${zoom / 100})`,
               transformOrigin: "0 0",
             }}
             role="figure"
             aria-label="Canvas"
           >
-            {DEFAULT_SECTIONS?.map((item, idx) => {
+            {DEFAULT_SECTIONS?.map(item => {
               return (
                 <Box
                   key={item?.id}
@@ -152,11 +214,19 @@ export default function EditStage() {
                   snapGridWidth={gridSize}
                   snapGridHeight={gridSize}
                   elementGuidelines={[itemRefs]}
+                  // ⬇⬇⬇ Guides 표시용 실시간 핸들러 (Box가 Moveable 이벤트를 그대로 지원한다고 가정)
+                  onDrag={handleLiveGuide}
+                  onResize={handleLiveGuide}
+                  onDragEnd={handleEnd}
+                  onResizeEnd={handleEnd}
                 >
                   {item?.title}
                 </Box>
               );
             })}
+
+            {/* Guides Layer (Stage 안, scale과 함께 움직이도록) */}
+            <GuidesLayer lines={guideLines} />
           </Stage>
         </ScaledWrap>
       </StageFrame>
@@ -164,7 +234,46 @@ export default function EditStage() {
   );
 }
 
-/* Workspace (스타일 그대로) */
+/* ========= Guides Layer ========= */
+function GuidesLayer({ lines }: { lines: GuideLine[] }) {
+  return (
+    <>
+      {lines.map((g, i) =>
+        g.orientation === "v" ? (
+          <div
+            key={`gv-${i}`}
+            style={{
+              position: "absolute",
+              left: g.pos,
+              top: g.from,
+              width: 1,
+              height: g.to - g.from,
+              background: "rgba(0,132,254,.95)", // --guide-strong 유사
+              pointerEvents: "none",
+              zIndex: 999,
+            }}
+          />
+        ) : (
+          <div
+            key={`gh-${i}`}
+            style={{
+              position: "absolute",
+              top: g.pos,
+              left: g.from,
+              height: 1,
+              width: g.to - g.from,
+              background: "rgba(0,132,254,.95)",
+              pointerEvents: "none",
+              zIndex: 999,
+            }}
+          />
+        ),
+      )}
+    </>
+  );
+}
+
+/* ========= Workspace (스타일 그대로) ========= */
 const Viewport = styled.div`
   position: relative;
   overflow: auto;
@@ -172,8 +281,6 @@ const Viewport = styled.div`
   place-items: start center;
   height: 100%;
   padding: 2rem;
-
-  /* 바깥 ‘워크벤치’는 은은한 배경만 — 보더 X */
 
   /* thin scrollbar */
   scrollbar-width: thin;
@@ -205,10 +312,8 @@ const Stage = styled.div`
   user-select: none;
   overflow: hidden;
   border-radius: 12px;
-  /* box-shadow:
-    0 12px 32px rgba(15, 23, 42, 0.1),
-    0 2px 8px rgba(15, 23, 42, 0.05); */
 `;
+
 const ScaledWrap = styled.div`
   position: relative;
 `;
