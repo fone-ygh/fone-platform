@@ -1,11 +1,18 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import styled from "@emotion/styled";
-import Moveable from "react-moveable";
+import Moveable, {
+  ElementGuidelineValueOption,
+  MoveableRefType,
+} from "react-moveable";
 
 import { useOutsideClick } from "@/shared/hooks/useOutsideClick";
 import useResizeStore from "@/shared/store/resize";
 
+// Moveable 그룹 타겟 타입(일반 HTMLElement/SVGElement, CSS selector, 혹은 RefObject까지 허용)
+
 interface Props {
+  targets?: (HTMLElement | SVGElement)[];
+
   /** 컴포넌트를 구분하는 ID */
   id?: string;
 
@@ -47,6 +54,39 @@ interface Props {
 
   /** 리사이즈 가능한 방향 */
   renderDirections: string[];
+
+  onResizeStart?: (e: any) => void;
+  onResize?: (e: any) => void;
+  onResizeEnd?: (e: any) => void;
+  onResizeGroupStart?: (e: any) => void;
+  onResizeGroup?: (e: any) => void;
+  onResizeGroupEnd?: (e: any) => void;
+  onDragStart?: (e: any) => void;
+  onDrag?: (e: any) => void;
+  onDragEnd?: (e: any) => void;
+  onDragGroupStart?: (e: any) => void;
+  onDragGroup?: (e: any) => void;
+  onDragGroupEnd?: (e: any) => void;
+
+  /** 스냅 기능 on/off */
+  snappable?: boolean | (string[] & false) | (string[] & true);
+
+  /** 세로(수직) 방향 그리드 간격. 0보다 크면 x축 이동/리사이즈가 그리드 단위로 스냅 */
+  snapGridWidth?: number;
+
+  /** 가로(수평) 방향 그리드 간격. 0보다 크면 y축 이동/리사이즈가 그리드 단위로 스냅. */
+  snapGridHeight?: number;
+
+  snapDigit?: number;
+
+  elementGuidelines?:
+    | ((ElementGuidelineValueOption | MoveableRefType<Element>)[] &
+        (HTMLDivElement | null)[])
+    | HTMLElement
+    | MoveableRefType<Element>
+    | ElementGuidelineValueOption
+    | null
+    | any;
 }
 
 export default function ResizeContainer({
@@ -64,10 +104,26 @@ export default function ResizeContainer({
   height: propHeight,
   x: propX = 0,
   y: propY = 0,
+  onResizeStart,
+  onResize,
+  onResizeEnd,
+  onResizeGroupStart,
+  onResizeGroup,
+  onResizeGroupEnd,
+  onDragStart,
+  onDrag,
+  onDragEnd,
+  onDragGroupStart,
+  onDragGroup,
+  onDragGroupEnd,
+  targets,
+  snappable = true,
+  snapGridWidth = 16,
+  snapGridHeight = 16,
+  elementGuidelines,
 }: Props) {
-  
   const [active, setActive] = useState(false);
-  
+
   const moveableRef = useOutsideClick(() => setActive(false));
 
   const { resize, setResize, setId } = useResizeStore();
@@ -85,7 +141,7 @@ export default function ResizeContainer({
       y: propY || 0,
     });
     setId(id);
-  }, [id]);
+  }, [id, propWidth, propHeight, propX, propY, setId, setResize]);
 
   // 리사이즈 시작 시 기준값 저장(좌측/상단 핸들에서 위로/왼쪽으로 늘릴 때 top/left 조정 필요)
   const resizeStartRef = useRef<{
@@ -102,10 +158,28 @@ export default function ResizeContainer({
       {active && (
         <Moveable
           target={moveableRef}
+          targets={targets || undefined}
           resizable={resizable}
           draggable={draggable}
+          origin={false}
           throttleResize={throttleResize}
           renderDirections={renderDirections}
+          snappable={snappable}
+          snapGridWidth={snapGridWidth}
+          snapGridHeight={snapGridHeight}
+          elementGuidelines={elementGuidelines}
+          // elementSnapDirections={{
+          //   left: true,
+          //   top: true,
+          //   right: true,
+          //   bottom: true,
+          //   center: true,
+          //   middle: true,
+          // }}
+          // snapThreshold={8}
+          // snapDigit={0}
+          // horizontalGuidelines={[100, 200, 500]} // 선택: 고정 가이드
+          // verticalGuidelines={[120, 400]}
           onResizeStart={e => {
             const cs = getComputedStyle(e.target as HTMLElement);
             const startWidth = parseFloat(cs.width) || 0;
@@ -121,6 +195,8 @@ export default function ResizeContainer({
               dirX,
               dirY,
             };
+
+            onResizeStart?.(e);
           }}
           onResize={e => {
             const newWidth = Math.max(minWidth, Math.min(e.width, maxWidth));
@@ -147,6 +223,8 @@ export default function ResizeContainer({
                 }
               }
             }
+
+            onResize?.(e);
           }}
           onResizeEnd={e => {
             // 최종 좌표를 커밋(상/좌 리사이즈 시 이동된 top/left 반영)
@@ -160,10 +238,17 @@ export default function ResizeContainer({
               y: draggable ? finalTop : y,
             });
             resizeStartRef.current = null;
+
+            onResizeEnd?.(e);
+          }}
+          onDragStart={e => {
+            onDragStart?.(e);
           }}
           onDrag={e => {
             e.target.style.left = `${e.left}px`;
             e.target.style.top = `${e.top}px`;
+
+            onDrag?.(e);
           }}
           onDragEnd={e => {
             setResize(id, {
@@ -172,7 +257,19 @@ export default function ResizeContainer({
               x: e.lastEvent?.left ?? x,
               y: e.lastEvent?.top ?? y,
             });
+
+            onDragEnd?.(e);
           }}
+          onResizeGroupStart={e => {
+            onResizeGroupStart?.(e);
+          }}
+          onResizeGroup={e => onResizeGroup?.(e)}
+          onResizeGroupEnd={e => onResizeGroupEnd?.(e)}
+          onDragGroupStart={e => {
+            onDragGroupStart?.(e);
+          }}
+          onDragGroup={e => onDragGroup?.(e)}
+          onDragGroupEnd={e => onDragGroupEnd?.(e)}
         />
       )}
       <StyledContainer
