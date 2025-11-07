@@ -1,6 +1,9 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import styled from "@emotion/styled";
-import Moveable from "react-moveable";
+import Moveable, {
+  ElementGuidelineValueOption,
+  MoveableRefType,
+} from "react-moveable";
 
 import { useOutsideClick } from "@/shared/hooks/useOutsideClick";
 import useResizeStore from "@/shared/store/resize";
@@ -64,6 +67,26 @@ interface Props {
   onDragGroupStart?: (e: any) => void;
   onDragGroup?: (e: any) => void;
   onDragGroupEnd?: (e: any) => void;
+
+  /** 스냅 기능 on/off */
+  snappable?: boolean | (string[] & false) | (string[] & true);
+
+  /** 세로(수직) 방향 그리드 간격. 0보다 크면 x축 이동/리사이즈가 그리드 단위로 스냅 */
+  snapGridWidth?: number;
+
+  /** 가로(수평) 방향 그리드 간격. 0보다 크면 y축 이동/리사이즈가 그리드 단위로 스냅. */
+  snapGridHeight?: number;
+
+  snapDigit?: number;
+
+  elementGuidelines?:
+    | ((ElementGuidelineValueOption | MoveableRefType<Element>)[] &
+        (HTMLDivElement | null)[])
+    | HTMLElement
+    | MoveableRefType<Element>
+    | ElementGuidelineValueOption
+    | null
+    | any;
 }
 
 export default function ResizeContainer({
@@ -94,6 +117,10 @@ export default function ResizeContainer({
   onDragGroup,
   onDragGroupEnd,
   targets,
+  snappable = true,
+  snapGridWidth = 16,
+  snapGridHeight = 16,
+  elementGuidelines,
 }: Props) {
   const [active, setActive] = useState(false);
 
@@ -137,6 +164,22 @@ export default function ResizeContainer({
           origin={false}
           throttleResize={throttleResize}
           renderDirections={renderDirections}
+          snappable={snappable}
+          snapGridWidth={snapGridWidth}
+          snapGridHeight={snapGridHeight}
+          elementGuidelines={elementGuidelines}
+          // elementSnapDirections={{
+          //   left: true,
+          //   top: true,
+          //   right: true,
+          //   bottom: true,
+          //   center: true,
+          //   middle: true,
+          // }}
+          // snapThreshold={8}
+          // snapDigit={0}
+          // horizontalGuidelines={[100, 200, 500]} // 선택: 고정 가이드
+          // verticalGuidelines={[120, 400]}
           onResizeStart={e => {
             const cs = getComputedStyle(e.target as HTMLElement);
             const startWidth = parseFloat(cs.width) || 0;
