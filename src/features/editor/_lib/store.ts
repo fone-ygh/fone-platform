@@ -12,10 +12,26 @@ export type EditorStore = {
   canvasHeight: number;
   zoom: number;
 
+  showGrid: boolean;
+  gridSize: number;
+  gridColor: string;
+
+  componentTitle: string;
+
+  selectedIds: string[];
+
   actions: {
     setCanvasWidth: (w: number) => void;
     setCanvasHeight: (h: number) => void;
     setZoom: (next: number | ((prev: number) => number)) => void;
+
+    setShowGrid: (g: boolean) => void;
+    setGridSize: (next: number | ((prev: number) => number)) => void;
+    setGridColor: (c: string) => void;
+
+    setComponentTitle: (t: string) => void;
+
+    setSelectedIds: (next: string[] | ((prev: string[]) => string[])) => void;
   };
 };
 
@@ -32,6 +48,15 @@ export const useEDITORStore = create<EditorStore>()(
         canvasWidth: 1920,
         canvasHeight: 2000,
         zoom: 0,
+
+        showGrid: true,
+        gridSize: 16,
+        gridColor: "#eff4fb",
+
+        componentTitle: "",
+
+        selectedIds: [],
+
         actions: {
           setCanvasWidth: w =>
             set(s => {
@@ -46,6 +71,33 @@ export const useEDITORStore = create<EditorStore>()(
               const value = typeof next === "function" ? next(s.zoom) : next;
               // 선택: 줌을 25~200%로 보정하고 싶으면 아래 한 줄, 아니면 s.zoom = value
               s.zoom = Math.min(200, Math.max(25, Math.round(value)));
+            }),
+
+          setShowGrid: g =>
+            set(s => {
+              s.showGrid = g;
+            }),
+          setGridSize: next =>
+            set(s => {
+              const value =
+                typeof next === "function" ? next(s.gridSize) : next;
+              s.gridSize = value;
+            }),
+          setGridColor: c =>
+            set(s => {
+              s.gridColor = c;
+            }),
+
+          setComponentTitle: t =>
+            set(s => {
+              s.componentTitle = t;
+            }),
+
+          setSelectedIds: next =>
+            set(s => {
+              const value =
+                typeof next === "function" ? next(s.selectedIds) : next;
+              s.selectedIds = value;
             }),
         },
       }),
