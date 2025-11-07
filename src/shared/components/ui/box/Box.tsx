@@ -16,6 +16,18 @@ interface ResizeBoxProps extends Omit<DsBoxProps, "ref"> {
   maxHeight?: number;
   x: number;
   y: number;
+  onResizeStart?: (e: any) => void;
+  onResize?: (e: any) => void;
+  onResizeEnd?: (e: any) => void;
+  onResizeGroupStart?: (e: any) => void;
+  onResizeGroup?: (e: any) => void;
+  onResizeGroupEnd?: (e: any) => void;
+  onDragStart?: (e: any) => void;
+  onDrag?: (e: any) => void;
+  onDragEnd?: (e: any) => void;
+  onDragGroupStart?: (e: any) => void;
+  onDragGroup?: (e: any) => void;
+  onDragGroupEnd?: (e: any) => void;
   snappable?: boolean | (string[] & false) | (string[] & true);
   snapGridWidth?: number;
   snapGridHeight?: number;
@@ -37,6 +49,18 @@ const Box = React.forwardRef<HTMLDivElement, ResizeBoxProps>(function Box(
     height,
     x,
     y,
+    onResizeStart,
+    onResize,
+    onResizeEnd,
+    onResizeGroupStart,
+    onResizeGroup,
+    onResizeGroupEnd,
+    onDragStart,
+    onDrag,
+    onDragEnd,
+    onDragGroupStart,
+    onDragGroup,
+    onDragGroupEnd,
     snappable,
     snapGridWidth,
     snapGridHeight,
@@ -59,6 +83,18 @@ const Box = React.forwardRef<HTMLDivElement, ResizeBoxProps>(function Box(
       height={height}
       x={x}
       y={y}
+      onResizeStart={onResizeStart}
+      onResize={onResize}
+      onResizeEnd={onResizeEnd}
+      onResizeGroupStart={onResizeGroupStart}
+      onResizeGroup={onResizeGroup}
+      onResizeGroupEnd={onResizeGroupEnd}
+      onDragStart={onDragStart}
+      onDrag={onDrag}
+      onDragEnd={onDragEnd}
+      onDragGroupStart={onDragGroupStart}
+      onDragGroup={onDragGroup}
+      onDragGroupEnd={onDragGroupEnd}
       snappable={snappable}
       snapGridWidth={snapGridWidth}
       snapGridHeight={snapGridHeight}
