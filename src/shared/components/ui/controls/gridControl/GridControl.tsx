@@ -2,10 +2,7 @@
 
 import { Flex, Switch, TextField2 } from "fone-design-system_v1";
 
-import {
-  useEDITORActions,
-  useEDITORStore,
-} from "@/features/editor/lib/store/store";
+import { useEDITORActions, useEDITORStore } from "@/shared/store/control";
 import { LabelStyle } from "@/shared/styles/control";
 
 export default function GridControl() {

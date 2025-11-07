@@ -167,7 +167,7 @@ export default function ResizeContainer({
           snappable={snappable}
           snapGridWidth={snapGridWidth}
           snapGridHeight={snapGridHeight}
-          elementGuidelines={elementGuidelines}
+          elementGuidelines={elementGuidelines ?? []}
           // elementSnapDirections={{
           //   left: true,
           //   top: true,
