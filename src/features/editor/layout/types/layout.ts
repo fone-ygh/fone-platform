@@ -1,3 +1,5 @@
+import { LargeNumberLike } from "crypto";
+
 /* ===== 공통 ===== */
 export type ID = string;
 
@@ -13,6 +15,29 @@ export type WidgetType =
   | "accordion";
 
 export type Frame = { x: number; y: number; width: number; height: number };
+
+export type SectionItem = {
+  id: string;
+  title: string;
+  type: WidgetType;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotate?: number;
+  bg?: string;
+  z?: number;
+  radius?: number;
+  shadow?: number;
+  locked?: boolean;
+};
+
+export type LayoutState = {
+  version: number;
+  canvasWidth: number;
+  canvasHeight: number;
+  sections: SectionItem[];
+};
 
 export type Item<T = any> = {
   id: ID;
