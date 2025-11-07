@@ -5,6 +5,7 @@ import ResizeContainer from "../resize/ResizeContainer";
 
 interface ResizeBoxProps extends Omit<DsBoxProps, "ref"> {
   id?: string;
+  targets?: (HTMLElement | SVGElement)[];
   resizable?: boolean;
   draggable?: boolean;
   throttleResize?: number;
@@ -37,6 +38,7 @@ interface ResizeBoxProps extends Omit<DsBoxProps, "ref"> {
 const Box = React.forwardRef<HTMLDivElement, ResizeBoxProps>(function Box(
   {
     id,
+    targets,
     resizable,
     draggable,
     throttleResize,
@@ -72,6 +74,7 @@ const Box = React.forwardRef<HTMLDivElement, ResizeBoxProps>(function Box(
   return (
     <ResizeContainer
       id={id}
+      targets={targets}
       resizable={resizable}
       draggable={draggable}
       throttleResize={throttleResize}
