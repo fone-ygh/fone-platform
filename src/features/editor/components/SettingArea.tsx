@@ -11,6 +11,7 @@ import {
 } from "fone-design-system_v1";
 
 import Aside from "@/shared/components/layout/aside/Aside";
+import CanvasSizeControl from "@/shared/components/ui/canvasSizeControl/CanvasSizeControl";
 import { AccordionCard } from "@/shared/components/ui/cardAccordion/CardAccordion";
 
 import { useEDITORActions, useEDITORStore } from "../_lib/store";
@@ -56,18 +57,6 @@ const Hr = styled.hr`
 function SettingArea() {
   const { setCanvasWidth, setCanvasHeight, setZoom } = useEDITORActions();
   const { canvasWidth, canvasHeight } = useEDITORStore();
-
-  /* Canvas */
-  const handleCanvasW = (v: number) => {
-    setCanvasWidth(v);
-  };
-  const handleCanvasH = (v: number) => {
-    setCanvasHeight(v);
-  };
-  const resetCanvas = () => {
-    setCanvasWidth(1200);
-    setCanvasHeight(800);
-  };
 
   /* Zoom */
   const [canvasZoom, setCanvasZoom] = useState(100);
@@ -213,38 +202,7 @@ function SettingArea() {
           {
             id: "canvas-size",
             title: "캔버스크기",
-            content: (
-              <Flex flexDirection="column" spacing="1rem">
-                <Flex spacing="1.2rem">
-                  <Flex flexDirection="column">
-                    <label>W</label>
-                    <TextField2
-                      type="number"
-                      size="xs"
-                      value={canvasWidth}
-                      inputProps={{ min: 1 }}
-                      onChange={e => handleCanvasW(Number(e.target.value))}
-                    />
-                  </Flex>
-
-                  <Flex flexDirection="column">
-                    <label htmlFor="h">H</label>
-                    <TextField2
-                      type="number"
-                      value={canvasHeight}
-                      inputProps={{ min: 1 }}
-                      onChange={e => handleCanvasH(Number(e.target.value))}
-                      size="xs"
-                    />
-                    <div />
-                  </Flex>
-                </Flex>
-
-                <Button onClick={resetCanvas} size="xsmall" variant="outlined">
-                  리셋(1200×800)
-                </Button>
-              </Flex>
-            ),
+            content: <CanvasSizeControl />,
           },
           {
             id: "json-io",
@@ -345,7 +303,6 @@ function SettingArea() {
                     type="number"
                     value={gridSize}
                     inputProps={{ min: 4, max: 64 }}
-                    size="xs"
                     onChange={e =>
                       setGridSize(
                         Math.max(4, Math.min(64, Number(e.target.value))),
@@ -361,7 +318,6 @@ function SettingArea() {
                     value={gridColor}
                     onChange={e => setGridColor(e.target.value)}
                     style={{ width: "4rem", padding: 0 }}
-                    size="xs"
                   />
                 </Flex>
               </div>
