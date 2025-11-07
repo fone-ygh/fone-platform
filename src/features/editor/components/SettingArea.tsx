@@ -263,7 +263,6 @@ function SettingArea() {
                     type="number"
                     value={canvasZoom}
                     inputProps={{ min: 25, max: 200 }}
-                    size="xs"
                     onChange={e => setZoom(clampZoom(Number(e.target.value)))}
                   />
                   <Button onClick={zoomIn} size="xsmall" variant="outlined">
