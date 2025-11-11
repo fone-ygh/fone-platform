@@ -167,7 +167,7 @@ export default function ResizeContainer({
           snappable={snappable}
           snapGridWidth={snapGridWidth}
           snapGridHeight={snapGridHeight}
-          elementGuidelines={elementGuidelines}
+          elementGuidelines={elementGuidelines ?? []}
           // elementSnapDirections={{
           //   left: true,
           //   top: true,
@@ -273,6 +273,7 @@ export default function ResizeContainer({
         />
       )}
       <StyledContainer
+        id={id}
         ref={moveableRef}
         onClick={() => setActive(true)}
         width={width || "auto"}
