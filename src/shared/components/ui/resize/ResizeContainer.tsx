@@ -273,6 +273,7 @@ export default function ResizeContainer({
         />
       )}
       <StyledContainer
+        id={id}
         ref={moveableRef}
         onClick={() => setActive(true)}
         width={width || "auto"}

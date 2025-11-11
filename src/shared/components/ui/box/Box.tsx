@@ -101,7 +101,7 @@ const Box = React.forwardRef<HTMLDivElement, ResizeBoxProps>(function Box(
       snappable={snappable}
       snapGridWidth={snapGridWidth}
       snapGridHeight={snapGridHeight}
-      elementGuidelines={ref}
+      elementGuidelines={elementGuidelines}
       renderDirections={["nw", "n", "ne", "w", "e", "sw", "s", "se"]} // ["nw", "n", "ne", "w", "e", "sw", "s", "se"]
     >
       <DsBox ref={ref} width={"100%"} height={"100%"} {...props}>
