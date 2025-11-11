@@ -15,7 +15,7 @@ export function GuidesLayer({ lines }: { lines: GuideLine[] }) {
               top: g.from,
               height: g.to - g.from,
               width: 2,
-              background: "var(--guide-strong)",
+              background: "#1f6feb",
               pointerEvents: "none",
               zIndex: 70,
             }}
@@ -29,7 +29,7 @@ export function GuidesLayer({ lines }: { lines: GuideLine[] }) {
               left: g.from,
               width: g.to - g.from,
               height: 2,
-              background: "var(--guide-strong)",
+              background: "#1f6feb",
               pointerEvents: "none",
               zIndex: 70,
             }}
