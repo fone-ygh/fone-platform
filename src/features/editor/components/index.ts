@@ -3,7 +3,6 @@ export { default as EditorShell } from "./EditorShell";
 export { default as CanvasViewport } from "./canvas/CanvasViewport";
 export { default as CanvasStage } from "./canvas/CanvasStage";
 export { default as SectionItemView } from "./canvas/SectionItemView";
-export { default as MoveableController } from "./canvas/MoveableController";
 export { default as MarqueeSelection } from "./canvas/MarqueeSelection";
 
 export { default as GuidesLayer } from "./overlays/GuidesLayer";
