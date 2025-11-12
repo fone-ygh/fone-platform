@@ -359,18 +359,18 @@ export default function CanvasStage() {
   /* ========================================================= */
 
   // 선택된 DOM(그룹 핸들)
-  const selectedEls: HTMLElement[] = useMemo(
-    () =>
-      selectedIds
-        .map(id => document.getElementById(id))
-        .filter((el): el is HTMLElement => !!el),
-    [selectedIds],
-  );
+  const selectedEls: HTMLElement[] = useMemo(() => {
+    if (typeof document === "undefined") return [];
+    return selectedIds
+      .map(id => document.getElementById(id) as HTMLElement | null)
+      .filter((el): el is HTMLElement => !!el);
+  }, [selectedIds]);
 
   const guidelineEls: HTMLElement[] = useMemo(() => {
     if (!snapToElements) return [];
+    if (typeof document === "undefined") return [];
     return sections
-      .map(s => document.getElementById(s.id))
+      .map(s => document.getElementById(s.id) as HTMLElement | null)
       .filter((el): el is HTMLElement => !!el && !selectedIds.includes(el.id));
   }, [sections, selectedIds, snapToElements]);
 
