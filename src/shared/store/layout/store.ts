@@ -1,683 +1,844 @@
+// src/shared/store/layout.ts
 "use client";
 
-import { create } from "zustand";
+import { create, type StateCreator } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
 import { persist } from "@/shared/lib/store-util";
 
-import { commitOrBounceLayout } from "./collision";
-import { DEFAULT_PAGES, makeDefaultLayout } from "./defaults";
-import { applyActiveFramesToTopLevel } from "./responsive";
 import type {
-  CommitResult,
-  GuideTheme,
+  Breakpoint,
+  Frame,
+  GuideLine,
   LayoutState,
   Page,
+  Purpose,
   SectionItem,
-  Theme,
+  WidgetType,
 } from "./types";
-import { clamp, deepClone, genId } from "./utils";
 
-/* ====================== Store Type ====================== */
-export type LayoutStore = {
-  theme: Theme;
-  guideTheme: GuideTheme;
-  brandHue: number;
+/* ================== helpers ================== */
+const clamp = (n: number, min: number, max: number) =>
+  Math.max(min, Math.min(n, max));
+const deepClone = <T>(v: T): T => JSON.parse(JSON.stringify(v));
+const genId = (prefix = "s") =>
+  `${prefix}-${Math.random().toString(36).slice(2, 9)}`;
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
+const rectsOverlap = (
+  a: { x: number; y: number; width: number; height: number },
+  b: { x: number; y: number; width: number; height: number },
+) =>
+  !(
+    a.x + a.width <= b.x ||
+    b.x + b.width <= a.x ||
+    a.y + a.height <= b.y ||
+    b.y + b.height <= a.y
+  );
+
+const isSolid = (s: SectionItem) => s.type === "box";
+
+/* ================== defaults ================== */
+const DEFAULT_BREAKPOINTS: Breakpoint[] = [
+  { id: "base", label: "Base", width: 1200 },
+  { id: "sm", label: "SM", width: 640 },
+  { id: "md", label: "MD", width: 768 },
+  { id: "lg", label: "LG", width: 1024 },
+  { id: "xl", label: "XL", width: 1280 },
+];
+
+const START_SECTIONS: SectionItem[] = [
+  {
+    id: "s-1",
+    title: "Header",
+    type: "box",
+    x: 12,
+    y: 12,
+    width: 1160,
+    height: 80,
+    radius: 8,
+    shadow: 0,
+    z: 1,
+    purpose: "header",
+    autoColor: true,
+  },
+  {
+    id: "s-2",
+    title: "Sidebar",
+    type: "box",
+    x: 12,
+    y: 108,
+    width: 280,
+    height: 300,
+    radius: 8,
+    shadow: 0,
+    z: 1,
+    purpose: "sidebar",
+    autoColor: true,
+  },
+  {
+    id: "s-3",
+    title: "Main",
+    type: "box",
+    x: 304,
+    y: 108,
+    width: 868,
+    height: 300,
+    radius: 8,
+    shadow: 0,
+    z: 1,
+    purpose: "main",
+    autoColor: true,
+  },
+  {
+    id: "s-4",
+    title: "Footer",
+    type: "box",
+    x: 12,
+    y: 422,
+    width: 1160,
+    height: 80,
+    radius: 8,
+    shadow: 0,
+    z: 1,
+    purpose: "footer",
+    autoColor: true,
+  },
+];
+
+const makeDefaultLayout = (): LayoutState => ({
+  version: 9,
+  canvasWidth: 1200,
+  canvasHeight: 900,
+  sections: deepClone(START_SECTIONS),
+  breakpoints: DEFAULT_BREAKPOINTS,
+  activeBp: "base",
+  responsive: { inheritScale: true, viewportWidth: 1200 },
+
+  // 🔻 레일 호환 필드 사용한다면 types.ts의 LayoutState에 optional로 정의해둘 것
+  showColumns: false,
+  columns: 0,
+  gutter: 0,
+  containerPadding: 0,
+});
+
+/* ================== collision helpers ================== */
+function clampInCanvas(s: SectionItem, W: number, H: number): SectionItem {
+  const x = clamp(s.x, 0, Math.max(0, W - s.width));
+  const y = clamp(s.y, 0, Math.max(0, H - s.height));
+  return { ...s, x, y };
+}
+
+function collideBoxes(layout: LayoutState): string[] {
+  const solids = layout.sections.filter(isSolid);
+  const hit: string[] = [];
+  for (let i = 0; i < solids.length; i++) {
+    for (let j = i + 1; j < solids.length; j++) {
+      const a = solids[i];
+      const b = solids[j];
+      if (
+        rectsOverlap(
+          { x: a.x, y: a.y, width: a.width, height: a.height },
+          { x: b.x, y: b.y, width: b.width, height: b.height },
+        )
+      ) {
+        hit.push(a.id, b.id);
+      }
+    }
+  }
+  return Array.from(new Set(hit));
+}
+
+function commitWithCollision(_before: LayoutState, after: LayoutState) {
+  // canvas clamp
+  const W = after.canvasWidth;
+  const H = after.canvasHeight;
+  after.sections = after.sections.map(s => clampInCanvas(s, W, H));
+  // only box-to-box collision
+  const bad = collideBoxes(after);
+  if (bad.length) return { ok: false as const, hit: bad };
+  return { ok: true as const };
+}
+
+/* ================== store shape ================== */
+type ToastKind = "info" | "success" | "warning" | "error";
+type Toast = { id: number; kind: ToastKind; message: string; ts: number };
+
+type HistoryStacks = Record<
+  string,
+  { undo: LayoutState[]; redo: LayoutState[] }
+>;
+type StagingMap = Record<string, LayoutState | null>;
+
+/** 기존 코드 호환을 위한 루트 파생 필드 포함 */
+type LayoutStore = {
+  /* 페이지/히스토리 */
   pages: Page[];
   currentPageId: string;
-
   selectedIds: string[];
+  history: HistoryStacks;
+  staging: StagingMap;
 
-  // undo/redo (페이지별 히스토리) — 메모리 전용(비영속)
-  _undo: Record<string, LayoutState[]>;
-  _redo: Record<string, LayoutState[]>;
+  /* ✅ 루트 파생 필드 */
+  canvasWidth: number;
+  canvasHeight: number;
+  sections: SectionItem[];
 
-  // 최근 커밋 에러 정보(겹침 등) — UI가 읽어 토스트/플래시 처리
-  lastError: string | null;
-  lastCollidedIds: string[];
+  /** 그리드 레일 호환 필드 (일부 컴포넌트가 참조) */
+  columns: number;
+  gutter: number;
+  containerPadding: number;
+  showColumns: boolean;
 
-  actions: {
-    /* theme */
-    setTheme: (t: Theme) => void;
-    setGuideTheme: (g: GuideTheme) => void;
-    setBrandHue: (h: number) => void;
+  /* UI */
+  toast: Toast | null;
 
-    /* page */
-    setCurrentPageId: (id: string) => void;
-    addPage: (name?: string) => void;
-    renamePage: (id: string, name: string) => void;
-    duplicatePage: (id: string) => void;
-    deletePage: (id: string) => void;
+  // 가이드 라인 (렌더 전용 상태)
+  guideLines: GuideLine[];
 
-    /* selection */
-    setSelectedIds: (ids: string[]) => void;
-    clearSelection: () => void;
-    toggleSelect: (id: string) => void;
-
-    /* layout mutators (현재 페이지) */
-    setCanvasSize: (w: number, h: number) => void;
-    setActiveBreakpoint: (bpId: string) => void;
-    setResponsiveInheritScale: (v: boolean) => void;
-    setResponsiveViewportWidth: (w: number) => void;
-
-    /* section CRUD */
-    addPreset: (preset: SectionItem["type"] | "hero") => void;
-    removeSections: (ids: string[]) => void;
-    duplicateSections: (ids: string[]) => void;
-
-    /* section prop */
-    setSectionProp: <K extends keyof SectionItem>(
-      id: string,
-      key: K,
-      value: SectionItem[K],
-    ) => void;
-    setSectionRect: (
-      id: string,
-      x: number,
-      y: number,
-      w?: number,
-      h?: number,
-    ) => CommitResult;
-    moveSelectedBy: (dx: number, dy: number) => CommitResult;
-
-    /* z-index */
-    sendToFront: (ids: string[]) => void;
-    sendToBack: (ids: string[]) => void;
-    bringForward: (ids: string[]) => void;
-    sendBackward: (ids: string[]) => void;
-
-    /* history */
-    pushHistory: () => void;
-    undo: () => void;
-    redo: () => void;
-
-    /* project IO */
-    toJSON: () => {
-      version: number;
-      theme: Theme;
-      guideTheme: GuideTheme;
-      brandHue: number;
-      pages: Page[];
-      currentPageId: string;
-    };
-    fromJSON: (proj: any) => void;
-
-    /* internal utils (UI가 필요시 호출) */
-    clearLastError: () => void;
-  };
+  actions: LayoutActions;
 };
 
-/* ====================== Store ====================== */
-export const useLayoutStore = create<LayoutStore>()(
-  immer(
-    persist(
-      (set, get) => ({
-        theme: "light",
-        guideTheme: "blue",
-        brandHue: 210,
+type LayoutActions = {
+  /* pages */
+  setCurrentPage: (id: string) => void;
+  addPage: (name?: string) => void;
+  renamePage: (id: string, name: string) => void;
+  duplicatePage: (id: string) => void;
+  deletePage: (id: string) => void;
 
-        pages: deepClone(DEFAULT_PAGES),
-        currentPageId: deepClone(DEFAULT_PAGES[0].id),
+  /* selection */
+  setSelectedIds: (next: string[] | ((prev: string[]) => string[])) => void;
+  clearSelection: () => void;
+  selectOne: (id: string) => void;
+  toggleSelect: (id: string) => void;
 
-        selectedIds: [],
+  /* canvas basics */
+  setCanvasSize: (w: number, h: number) => void;
 
-        _undo: {},
-        _redo: {},
+  /* responsive */
+  setActiveBreakpoint: (bpId: string) => void;
+  setViewportWidth: (w: number) => void;
 
-        lastError: null,
-        lastCollidedIds: [],
+  /* history */
+  undo: () => void;
+  redo: () => void;
 
-        actions: {
-          /* theme */
-          setTheme: t =>
-            set(s => {
-              s.theme = t;
-            }),
-          setGuideTheme: g =>
-            set(s => {
-              s.guideTheme = g;
-            }),
-          setBrandHue: h =>
-            set(s => {
-              s.brandHue = h;
-            }),
+  /* transform pipeline */
+  updateFrame: (id: string, rect: Partial<Frame>) => void; // move/resize 중
+  commitAfterTransform: () => void; // move/resize 끝
 
-          /* page */
-          setCurrentPageId: id =>
-            set(s => {
-              if (!s.pages.some(p => p.id === id)) return;
-              s.currentPageId = id;
-              s.selectedIds = [];
-              const pg = currentPageRef(s);
-              pg.layout = applyActiveFramesToTopLevel(pg.layout);
-            }),
+  /* patch & utils */
+  addSection: (
+    type: WidgetType,
+    opts?: Partial<SectionItem> & { history?: boolean },
+  ) => string;
+  patchSection: (
+    id: string,
+    patch: Partial<SectionItem>,
+    opts?: { history?: boolean },
+  ) => void;
+  deleteSelected: () => void;
+  removeSelected: () => void; // alias
+  duplicateSelected: () => void;
 
-          addPage: name =>
-            set(s => {
-              const pg: Page = {
-                id: genId("page"),
-                name: name || `Page ${s.pages.length + 1}`,
-                layout: makeDefaultLayout(),
-              };
-              s.pages.push(pg);
-              s.currentPageId = pg.id;
-              s.selectedIds = [];
-            }),
+  sendToFront: () => void;
+  sendToBack: () => void;
+  bringForward: () => void;
+  sendBackward: () => void;
 
-          renamePage: (id, name) =>
-            set(s => {
-              const p = s.pages.find(x => x.id === id);
-              if (p) p.name = name;
-            }),
+  applyColorToSelection: (color: string, target: "bg" | "text") => void;
 
-          duplicatePage: id =>
-            set(s => {
-              const orig = s.pages.find(p => p.id === id);
-              if (!orig) return;
-              const copy: Page = {
-                id: genId("page"),
-                name: `${orig.name} Copy`,
-                layout: deepClone(orig.layout),
-              };
-              s.pages.push(copy);
-              s.currentPageId = copy.id;
-              s.selectedIds = [];
-            }),
+  /* toast */
+  showToast: (message: string, kind?: ToastKind) => void;
+  clearToast: () => void;
 
-          deletePage: id =>
-            set(s => {
-              if (s.pages.length <= 1) return;
-              const idx = s.pages.findIndex(p => p.id === id);
-              if (idx < 0) return;
-              s.pages.splice(idx, 1);
-              if (s.currentPageId === id) s.currentPageId = s.pages[0].id;
-              s.selectedIds = [];
-              delete s._undo[id];
-              delete s._redo[id];
-            }),
+  /* (옵션) 레일 보조 액션 */
+  setColumns?: (n: number) => void;
+  setGutter?: (n: number) => void;
+  setContainerPadding?: (n: number) => void;
+  setShowColumns?: (b: boolean) => void;
 
-          /* selection */
-          setSelectedIds: ids =>
-            set(s => {
-              s.selectedIds = Array.from(new Set(ids));
-            }),
-          clearSelection: () =>
-            set(s => {
-              s.selectedIds = [];
-            }),
-          toggleSelect: id =>
-            set(s => {
-              s.selectedIds = s.selectedIds.includes(id)
-                ? s.selectedIds.filter(x => x !== id)
-                : [...s.selectedIds, id];
-            }),
+  // 가이드 라인 제어
+  setGuideLines: (lines: GuideLine[]) => void;
+  clearGuideLines: () => void;
+};
 
-          /* layout props (current page) */
-          setCanvasSize: (w, h) =>
-            set(s => {
-              const pg = currentPageRef(s);
-              pg.layout.canvasWidth = clamp(w, 300, 4000);
-              pg.layout.canvasHeight = clamp(h, 300, 4000);
-            }),
+/* ================== small utils ================== */
+const getCurrentPage = (s: LayoutStore) =>
+  s.pages.find(p => p.id === (s.currentPageId || s.pages[0]?.id));
 
-          setActiveBreakpoint: bpId =>
-            set(s => {
-              const pg = currentPageRef(s);
-              pg.layout.activeBp = bpId;
-              pg.layout = applyActiveFramesToTopLevel(pg.layout);
-            }),
+/** 페이지의 layout → 루트 파생 필드 동기화 */
+const deriveIntoRoot = (s: LayoutStore) => {
+  const page = getCurrentPage(s);
+  if (!page) return;
+  const ly = page.layout;
+  s.canvasWidth = ly.canvasWidth;
+  s.canvasHeight = ly.canvasHeight;
+  s.sections = ly.sections;
+};
 
-          setResponsiveInheritScale: v =>
-            set(s => {
-              const pg = currentPageRef(s);
-              pg.layout.responsive = {
-                ...(pg.layout.responsive || {}),
-                inheritScale: v,
-              };
-              pg.layout = applyActiveFramesToTopLevel(pg.layout);
-            }),
+/* ================== creator ================== */
+const initialLayout = makeDefaultLayout();
 
-          setResponsiveViewportWidth: w =>
-            set(s => {
-              const pg = currentPageRef(s);
-              const width = clamp(w, 280, 1600);
-              pg.layout.responsive = {
-                ...(pg.layout.responsive || {}),
-                viewportWidth: width,
-              };
-            }),
+const creator: StateCreator<
+  LayoutStore,
+  [["zustand/immer", never]],
+  [["zustand/persist", unknown]]
+> = (set, get) => ({
+  /* 기본 상태 */
+  pages: [
+    { id: genId("page"), name: "Home", layout: deepClone(initialLayout) },
+  ],
+  currentPageId: "",
+  selectedIds: [],
+  history: {},
+  staging: {},
 
-          /* section CRUD / presets */
-          addPreset: preset =>
-            set(s => {
-              const pg = currentPageRef(s);
-              const L = pg.layout;
-              const padding = 24;
-              const baseW = Math.floor(L.canvasWidth / 3);
-              let item: SectionItem = {
-                id: genId(),
-                title: "Box",
-                type: "box",
-                x: padding,
-                y: padding,
-                width: Math.min(baseW, L.canvasWidth - padding * 2),
-                height: 140,
-                radius: 10,
-                shadow: 1,
-                z: 1,
-                purpose: "card",
-                autoColor: true,
-              };
+  /* 루트 파생 필드(초기값: 첫 페이지 레이아웃 값으로 채움) */
+  canvasWidth: initialLayout.canvasWidth,
+  canvasHeight: initialLayout.canvasHeight,
+  sections: initialLayout.sections,
 
-              switch (preset) {
-                case "text":
-                  item = {
-                    ...item,
-                    title: "Text",
-                    type: "text",
-                    text: "더블클릭하여 편집",
-                    fontSize: 18,
-                    textAlign: "left",
-                    width: 420,
-                    height: 120,
-                    purpose: "neutral",
-                    autoColor: false,
-                    bg: "transparent",
-                  };
-                  break;
-                case "image":
-                  item = {
-                    ...item,
-                    title: "Image",
-                    type: "image",
-                    imageUrl:
-                      "https://images.unsplash.com/photo-1520763185298-1b434c919102?auto=format&fit=crop&w=1200&q=60",
-                    objectFit: "cover",
-                    width: 360,
-                    height: 220,
-                    purpose: "neutral",
-                    autoColor: false,
-                  };
-                  break;
-                case "button":
-                  item = {
-                    ...item,
-                    title: "Button",
-                    type: "button",
-                    btnLabel: "페이지 이동",
-                    btnHref: "page:About",
-                    btnVariant: "solid",
-                    width: 200,
-                    height: 52,
-                    purpose: "cta",
-                    autoColor: true,
-                  };
-                  break;
-                case "list":
-                  item = {
-                    ...item,
-                    title: "List",
-                    type: "list",
-                    width: 300,
-                    height: 200,
-                    listItems: ["항목 A", "항목 B", "항목 C"],
-                    purpose: "neutral",
-                    autoColor: true,
-                  };
-                  break;
-                case "card":
-                  item = {
-                    ...item,
-                    title: "Card",
-                    type: "card",
-                    width: 320,
-                    height: 220,
-                    purpose: "card",
-                    autoColor: true,
-                  };
-                  break;
-                case "gallery":
-                  item = {
-                    ...item,
-                    title: "Gallery",
-                    type: "gallery",
-                    width: L.canvasWidth - padding * 2,
-                    height: 260,
-                    purpose: "gallery",
-                    autoColor: true,
-                  };
-                  break;
-                case "hero":
-                  item = {
-                    ...item,
-                    title: "Hero",
-                    type: "box",
-                    width: L.canvasWidth - padding * 2,
-                    height: 260,
-                    purpose: "hero",
-                    autoColor: true,
-                  };
-                  break;
-                case "tabs":
-                  item = {
-                    ...item,
-                    title: "Tabs",
-                    type: "tabs",
-                    width: 560,
-                    height: 240,
-                    tabs: [
-                      { label: "Tab 1", content: "첫 번째 탭 콘텐츠" },
-                      { label: "Tab 2", content: "두 번째 탭 콘텐츠" },
-                      { label: "Tab 3", content: "세 번째 탭 콘텐츠" },
-                    ],
-                    activeTabIndex: 0,
-                    autoColor: true,
-                    purpose: "neutral",
-                  };
-                  break;
-                case "accordion":
-                  item = {
-                    ...item,
-                    title: "Accordion",
-                    type: "accordion",
-                    width: 480,
-                    height: 260,
-                    accordion: [
-                      { label: "아코디언 A", content: "내용 A", open: true },
-                      { label: "아코디언 B", content: "내용 B", open: false },
-                      { label: "아코디언 C", content: "내용 C", open: false },
-                    ],
-                    autoColor: true,
-                    purpose: "neutral",
-                  };
-                  break;
-                case "pricing":
-                  item = {
-                    ...item,
-                    title: "Pricing",
-                    type: "pricing",
-                    width: 720,
-                    height: 280,
-                    pricing: [
-                      {
-                        name: "Basic",
-                        price: "$9",
-                        features: ["1 Project", "Email Support"],
-                        highlight: false,
-                      },
-                      {
-                        name: "Pro",
-                        price: "$29",
-                        features: ["5 Projects", "Priority Support"],
-                        highlight: true,
-                      },
-                      {
-                        name: "Team",
-                        price: "$59",
-                        features: ["Unlimited", "Dedicated Support"],
-                        highlight: false,
-                      },
-                    ],
-                    autoColor: true,
-                    purpose: "card",
-                  };
-                  break;
-              }
+  /* 레일 호환 필드(필요 시 컴포넌트에서 사용) */
+  columns: 12,
+  gutter: 16,
+  containerPadding: 24,
+  showColumns: true,
 
-              // 새 박스 y 배치(간단 규칙)
-              const paddingY = 24;
-              const y = Math.min(
-                L.canvasHeight - item.height - paddingY,
-                paddingY + L.sections.length * (item.height + paddingY),
-              );
+  toast: null,
 
-              L.sections.push({ ...item, y: Math.max(paddingY, y) });
-            }),
+  guideLines: [],
 
-          removeSections: ids =>
-            set(s => {
-              const pg = currentPageRef(s);
-              if (ids.length === 0) return;
-              s.actions.pushHistory();
-              pg.layout.sections = pg.layout.sections.filter(
-                x => !ids.includes(x.id),
-              );
-              s.selectedIds = s.selectedIds.filter(x => !ids.includes(x));
-            }),
-
-          duplicateSections: ids =>
-            set(s => {
-              const pg = currentPageRef(s);
-              if (ids.length === 0) return;
-              s.actions.pushHistory();
-              const copies: SectionItem[] = [];
-              for (const id of ids) {
-                const src = pg.layout.sections.find(x => x.id === id);
-                if (!src) continue;
-                copies.push({
-                  ...deepClone(src),
-                  id: genId(),
-                  title: `${src.title} Copy`,
-                  x: Math.min(src.x + 32, pg.layout.canvasWidth - src.width),
-                  y: Math.min(src.y + 32, pg.layout.canvasHeight - src.height),
-                });
-              }
-              pg.layout.sections.push(...copies);
-              s.selectedIds = copies.map(c => c.id);
-            }),
-
-          /* section prop & rect */
-          setSectionProp: (id, key, value) =>
-            set(s => {
-              const pg = currentPageRef(s);
-              const t = pg.layout.sections.find(x => x.id === id);
-              if (!t) return;
-              (t as any)[key] = value;
-            }),
-
-          setSectionRect: (id, x, y, w, h) => {
-            const s0 = get();
-            const pg = currentPageRef(s0);
-            const L = deepClone(pg.layout);
-            const t = L.sections.find(x => x.id === id);
-            if (!t)
-              return {
-                ok: false,
-                message: "not found",
-                collidedIds: [],
-              } as CommitResult;
-
-            // 크기/위치 보정
-            const nx = clamp(x, 0, Math.max(0, L.canvasWidth - t.width));
-            const ny = clamp(y, 0, Math.max(0, L.canvasHeight - t.height));
-            t.x = nx;
-            t.y = ny;
-            if (typeof w === "number") t.width = Math.max(12, w);
-            if (typeof h === "number") t.height = Math.max(12, h);
-
-            const commit = commitOrBounceLayout(L);
-            if (commit.ok) {
-              get().actions.pushHistory();
-              set(s => {
-                const pg2 = currentPageRef(s);
-                pg2.layout = L;
-                s.lastError = null;
-                s.lastCollidedIds = [];
-              });
-            } else {
-              set(s => {
-                s.lastError = commit.message;
-                s.lastCollidedIds = commit.collidedIds;
-              });
-            }
-            return commit;
-          },
-
-          moveSelectedBy: (dx, dy) => {
-            const s0 = get();
-            const ids = s0.selectedIds;
-            if (ids.length === 0) return { ok: true } as CommitResult;
-
-            const pg = currentPageRef(s0);
-            const L = deepClone(pg.layout);
-
-            for (const id of ids) {
-              const t = L.sections.find(x => x.id === id);
-              if (!t || t.locked) continue;
-              t.x = clamp(t.x + dx, 0, Math.max(0, L.canvasWidth - t.width));
-              t.y = clamp(t.y + dy, 0, Math.max(0, L.canvasHeight - t.height));
-            }
-
-            const commit = commitOrBounceLayout(L);
-            if (commit.ok) {
-              get().actions.pushHistory();
-              set(s => {
-                const pg2 = currentPageRef(s);
-                pg2.layout = L;
-                s.lastError = null;
-                s.lastCollidedIds = [];
-              });
-            } else {
-              set(s => {
-                s.lastError = commit.message;
-                s.lastCollidedIds = commit.collidedIds;
-              });
-            }
-            return commit;
-          },
-
-          /* z-index */
-          sendToFront: ids =>
-            set(s => {
-              if (!ids.length) return;
-              const pg = currentPageRef(s);
-              const maxZ = Math.max(
-                0,
-                ...pg.layout.sections.map(x => x.z ?? 0),
-              );
-              pg.layout.sections = pg.layout.sections.map(x =>
-                ids.includes(x.id) ? { ...x, z: maxZ + 1 } : x,
-              );
-            }),
-          sendToBack: ids =>
-            set(s => {
-              if (!ids.length) return;
-              const pg = currentPageRef(s);
-              const minZ = Math.min(
-                0,
-                ...pg.layout.sections.map(x => x.z ?? 0),
-              );
-              pg.layout.sections = pg.layout.sections.map(x =>
-                ids.includes(x.id) ? { ...x, z: minZ - 1 } : x,
-              );
-            }),
-          bringForward: ids =>
-            set(s => {
-              if (!ids.length) return;
-              const pg = currentPageRef(s);
-              pg.layout.sections = pg.layout.sections.map(x =>
-                ids.includes(x.id) ? { ...x, z: (x.z ?? 0) + 1 } : x,
-              );
-            }),
-          sendBackward: ids =>
-            set(s => {
-              if (!ids.length) return;
-              const pg = currentPageRef(s);
-              pg.layout.sections = pg.layout.sections.map(x =>
-                ids.includes(x.id) ? { ...x, z: (x.z ?? 0) - 1 } : x,
-              );
-            }),
-
-          /* history */
-          pushHistory: () =>
-            set(s => {
-              const id = s.currentPageId;
-              if (!s._undo[id]) s._undo[id] = [];
-              const snap = deepClone(currentPageRef(s).layout);
-              s._undo[id].push(snap);
-              if (s._undo[id].length > 100) s._undo[id].shift();
-              s._redo[id] = [];
-            }),
-
-          undo: () =>
-            set(s => {
-              const id = s.currentPageId;
-              const stack = s._undo[id] || [];
-              if (!stack.length) return;
-              const prev = stack.pop()!;
-              if (!s._redo[id]) s._redo[id] = [];
-              const curSnap = deepClone(currentPageRef(s).layout);
-              s._redo[id].push(curSnap);
-              currentPageRef(s).layout = prev;
-              s.selectedIds = [];
-            }),
-
-          redo: () =>
-            set(s => {
-              const id = s.currentPageId;
-              const stack = s._redo[id] || [];
-              if (!stack.length) return;
-              const next = stack.pop()!;
-              if (!s._undo[id]) s._undo[id] = [];
-              const curSnap = deepClone(currentPageRef(s).layout);
-              s._undo[id].push(curSnap);
-              currentPageRef(s).layout = next;
-              s.selectedIds = [];
-            }),
-
-          /* project IO */
-          toJSON: () => {
-            const s0 = get();
-            return {
-              version: 2,
-              theme: s0.theme,
-              guideTheme: s0.guideTheme,
-              brandHue: s0.brandHue,
-              pages: s0.pages,
-              currentPageId: s0.currentPageId,
-            };
-          },
-
-          fromJSON: (proj: any) =>
-            set(s => {
-              if (!proj || !Array.isArray(proj.pages)) return;
-              s.pages = proj.pages;
-              s.currentPageId = proj.currentPageId || proj.pages[0].id;
-              s.theme = (proj.theme as Theme) || "light";
-              s.guideTheme = (proj.guideTheme as any) || "blue";
-              s.brandHue =
-                typeof proj.brandHue === "number" ? proj.brandHue : 210;
-              s.selectedIds = [];
-            }),
-
-          clearLastError: () =>
-            set(s => {
-              s.lastError = null;
-              s.lastCollidedIds = [];
-            }),
-        },
+  actions: {
+    /* ---------- pages ---------- */
+    setCurrentPage: id =>
+      set(s => {
+        if (!s.pages.find(p => p.id === id)) return;
+        s.currentPageId = id;
+        s.selectedIds = [];
+        deriveIntoRoot(s);
       }),
-      {
-        name: "EDITOR_LAYOUT", // 기존 키 유지(데이터 연속성)
-        // 함수/히스토리(_undo/_redo)는 저장하지 않고, 프로젝트 데이터만 저장
-        partialize: state => ({
-          theme: state.theme,
-          guideTheme: state.guideTheme,
-          brandHue: state.brandHue,
-          pages: state.pages,
-          currentPageId: state.currentPageId,
-          selectedIds: [], // 선택은 복원하지 않음
-        }),
-      },
-    ),
-  ),
+
+    addPage: name =>
+      set(s => {
+        const pg: Page = {
+          id: genId("page"),
+          name: name || `Page ${s.pages.length + 1}`,
+          layout: makeDefaultLayout(),
+        };
+        s.pages.push(pg);
+        s.currentPageId = pg.id;
+        s.selectedIds = [];
+        deriveIntoRoot(s);
+      }),
+
+    renamePage: (id, name) =>
+      set(s => {
+        const p = s.pages.find(x => x.id === id);
+        if (p && name?.trim()) p.name = name.trim();
+      }),
+
+    duplicatePage: id =>
+      set(s => {
+        const orig = s.pages.find(x => x.id === id);
+        if (!orig) return;
+        const copy: Page = {
+          id: genId("page"),
+          name: `${orig.name} Copy`,
+          layout: deepClone(orig.layout),
+        };
+        s.pages.push(copy);
+        s.currentPageId = copy.id;
+        s.selectedIds = [];
+        deriveIntoRoot(s);
+      }),
+
+    deletePage: id =>
+      set(s => {
+        if (s.pages.length <= 1) return;
+        const idx = s.pages.findIndex(x => x.id === id);
+        if (idx === -1) return;
+        s.pages.splice(idx, 1);
+        if (s.currentPageId === id) {
+          s.currentPageId = s.pages[0].id;
+          s.selectedIds = [];
+        }
+        delete s.history[id];
+        delete s.staging[id];
+        deriveIntoRoot(s);
+      }),
+
+    /* ---------- selection ---------- */
+    setSelectedIds: next =>
+      set(s => {
+        const value =
+          typeof next === "function"
+            ? (next as (p: string[]) => string[])(s.selectedIds)
+            : next;
+        s.selectedIds = value;
+      }),
+    clearSelection: () =>
+      set(s => {
+        s.selectedIds = [];
+      }),
+    selectOne: id =>
+      set(s => {
+        s.selectedIds = [id];
+      }),
+    toggleSelect: id =>
+      set(s => {
+        s.selectedIds = s.selectedIds.includes(id)
+          ? s.selectedIds.filter(x => x !== id)
+          : [...s.selectedIds, id];
+      }),
+
+    setGuideLines: lines =>
+      set(s => {
+        s.guideLines = lines;
+      }),
+    clearGuideLines: () =>
+      set(s => {
+        s.guideLines = [];
+      }),
+
+    /* ---------- canvas basics ---------- */
+    setCanvasSize: (w, h) =>
+      set(s => {
+        const page = getCurrentPage(s);
+        if (!page) return;
+        const stacks = (s.history[page.id] ||= { undo: [], redo: [] });
+        stacks.undo.push(deepClone(page.layout));
+        stacks.redo = [];
+        page.layout.canvasWidth = Math.max(300, Math.round(w));
+        page.layout.canvasHeight = Math.max(300, Math.round(h));
+        const W = page.layout.canvasWidth;
+        const H = page.layout.canvasHeight;
+        page.layout.sections = page.layout.sections.map(sec =>
+          clampInCanvas(sec, W, H),
+        );
+        deriveIntoRoot(s);
+      }),
+
+    /* ---------- responsive ---------- */
+    setActiveBreakpoint: bpId =>
+      set(s => {
+        const page = getCurrentPage(s);
+        if (!page) return;
+        if (!page.layout.breakpoints?.find(b => b.id === bpId)) return;
+
+        const stacks = (s.history[page.id] ||= { undo: [], redo: [] });
+        stacks.undo.push(deepClone(page.layout));
+        stacks.redo = [];
+
+        page.layout.activeBp = bpId;
+
+        const cw =
+          page.layout.breakpoints.find(b => b.id === bpId)?.width ??
+          page.layout.canvasWidth;
+        page.layout.canvasWidth = cw;
+
+        const readFrame = (sec: SectionItem): Frame => {
+          const fr = sec.frames?.[bpId];
+          if (fr) return deepClone(fr);
+          if (page.layout.responsive?.inheritScale && bpId !== "base") {
+            const baseW =
+              page.layout.breakpoints?.find(b => b.id === "base")?.width ??
+              page.layout.canvasWidth;
+            const r = cw / baseW;
+            return {
+              x: Math.round(sec.x * r),
+              y: sec.y,
+              width: Math.round(sec.width * r),
+              height: sec.height,
+              rotate: sec.rotate ?? 0,
+            };
+          }
+          return {
+            x: sec.x,
+            y: sec.y,
+            width: sec.width,
+            height: sec.height,
+            rotate: sec.rotate ?? 0,
+          };
+        };
+
+        page.layout.sections = page.layout.sections.map(sec => {
+          const fr = readFrame(sec);
+          return {
+            ...sec,
+            x: fr.x,
+            y: fr.y,
+            width: fr.width,
+            height: fr.height,
+            rotate: fr.rotate ?? sec.rotate,
+          };
+        });
+
+        deriveIntoRoot(s);
+      }),
+
+    setViewportWidth: w =>
+      set(s => {
+        const page = getCurrentPage(s);
+        if (!page) return;
+        page.layout.responsive = {
+          ...(page.layout.responsive || {}),
+          viewportWidth: clamp(Math.round(w), 280, 1600),
+        };
+        // viewportWidth는 파생필드에 영향 없음 (canvas 변경 아님)
+      }),
+
+    /* ---------- history ---------- */
+    undo: () =>
+      set(s => {
+        const page = getCurrentPage(s);
+        if (!page) return;
+        const stacks = (s.history[page.id] ||= { undo: [], redo: [] });
+        const prev = stacks.undo.pop();
+        if (!prev) return;
+        stacks.redo.push(deepClone(page.layout));
+        page.layout = prev;
+        s.selectedIds = [];
+        deriveIntoRoot(s);
+      }),
+
+    redo: () =>
+      set(s => {
+        const page = getCurrentPage(s);
+        if (!page) return;
+        const stacks = (s.history[page.id] ||= { undo: [], redo: [] });
+        const next = stacks.redo.pop();
+        if (!next) return;
+        stacks.undo.push(deepClone(page.layout));
+        page.layout = next;
+        s.selectedIds = [];
+        deriveIntoRoot(s);
+      }),
+
+    /* ---------- transform (Moveable 연동) ---------- */
+    updateFrame: (id, rect) =>
+      set(s => {
+        const page = getCurrentPage(s);
+        if (!page) return;
+
+        // 첫 updateFrame 호출 시 snapshot 저장
+        if (!s.staging[page.id]) {
+          s.staging[page.id] = deepClone(page.layout);
+        }
+
+        const sec = page.layout.sections.find(x => x.id === id);
+        if (!sec) return;
+
+        const nx = rect.x ?? sec.x;
+        const ny = rect.y ?? sec.y;
+        const nw = rect.width ?? sec.width;
+        const nh = rect.height ?? sec.height;
+        const nr = rect.rotate ?? sec.rotate;
+
+        sec.x = nx;
+        sec.y = ny;
+        sec.width = nw;
+        sec.height = nh;
+        if (typeof nr === "number") sec.rotate = nr;
+
+        deriveIntoRoot(s);
+      }),
+
+    commitAfterTransform: () =>
+      set(s => {
+        const page = getCurrentPage(s);
+        if (!page) return;
+
+        const before = s.staging[page.id];
+        s.staging[page.id] = null;
+
+        const after = deepClone(page.layout);
+        const result = commitWithCollision(before || after, after);
+
+        if (!result.ok && before) {
+          // 충돌 → 이전 레이아웃 복구 (히스토리 변화 없음)
+          page.layout = before;
+          deriveIntoRoot(s);
+          return;
+        }
+
+        // 정상 커밋 → 히스토리 push
+        const stacks = (s.history[page.id] ||= { undo: [], redo: [] });
+        stacks.undo.push(before ? before : deepClone(page.layout));
+        stacks.redo = [];
+        page.layout = after;
+
+        deriveIntoRoot(s);
+      }),
+
+    /* ---------- create / patch / delete ---------- */
+    addSection: (type, opts) => {
+      let newId = "";
+      set(s => {
+        const page = getCurrentPage(s);
+        if (!page) return;
+
+        const doHistory = opts?.history !== false;
+        if (doHistory) {
+          const stacks = (s.history[page.id] ||= { undo: [], redo: [] });
+          stacks.undo.push(deepClone(page.layout));
+          stacks.redo = [];
+        }
+
+        const W = page.layout.canvasWidth;
+        const H = page.layout.canvasHeight;
+        const maxZ = Math.max(0, ...page.layout.sections.map(x => x.z ?? 0));
+
+        const id = genId();
+        newId = id;
+
+        const sec: SectionItem = {
+          id,
+          title: opts?.title ?? cap(type),
+          type,
+          x: clamp(Math.round(opts?.x ?? 24), 0, Math.max(0, W - 12)),
+          y: clamp(Math.round(opts?.y ?? 24), 0, Math.max(0, H - 12)),
+          width: clamp(Math.round(opts?.width ?? 240), 12, W),
+          height: clamp(Math.round(opts?.height ?? 160), 12, H),
+          rotate: opts?.rotate ?? 0,
+          radius: opts?.radius ?? 8,
+          shadow: opts?.shadow ?? 0,
+          z: (opts?.z ?? maxZ) + 1,
+          purpose: (opts?.purpose as Purpose) ?? "neutral",
+          bg: opts?.bg,
+          autoColor: opts?.autoColor ?? true,
+          textColorOverride: opts?.textColorOverride,
+          frames: opts?.frames,
+        };
+
+        const fixed = clampInCanvas(sec, W, H);
+
+        page.layout.sections.push(fixed);
+        s.selectedIds = [id];
+        deriveIntoRoot(s);
+      });
+      return newId;
+    },
+
+    patchSection: (id, patch, opts) =>
+      set(s => {
+        const page = getCurrentPage(s);
+        if (!page) return;
+
+        if (opts?.history !== false) {
+          const stacks = (s.history[page.id] ||= { undo: [], redo: [] });
+          stacks.undo.push(deepClone(page.layout));
+          stacks.redo = [];
+        }
+
+        const sec = page.layout.sections.find(x => x.id === id);
+        if (!sec) return;
+        Object.assign(sec, patch);
+
+        // 안전 범위 보정
+        sec.width = Math.max(12, sec.width);
+        sec.height = Math.max(12, sec.height);
+        sec.x = clamp(
+          sec.x,
+          0,
+          Math.max(0, page.layout.canvasWidth - sec.width),
+        );
+        sec.y = clamp(
+          sec.y,
+          0,
+          Math.max(0, page.layout.canvasHeight - sec.height),
+        );
+
+        deriveIntoRoot(s);
+      }),
+
+    deleteSelected: () =>
+      set(s => {
+        const page = getCurrentPage(s);
+        if (!page) return;
+
+        const sel = s.selectedIds;
+        if (!sel.length) return;
+
+        const stacks = (s.history[page.id] ||= { undo: [], redo: [] });
+        stacks.undo.push(deepClone(page.layout));
+        stacks.redo = [];
+
+        page.layout.sections = page.layout.sections.filter(
+          sec => !sel.includes(sec.id),
+        );
+        s.selectedIds = [];
+        deriveIntoRoot(s);
+      }),
+
+    // ✅ 깔끔한 별칭
+    removeSelected: () => {
+      const { deleteSelected } = get().actions;
+      deleteSelected();
+    },
+
+    duplicateSelected: () =>
+      set(s => {
+        const page = getCurrentPage(s);
+        if (!page) return;
+        if (!s.selectedIds.length) return;
+
+        const stacks = (s.history[page.id] ||= { undo: [], redo: [] });
+        stacks.undo.push(deepClone(page.layout));
+        stacks.redo = [];
+
+        const grid = 10;
+        const copies: SectionItem[] = [];
+        for (const id of s.selectedIds) {
+          const sec = page.layout.sections.find(x => x.id === id);
+          if (!sec) continue;
+          copies.push({
+            ...deepClone(sec),
+            id: genId(),
+            title: sec.title + " Copy",
+            x: clamp(
+              sec.x + grid * 2,
+              0,
+              Math.max(0, page.layout.canvasWidth - sec.width),
+            ),
+            y: clamp(
+              sec.y + grid * 2,
+              0,
+              Math.max(0, page.layout.canvasHeight - sec.height),
+            ),
+          } as SectionItem);
+        }
+        page.layout.sections.push(...copies);
+        deriveIntoRoot(s);
+      }),
+
+    /* ---------- z-order ---------- */
+    sendToFront: () =>
+      set(s => {
+        const page = getCurrentPage(s);
+        if (!page) return;
+        if (!s.selectedIds.length) return;
+
+        const stacks = (s.history[page.id] ||= { undo: [], redo: [] });
+        stacks.undo.push(deepClone(page.layout));
+        stacks.redo = [];
+
+        const maxZ = Math.max(0, ...page.layout.sections.map(x => x.z ?? 0));
+        page.layout.sections = page.layout.sections.map(sec =>
+          s.selectedIds.includes(sec.id) ? { ...sec, z: maxZ + 1 } : sec,
+        );
+        deriveIntoRoot(s);
+      }),
+
+    sendToBack: () =>
+      set(s => {
+        const page = getCurrentPage(s);
+        if (!page) return;
+        if (!s.selectedIds.length) return;
+
+        const stacks = (s.history[page.id] ||= { undo: [], redo: [] });
+        stacks.undo.push(deepClone(page.layout));
+        stacks.redo = [];
+
+        const minZ = Math.min(0, ...page.layout.sections.map(x => x.z ?? 0));
+        page.layout.sections = page.layout.sections.map(sec =>
+          s.selectedIds.includes(sec.id) ? { ...sec, z: minZ - 1 } : sec,
+        );
+        deriveIntoRoot(s);
+      }),
+
+    bringForward: () =>
+      set(s => {
+        const page = getCurrentPage(s);
+        if (!page) return;
+        if (!s.selectedIds.length) return;
+
+        const stacks = (s.history[page.id] ||= { undo: [], redo: [] });
+        stacks.undo.push(deepClone(page.layout));
+        stacks.redo = [];
+
+        page.layout.sections = page.layout.sections.map(sec =>
+          s.selectedIds.includes(sec.id)
+            ? { ...sec, z: (sec.z ?? 0) + 1 }
+            : sec,
+        );
+        deriveIntoRoot(s);
+      }),
+
+    sendBackward: () =>
+      set(s => {
+        const page = getCurrentPage(s);
+        if (!page) return;
+        if (!s.selectedIds.length) return;
+
+        const stacks = (s.history[page.id] ||= { undo: [], redo: [] });
+        stacks.undo.push(deepClone(page.layout));
+        stacks.redo = [];
+
+        page.layout.sections = page.layout.sections.map(sec =>
+          s.selectedIds.includes(sec.id)
+            ? { ...sec, z: (sec.z ?? 0) - 1 }
+            : sec,
+        );
+        deriveIntoRoot(s);
+      }),
+
+    applyColorToSelection: (color, target) =>
+      set(s => {
+        const page = getCurrentPage(s);
+        if (!page) return;
+        if (!s.selectedIds.length) return;
+
+        const stacks = (s.history[page.id] ||= { undo: [], redo: [] });
+        stacks.undo.push(deepClone(page.layout));
+        stacks.redo = [];
+
+        page.layout.sections = page.layout.sections.map(sec => {
+          if (!s.selectedIds.includes(sec.id)) return sec;
+          if (target === "bg") return { ...sec, bg: color, autoColor: false };
+          return { ...sec, textColorOverride: color };
+        });
+
+        deriveIntoRoot(s);
+      }),
+
+    /* ---------- toast ---------- */
+    showToast: (message, kind = "info") =>
+      set(s => {
+        s.toast = { id: Date.now(), kind, message, ts: Date.now() };
+      }),
+    clearToast: () =>
+      set(s => {
+        s.toast = null;
+      }),
+
+    /* ---------- (옵션) 레일 보조 액션 ---------- */
+    setColumns: n =>
+      set(s => {
+        s.columns = Math.max(1, Math.floor(n));
+      }),
+    setGutter: n =>
+      set(s => {
+        s.gutter = Math.max(0, Math.floor(n));
+      }),
+    setContainerPadding: n =>
+      set(s => {
+        s.containerPadding = Math.max(0, Math.floor(n));
+      }),
+    setShowColumns: b =>
+      set(s => {
+        s.showColumns = !!b;
+      }),
+  },
+});
+
+/* ================== create (persist ∘ immer) ================== */
+export const useLayoutStore = create<LayoutStore>()(
+  persist(immer(creator), {
+    name: "LAYOUT",
+    // 지금은 아무 것도 저장하지 않음(함수 직렬화 이슈 회피)
+    // ❗ partialize는 파라미터를 받는 함수여야 함
+    partialize: _s => ({}) as Partial<LayoutStore>,
+  }),
 );
-
-/* selector helper */
-export const useLayoutActions = () => useLayoutStore(s => s.actions);
-
-/* ============ internal helper (store scope) ============ */
-function currentPageRef(s: LayoutStore): Page {
-  return s.pages.find(p => p.id === s.currentPageId) || s.pages[0];
-}

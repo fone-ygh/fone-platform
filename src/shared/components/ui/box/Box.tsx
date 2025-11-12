@@ -3,12 +3,19 @@ import { Box as DsBox, BoxProps as DsBoxProps } from "fone-design-system_v1";
 
 import ResizeContainer from "../resize/ResizeContainer";
 
-interface ResizeBoxProps extends Omit<DsBoxProps, "ref"> {
+export interface ResizeBoxProps extends Omit<DsBoxProps, "ref"> {
   id?: string;
+
+  /** Moveable 표시 여부(Controlled) */
+  active?: boolean;
+  onActiveChange?: (active: boolean) => void;
+
   targets?: (HTMLElement | SVGElement)[];
   resizable?: boolean;
   draggable?: boolean;
+  rotatable?: boolean;
   throttleResize?: number;
+
   width: number;
   minWidth?: number;
   maxWidth?: number;
@@ -17,6 +24,19 @@ interface ResizeBoxProps extends Omit<DsBoxProps, "ref"> {
   maxHeight?: number;
   x: number;
   y: number;
+  rotate?: number;
+
+  /** 스냅/가이드 */
+  snappable?: boolean | (string[] & false) | (string[] & true);
+  snapGridWidth?: number;
+  snapGridHeight?: number;
+  elementGuidelines?: any;
+
+  /** 좌표계/줌 */
+  zoom?: number;
+  containerEl?: HTMLElement | null;
+
+  /** 이벤트 */
   onResizeStart?: (e: any) => void;
   onResize?: (e: any) => void;
   onResizeEnd?: (e: any) => void;
@@ -29,28 +49,44 @@ interface ResizeBoxProps extends Omit<DsBoxProps, "ref"> {
   onDragGroupStart?: (e: any) => void;
   onDragGroup?: (e: any) => void;
   onDragGroupEnd?: (e: any) => void;
-  snappable?: boolean | (string[] & false) | (string[] & true);
-  snapGridWidth?: number;
-  snapGridHeight?: number;
-  elementGuidelines?: any;
+  onRotateStart?: (e: any) => void;
+  onRotate?: (e: any) => void;
+  onRotateEnd?: (e: any) => void;
 }
 
 const Box = React.forwardRef<HTMLDivElement, ResizeBoxProps>(function Box(
   {
     id,
+
+    active,
+    onActiveChange,
+
     targets,
     resizable,
     draggable,
+    rotatable,
     throttleResize,
+
     minWidth,
     maxWidth,
     minHeight,
     maxHeight,
+
     children,
     width,
     height,
     x,
     y,
+    rotate,
+
+    snappable,
+    snapGridWidth,
+    snapGridHeight,
+    elementGuidelines,
+
+    zoom = 1,
+    containerEl,
+
     onResizeStart,
     onResize,
     onResizeEnd,
@@ -63,10 +99,10 @@ const Box = React.forwardRef<HTMLDivElement, ResizeBoxProps>(function Box(
     onDragGroupStart,
     onDragGroup,
     onDragGroupEnd,
-    snappable,
-    snapGridWidth,
-    snapGridHeight,
-    elementGuidelines,
+    onRotateStart,
+    onRotate,
+    onRotateEnd,
+
     ...props
   }: ResizeBoxProps,
   ref,
@@ -74,9 +110,12 @@ const Box = React.forwardRef<HTMLDivElement, ResizeBoxProps>(function Box(
   return (
     <ResizeContainer
       id={id}
+      active={!!active}
+      onActiveChange={onActiveChange}
       targets={targets}
       resizable={resizable}
       draggable={draggable}
+      rotatable={rotatable}
       throttleResize={throttleResize}
       minWidth={minWidth}
       maxWidth={maxWidth}
@@ -86,6 +125,9 @@ const Box = React.forwardRef<HTMLDivElement, ResizeBoxProps>(function Box(
       height={height}
       x={x}
       y={y}
+      rotate={rotate}
+      zoom={zoom}
+      containerEl={containerEl}
       onResizeStart={onResizeStart}
       onResize={onResize}
       onResizeEnd={onResizeEnd}
@@ -98,11 +140,13 @@ const Box = React.forwardRef<HTMLDivElement, ResizeBoxProps>(function Box(
       onDragGroupStart={onDragGroupStart}
       onDragGroup={onDragGroup}
       onDragGroupEnd={onDragGroupEnd}
+      onRotateStart={onRotateStart}
+      onRotate={onRotate}
+      onRotateEnd={onRotateEnd}
       snappable={snappable}
       snapGridWidth={snapGridWidth}
       snapGridHeight={snapGridHeight}
       elementGuidelines={elementGuidelines}
-      renderDirections={["nw", "n", "ne", "w", "e", "sw", "s", "se"]} // ["nw", "n", "ne", "w", "e", "sw", "s", "se"]
     >
       <DsBox ref={ref} width={"100%"} height={"100%"} {...props}>
         {children}

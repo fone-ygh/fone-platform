@@ -76,6 +76,10 @@ export const makeDefaultLayout = (): LayoutState => ({
   breakpoints: DEFAULT_BREAKPOINTS,
   activeBp: "base",
   responsive: { inheritScale: true, viewportWidth: 1200 },
+  showColumns: false,
+  columns: 0,
+  gutter: 0,
+  containerPadding: 0,
 });
 
 export const DEFAULT_PAGES: Page[] = [
