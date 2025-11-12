@@ -90,7 +90,7 @@ function resolveNoOverlap(
     const hit = colliders.find(b => intersects(out, b));
     if (!hit) break;
     const next = pushOutOnce(out, hit, prevX, prevY);
-    if (next.x === out.x && next.y === out.y) break; // 안전장치
+    if (next.x === out.x && next.y === out.y) break;
     out = { ...out, ...next };
   }
   return out;
@@ -148,6 +148,13 @@ export default function CanvasStage() {
   const [downPt, setDownPt] = useState<{ x: number; y: number } | null>(null);
   const DRAG_THRESHOLD = 3; // px
 
+  // 🔹 Space+Drag 팬 상태
+  const [isSpace, setIsSpace] = useState(false);
+  const isSpaceRef = useRef(false);
+  const [isPanning, setIsPanning] = useState(false);
+  const panStartRef = useRef<{ x: number; y: number } | null>(null);
+  const mouseStartRef = useRef<{ x: number; y: number } | null>(null);
+
   const gridBg = useMemo(
     () =>
       `linear-gradient(to right, ${gridColor} 1px, transparent 1px),
@@ -166,6 +173,46 @@ export default function CanvasStage() {
     },
     [panX, panY, zoom],
   );
+
+  // 입력 필드 포커스 중인지 여부(스페이스 팬 제외)
+  const isTypingTarget = () => {
+    if (typeof document === "undefined") return false;
+    const el = document.activeElement as HTMLElement | null;
+    if (!el) return false;
+    const tag = el.tagName;
+    return (
+      el.isContentEditable ||
+      tag === "INPUT" ||
+      tag === "TEXTAREA" ||
+      tag === "SELECT"
+    );
+  };
+
+  // Space 키로 팬 모드 토글(입력 중 제외)
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code !== "Space") return;
+      if (isTypingTarget()) return;
+      if (!isSpaceRef.current) {
+        isSpaceRef.current = true;
+        setIsSpace(true);
+      }
+      // 페이지 스크롤 방지
+      e.preventDefault();
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.code !== "Space") return;
+      isSpaceRef.current = false;
+      setIsSpace(false);
+      setIsPanning(false);
+    };
+    window.addEventListener("keydown", onKeyDown, { capture: true });
+    window.addEventListener("keyup", onKeyUp, { capture: true });
+    return () => {
+      window.removeEventListener("keydown", onKeyDown, true);
+      window.removeEventListener("keyup", onKeyUp, true);
+    };
+  }, []);
 
   // CTRL+휠 줌(스테이지 위에서만), 기본 페이지 줌 차단
   useEffect(() => {
@@ -206,8 +253,28 @@ export default function CanvasStage() {
     return () => window.removeEventListener("wheel", handleWheel, opts);
   }, [panX, panY, zoom, setCanvasZoom, setPan]);
 
+  /* =================== Space+Drag 팬: 캡처 단계에서 시작 =================== */
+  const onMouseDownCapture = (e: React.MouseEvent) => {
+    if (!isSpaceRef.current) return;
+    if (e.button !== 0) return; // 좌클릭만
+    // 팬 시작: 자식(Box/Moveable) 이벤트 차단
+    e.preventDefault();
+    e.stopPropagation();
+
+    setIsPanning(true);
+    setOverlaps([]); // 하이라이트 제거
+    setBgDown(false);
+    setMarquee({ on: false, x: 0, y: 0, w: 0, h: 0 });
+
+    mouseStartRef.current = { x: e.clientX, y: e.clientY };
+    panStartRef.current = { x: panX, y: panY };
+  };
+  /* ======================================================================== */
+
   /* =================== 배경 클릭/마퀴 선택 =================== */
   const onMouseDown = (e: React.MouseEvent) => {
+    if (isPanning || isSpaceRef.current) return; // 팬 중/팬 모드면 무시
+
     // 아이템 위면 무시 (아이템은 SectionItemView에서 stopPropagation)
     if ((e.target as HTMLElement).closest(".section-item")) return;
 
@@ -221,6 +288,14 @@ export default function CanvasStage() {
   };
 
   const onMouseMove = (e: React.MouseEvent) => {
+    // 팬 모드: 마우스 이동량에 따라 pan 갱신(zoom 보정 X)
+    if (isPanning && mouseStartRef.current && panStartRef.current) {
+      //  줌으로 나누지 말고, 화면 px 이동량 그대로 더해준다.
+      const dx = e.clientX - mouseStartRef.current.x;
+      const dy = e.clientY - mouseStartRef.current.y;
+      setPan(panStartRef.current.x + dx, panStartRef.current.y + dy);
+      return; // 팬 중에는 선택/마퀴 무시
+    }
     if (!bgDown || !downPt) return;
 
     const p = toLogical(e.clientX, e.clientY);
@@ -235,7 +310,6 @@ export default function CanvasStage() {
         const nw = Math.abs(p.x - downPt.x);
         const nh = Math.abs(p.y - downPt.y);
         setMarquee({ on: true, x: nx, y: ny, w: nw, h: nh });
-
         // 마퀴 시작 시 선택 초기화
         setSelectedIds([]);
       }
@@ -265,6 +339,14 @@ export default function CanvasStage() {
   };
 
   const onMouseUp = () => {
+    // 팬 종료
+    if (isPanning) {
+      setIsPanning(false);
+      mouseStartRef.current = null;
+      panStartRef.current = null;
+      return;
+    }
+
     // 배경에서 클릭만 한 경우(마퀴 미시작) → 선택 해제
     if (bgDown && !marquee.on) {
       setSelectedIds([]);
@@ -336,6 +418,7 @@ export default function CanvasStage() {
     <div
       ref={stageRef}
       className="stage"
+      onMouseDownCapture={onMouseDownCapture}
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
@@ -348,7 +431,7 @@ export default function CanvasStage() {
         userSelect: "none",
       }}
     >
-      {/* 🔹 줌/팬 레이어 */}
+      {/* 줌/팬 레이어 */}
       <div
         ref={setZoomLayerRef}
         className="zoom-layer"
@@ -361,6 +444,7 @@ export default function CanvasStage() {
           willChange: "transform",
           backgroundImage: showGrid ? gridBg : "none",
           backgroundSize: showGrid ? `${gridSize}px ${gridSize}px` : "auto",
+          cursor: isPanning ? "grabbing" : isSpace ? "grab" : "default",
         }}
       >
         <ColumnsOverlay />
@@ -395,6 +479,7 @@ export default function CanvasStage() {
                 elementGuidelines={guidelineEls}
                 // ===== 실시간 하이라이트: drag 중
                 onDrag={(e: any) => {
+                  if (isPanning) return; // 팬 중엔 무시
                   const target = e.target as HTMLElement;
                   const cs = getComputedStyle(target);
                   const w = parseFloat(cs.width || "") || s.width;
@@ -404,6 +489,7 @@ export default function CanvasStage() {
                 }}
                 // ===== 실시간 하이라이트: resize 중
                 onResize={(e: any) => {
+                  if (isPanning) return;
                   const target = e.target as HTMLElement;
                   const l =
                     e.drag?.left ?? parseFloat(target.style.left || "") ?? s.x;
@@ -420,6 +506,7 @@ export default function CanvasStage() {
                 }}
                 // ===== Drag End: 여기서만 겹침 해소 + 커밋
                 onDragEnd={(e: any) => {
+                  if (isPanning) return;
                   const el = e.target as HTMLElement;
                   const cs = getComputedStyle(el);
                   const nx =
@@ -447,6 +534,7 @@ export default function CanvasStage() {
                 }}
                 // ===== Resize End: 여기서만 겹침 해소 + 커밋
                 onResizeEnd={(e: any) => {
+                  if (isPanning) return;
                   const el = e.target as HTMLElement;
                   const cs = getComputedStyle(el);
 
