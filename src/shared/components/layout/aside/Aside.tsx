@@ -98,7 +98,7 @@ export default function Aside({
       ref={ref}
       data-side={position}
       data-dragging={dragging ? "true" : "false"}
-      style={{ width: `${w}px` }}
+      style={{ width: `${w}px`, overflowX: "hidden" }}
     >
       {/* 콘텐츠 */}
       {children}
