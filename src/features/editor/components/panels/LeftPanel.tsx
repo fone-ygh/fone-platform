@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import { Checkbox, Label, TextField2 } from "fone-design-system_v1";
 
 import Aside from "@/shared/components/layout/aside/Aside";
 import { AccordionCard } from "@/shared/components/ui/cardAccordion/CardAccordion";
@@ -85,47 +86,48 @@ export default function LeftPanel() {
               content: (
                 <div className="card-body">
                   <div className="row" style={{ display: "grid", gap: 8 }}>
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={showGrid}
-                        onChange={e => setShowGrid(e.target.checked)}
-                      />{" "}
-                      Grid
-                    </label>
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={showGuides}
-                        onChange={e => setShowGuides(e.target.checked)}
-                      />{" "}
-                      Guides
-                    </label>
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={showRulers}
-                        onChange={e => setShowRulers(e.target.checked)}
-                      />{" "}
-                      Rulers
-                    </label>
+                    <Checkbox
+                      type="checkbox"
+                      checked={showGrid}
+                      onChange={e => setShowGrid(e.target.checked)}
+                      label="Grid"
+                      size="small"
+                    />
+                    <Checkbox
+                      type="checkbox"
+                      checked={showGuides}
+                      onChange={e => setShowGuides(e.target.checked)}
+                      label="Guides"
+                      size="small"
+                    />
+                    <Checkbox
+                      type="checkbox"
+                      checked={showRulers}
+                      onChange={e => setShowRulers(e.target.checked)}
+                      label="Rulers"
+                      size="small"
+                    />
                   </div>
 
                   <div
                     className="row"
                     style={{ display: "grid", gap: 8, marginTop: 10 }}
                   >
-                    <label className="inline">Grid Size</label>
-                    <input
+                    <Label>Grid Size</Label>
+                    <TextField2
                       type="number"
-                      min={1}
-                      max={100}
+                      size="xs"
                       value={gridSize}
                       onChange={e => setGridSize(Number(e.target.value || 1))}
+                      inputProps={{
+                        min: 1,
+                        max: 100,
+                      }}
                     />
-                    <label className="inline">Grid Color</label>
-                    <input
-                      type="text"
+
+                    <Label>Grid Color</Label>
+                    <TextField2
+                      size="xs"
                       value={gridColor}
                       onChange={e => setGridColor(e.target.value)}
                     />
@@ -149,44 +151,39 @@ export default function LeftPanel() {
               content: (
                 <div className="card-body">
                   <div className="row" style={{ display: "grid", gap: 8 }}>
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={snapToGrid}
-                        onChange={e => setSnapToGrid(e.target.checked)}
-                      />{" "}
-                      Snap to Grid
-                    </label>
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={snapToGuides}
-                        onChange={e => setSnapToGuides(e.target.checked)}
-                      />{" "}
-                      Snap to Guides
-                    </label>
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={snapToElements}
-                        onChange={e => setSnapToElements(e.target.checked)}
-                      />{" "}
-                      Snap to Elements
-                    </label>
+                    <Checkbox
+                      checked={snapToGrid}
+                      onChange={e => setSnapToGrid(e.target.checked)}
+                      label="Snap to Grid"
+                      size="small"
+                    />
+
+                    <Checkbox
+                      checked={snapToGuides}
+                      onChange={e => setSnapToGuides(e.target.checked)}
+                      label="Snap to Guides"
+                      size="small"
+                    />
+                    <Checkbox
+                      checked={snapToElements}
+                      onChange={e => setSnapToElements(e.target.checked)}
+                      label="Snap to Elements"
+                      size="small"
+                    />
                   </div>
                   <div
                     className="row"
                     style={{ display: "grid", gap: 8, marginTop: 10 }}
                   >
-                    <label className="inline">Tolerance</label>
-                    <input
+                    <Label>Tolerance</Label>
+                    <TextField2
                       type="number"
-                      min={0}
-                      max={40}
                       value={snapTolerance}
                       onChange={e =>
                         setSnapTolerance(Number(e.target.value || 0))
                       }
+                      inputProps={{ min: 0, max: 40 }}
+                      size="xs"
                     />
                   </div>
                 </div>
@@ -208,17 +205,19 @@ export default function LeftPanel() {
               content: (
                 <div className="card-body">
                   <div className="row" style={{ display: "grid", gap: 8 }}>
-                    <label className="inline">Width</label>
-                    <input
+                    <Label className="inline">Width</Label>
+                    <TextField2
                       type="number"
                       value={canvasWidth}
                       onChange={e => onChangeCanvasW(e.target.value)}
+                      size="xs"
                     />
-                    <label className="inline">Height</label>
-                    <input
+                    <Label className="inline">Height</Label>
+                    <TextField2
                       type="number"
                       value={canvasHeight}
                       onChange={e => onChangeCanvasH(e.target.value)}
+                      size="xs"
                     />
                   </div>
                 </div>
@@ -239,45 +238,43 @@ export default function LeftPanel() {
               title: "Grid Columns",
               content: (
                 <div className="card-body">
-                  <div className="row" style={{ display: "grid", gap: 8 }}>
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={showColumns}
-                        onChange={e => setShowColumns(e.target.checked)}
-                      />{" "}
-                      Show Columns
-                    </label>
-                  </div>
+                  <Checkbox
+                    checked={showColumns}
+                    onChange={e => setShowColumns(e.target.checked)}
+                    label="showColumns"
+                    size="small"
+                  />
+
                   <div
                     className="row"
                     style={{ display: "grid", gap: 8, marginTop: 10 }}
                   >
-                    <label className="inline">Count</label>
-                    <input
+                    <Label>Count</Label>
+                    <TextField2
                       type="number"
-                      min={1}
-                      max={24}
                       value={columns}
                       onChange={e => setColumns(Number(e.target.value || 12))}
+                      inputProps={{ min: 1, max: 24 }}
+                      size="xs"
                     />
-                    <label className="inline">Gutter</label>
-                    <input
+                    <Label>Gutter</Label>
+                    <TextField2
                       type="number"
-                      min={0}
-                      max={80}
                       value={gutter}
                       onChange={e => setGutter(Number(e.target.value || 0))}
+                      inputProps={{ min: 0, max: 80 }}
+                      size="xs"
                     />
-                    <label className="inline">Padding</label>
-                    <input
+
+                    <Label>Padding</Label>
+                    <TextField2
                       type="number"
-                      min={0}
-                      max={200}
                       value={containerPadding}
                       onChange={e =>
                         setContainerPadding(Number(e.target.value || 0))
                       }
+                      inputProps={{ min: 0, max: 200 }}
+                      size="xs"
                     />
                   </div>
                 </div>

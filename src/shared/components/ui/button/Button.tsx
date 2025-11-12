@@ -10,14 +10,14 @@ interface ResizeButtonProps extends Omit<DsButtonProps, "ref"> {
   resizable?: boolean;
   draggable?: boolean;
   throttleResize?: number;
-  width?: number;
+  width: number;
   minWidth?: number;
   maxWidth?: number;
-  height?: number;
+  height: number;
   minHeight?: number;
   maxHeight?: number;
-  x?: number;
-  y?: number;
+  x: number;
+  y: number;
 }
 
 export default function Button({
@@ -50,7 +50,7 @@ export default function Button({
       height={height}
       x={x}
       y={y}
-      renderDirections={["e", "w"]} // ["nw", "n", "ne", "w", "e", "sw", "s", "se"]
+      // renderDirections={["e", "w"]} // ["nw", "n", "ne", "w", "e", "sw", "s", "se"]
     >
       <div
         // 투명 오버레이로 Select 상호작용을 차단 (버블링은 허용하여 컨테이너 활성화/드래그 영향 최소화)

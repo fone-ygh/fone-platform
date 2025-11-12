@@ -14,9 +14,88 @@ import { useEDITORStore } from "@/shared/store/control";
 import { useLayoutStore } from "@/shared/store/layout";
 
 import ColumnsOverlay from "../overlays/ColumnsOverlay";
-import GuidesLayer from "../overlays/GuidesLayer";
+// import GuidesLayer from "../overlays/GuidesLayer";
 import MarqueeSelection from "./MarqueeSelection";
 import SectionItemView from "./SectionItemView";
+
+/* =================== Overlap/Collision helpers =================== */
+type Rect = { x: number; y: number; w: number; h: number; id?: string };
+
+function intersects(a: Rect, b: Rect) {
+  return !(
+    a.x + a.w <= b.x ||
+    b.x + b.w <= a.x ||
+    a.y + a.h <= b.y ||
+    b.y + b.h <= a.y
+  );
+}
+
+function intersectionRect(a: Rect, b: Rect): Rect | null {
+  const ix1 = Math.max(a.x, b.x);
+  const iy1 = Math.max(a.y, b.y);
+  const ix2 = Math.min(a.x + a.w, b.x + b.w);
+  const iy2 = Math.min(a.y + a.h, b.y + b.h);
+  if (ix2 > ix1 && iy2 > iy1) {
+    return { x: ix1, y: iy1, w: ix2 - ix1, h: iy2 - iy1 };
+  }
+  return null;
+}
+
+// a와 b가 겹칠 때 a를 b 바깥으로 내보내는 최소 이동량(MTV)
+function pushOutOnce(
+  a: Rect,
+  b: Rect,
+  prevX: number,
+  prevY: number,
+): { x: number; y: number } {
+  const ax1 = a.x,
+    ay1 = a.y,
+    ax2 = a.x + a.w,
+    ay2 = a.y + a.h;
+  const bx1 = b.x,
+    by1 = b.y,
+    bx2 = b.x + b.w,
+    by2 = b.y + b.h;
+
+  const overlapX = Math.min(ax2 - bx1, bx2 - ax1);
+  const overlapY = Math.min(ay2 - by1, by2 - ay1);
+
+  // 이전 중심과 b 중심 비교로 진입 방향 추정
+  const prevCx = prevX + a.w / 2;
+  const prevCy = prevY + a.h / 2;
+  const bCx = b.x + b.w / 2;
+  const bCy = b.y + b.h / 2;
+
+  if (overlapX < overlapY) {
+    const fromLeft = prevCx < bCx;
+    const dx = fromLeft ? -(ax2 - bx1) : bx2 - ax1;
+    return { x: a.x + dx, y: a.y };
+  } else {
+    const fromTop = prevCy < bCy;
+    const dy = fromTop ? -(ay2 - by1) : by2 - ay1;
+    return { x: a.x, y: a.y + dy };
+  }
+}
+
+// 여러 충돌체에 대해 반복적으로 겹침 제거
+function resolveNoOverlap(
+  a: Rect,
+  colliders: Rect[],
+  prevX: number,
+  prevY: number,
+  maxIter = 16,
+): Rect {
+  let out = { ...a };
+  for (let i = 0; i < maxIter; i++) {
+    const hit = colliders.find(b => intersects(out, b));
+    if (!hit) break;
+    const next = pushOutOnce(out, hit, prevX, prevY);
+    if (next.x === out.x && next.y === out.y) break; // 안전장치
+    out = { ...out, ...next };
+  }
+  return out;
+}
+/* ================================================================ */
 
 export default function CanvasStage() {
   // ---- layout ----
@@ -24,20 +103,14 @@ export default function CanvasStage() {
   const canvasHeight = useLayoutStore(s => s.canvasHeight);
   const sections = useLayoutStore(s => s.sections);
   const selectedIds = useLayoutStore(s => s.selectedIds);
-
   const setSelectedIds = useLayoutStore(s => s.actions.setSelectedIds);
   const updateFrame = useLayoutStore(s => s.actions.updateFrame);
   const commitAfterTransform = useLayoutStore(
     s => s.actions.commitAfterTransform,
   );
+  // const guideLines = useLayoutStore(s => s.guideLines);
 
-  // 선택/복제/삭제 액션 (오른쪽 패널에서 쓰던 것 재활용)
-  const deleteSelected = useLayoutStore(s => s.actions.deleteSelected);
-  const duplicateSelected = useLayoutStore(s => s.actions.duplicateSelected);
-
-  const guideLines = useLayoutStore(s => s.guideLines); // 필요 시 GuidesLayer 사용
-
-  // ---- editor (그리드/줌/팬/스냅) ----
+  // ---- editor (grid/zoom/pan/snap) ----
   const showGrid = useEDITORStore(s => s.showGrid);
   const gridSize = useEDITORStore(s => s.gridSize);
   const gridColor = useEDITORStore(s => s.gridColor);
@@ -52,29 +125,28 @@ export default function CanvasStage() {
   const snapToGrid = useEDITORStore(s => s.snapToGrid);
   const snapToElements = useEDITORStore(s => s.snapToElements);
   const snapToGuides = useEDITORStore(s => s.snapToGuides);
-  const snapTolerance = useEDITORStore(s => s.snapTolerance); // 필요시 Box/Moveable에 전달
+  // const snapTolerance = useEDITORStore(s => s.snapTolerance);
 
   const zoom = Math.max(0.25, Math.min(2, canvasZoomPct / 100));
 
   const stageRef = useRef<HTMLDivElement | null>(null);
 
-  // ✅ 줌/팬 레이어 DOM을 state로 (렌더 중 ref.current 접근 금지 규칙 회피)
+  // 줌/팬 레이어 DOM (렌더 중 ref.current 직접접근 X → state에 넣어 전달)
   const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
   const setZoomLayerRef = useCallback((node: HTMLDivElement | null) => {
     setContainerEl(node);
   }, []);
 
-  // ---- 상태: 마퀴, 팬, 스냅 임시 해제 ----
+  // 마퀴(논리좌표)
   const [marquee, setMarquee] = useState({ on: false, x: 0, y: 0, w: 0, h: 0 });
-  const [spacePressed, setSpacePressed] = useState(false);
-  const [altPressed, setAltPressed] = useState(false);
-  const [isPanning, setIsPanning] = useState(false);
-  const panStartRef = useRef<{
-    sx: number;
-    sy: number;
-    px: number;
-    py: number;
-  } | null>(null);
+
+  // 🔴 겹침 하이라이트(교집합 사각형들)
+  const [overlaps, setOverlaps] = useState<Rect[]>([]);
+
+  // ✅ 배경 클릭/드래그 구분용 상태
+  const [bgDown, setBgDown] = useState(false);
+  const [downPt, setDownPt] = useState<{ x: number; y: number } | null>(null);
+  const DRAG_THRESHOLD = 3; // px
 
   const gridBg = useMemo(
     () =>
@@ -121,7 +193,7 @@ export default function CanvasStage() {
       const next = Math.max(0.25, Math.min(2, prev * factor));
       const nextPct = Math.round(next * 100);
 
-      // 포커스 지점 고정: pan' = pan + (prev - next) * C
+      // 포커스 지점 고정
       const newPanX = panX + cx * (prev - next);
       const newPanY = panY + cy * (prev - next);
 
@@ -134,210 +206,50 @@ export default function CanvasStage() {
     return () => window.removeEventListener("wheel", handleWheel, opts);
   }, [panX, panY, zoom, setCanvasZoom, setPan]);
 
-  // ---- 키보드 숏컷 & 모디파이어 키 ----
-  useEffect(() => {
-    const isEditable = (el: EventTarget | null) => {
-      if (!(el instanceof HTMLElement)) return false;
-      return (
-        el.closest(
-          "input, textarea, select, [contenteditable='true'], [role='textbox']",
-        ) !== null
-      );
-    };
-    const isCmdOrCtrl = (e: KeyboardEvent) => e.metaKey || e.ctrlKey;
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (isEditable(e.target)) return;
-
-      // 모디파이어 트래킹
-      if (e.key === "Alt") setAltPressed(true);
-      if (e.key === " ") {
-        setSpacePressed(true);
-        // 스페이스 기본 스크롤 방지
-        e.preventDefault();
-      }
-
-      // 삭제
-      if (e.key === "Delete" || e.key === "Backspace") {
-        if (selectedIds.length) {
-          e.preventDefault();
-          deleteSelected?.();
-          setSelectedIds([]);
-          commitAfterTransform?.();
-        }
-        return;
-      }
-
-      // 복제
-      if ((e.key === "d" || e.key === "D") && isCmdOrCtrl(e)) {
-        if (selectedIds.length) {
-          e.preventDefault();
-          duplicateSelected?.();
-          commitAfterTransform?.();
-        }
-        return;
-      }
-
-      // 모두 선택
-      if ((e.key === "a" || e.key === "A") && isCmdOrCtrl(e)) {
-        e.preventDefault();
-        setSelectedIds(sections.map(s => s.id));
-        return;
-      }
-
-      // 선택 해제
-      if (e.key === "Escape") {
-        setSelectedIds([]);
-        return;
-      }
-
-      // 미세 이동 (Shift: 10px)
-      const step = e.shiftKey ? 10 : 1;
-      if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) {
-        e.preventDefault();
-        const dx =
-          e.key === "ArrowLeft" ? -step : e.key === "ArrowRight" ? step : 0;
-        const dy =
-          e.key === "ArrowUp" ? -step : e.key === "ArrowDown" ? step : 0;
-        if (selectedIds.length) {
-          selectedIds.forEach(id => {
-            const s = sections.find(x => x.id === id);
-            if (!s) return;
-            updateFrame(id, { x: s.x + dx, y: s.y + dy });
-          });
-          commitAfterTransform();
-        }
-        return;
-      }
-
-      // 키보드 줌 (뷰 중앙 기준)
-      const zoomAroundCenter = (factor: number) => {
-        const stage = stageRef.current;
-        if (!stage) return;
-        const rect = stage.getBoundingClientRect();
-        // 화면 중앙 기준 앵커
-        const sx = rect.left + rect.width / 2;
-        const sy = rect.top + rect.height / 2;
-        const cx = (sx - rect.left - panX) / zoom;
-        const cy = (sy - rect.top - panY) / zoom;
-
-        const prev = zoom;
-        const next = Math.max(0.25, Math.min(2, prev * factor));
-        const nextPct = Math.round(next * 100);
-        const newPanX = panX + cx * (prev - next);
-        const newPanY = panY + cy * (prev - next);
-        setCanvasZoom(nextPct);
-        setPan(newPanX, newPanY);
-      };
-
-      if (e.key === "+" || e.key === "=") {
-        e.preventDefault();
-        zoomAroundCenter(1.1);
-        return;
-      }
-      if (e.key === "-") {
-        e.preventDefault();
-        zoomAroundCenter(1 / 1.1);
-        return;
-      }
-      if (e.key === "0" && isCmdOrCtrl(e)) {
-        e.preventDefault();
-        // 100%로 리셋 (중앙 앵커)
-        const stage = stageRef.current;
-        if (stage) {
-          const rect = stage.getBoundingClientRect();
-          const sx = rect.left + rect.width / 2;
-          const sy = rect.top + rect.height / 2;
-          const cx = (sx - rect.left - panX) / zoom;
-          const cy = (sy - rect.top - panY) / zoom;
-          const prev = zoom;
-          const next = 1;
-          const nextPct = 100;
-          const newPanX = panX + cx * (prev - next);
-          const newPanY = panY + cy * (prev - next);
-          setCanvasZoom(nextPct);
-          setPan(newPanX, newPanY);
-        } else {
-          setCanvasZoom(100);
-        }
-        return;
-      }
-    };
-
-    const onKeyUp = (e: KeyboardEvent) => {
-      if (e.key === "Alt") setAltPressed(false);
-      if (e.key === " ") setSpacePressed(false);
-    };
-
-    const onBlur = () => {
-      setAltPressed(false);
-      setSpacePressed(false);
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("keyup", onKeyUp);
-    window.addEventListener("blur", onBlur);
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("keyup", onKeyUp);
-      window.removeEventListener("blur", onBlur);
-    };
-  }, [
-    selectedIds,
-    sections,
-    zoom,
-    panX,
-    panY,
-    setSelectedIds,
-    updateFrame,
-    commitAfterTransform,
-    setCanvasZoom,
-    setPan,
-    deleteSelected,
-    duplicateSelected,
-  ]);
-
-  // ---- 마퀴 / 팬 동작 ----
+  /* =================== 배경 클릭/마퀴 선택 =================== */
   const onMouseDown = (e: React.MouseEvent) => {
-    // Space 누른 상태면 팬 시작 (섹션 클릭 여부 무시)
-    if (spacePressed) {
-      setIsPanning(true);
-      panStartRef.current = {
-        sx: e.clientX,
-        sy: e.clientY,
-        px: panX,
-        py: panY,
-      };
-      return;
-    }
-
-    // 섹션 내부 클릭이면 마퀴 시작 X (선택 이벤트는 SectionItemView에서 처리)
+    // 아이템 위면 무시 (아이템은 SectionItemView에서 stopPropagation)
     if ((e.target as HTMLElement).closest(".section-item")) return;
 
-    const { x, y } = toLogical(e.clientX, e.clientY);
-    setSelectedIds([]);
-    setMarquee({ on: true, x, y, w: 0, h: 0 });
+    // 배경에서만 pending 시작
+    const p = toLogical(e.clientX, e.clientY);
+    setBgDown(true);
+    setDownPt(p);
+
+    // 깜빡이는 마퀴 방지: 여기선 마퀴 시작하지 않음
+    setMarquee({ on: false, x: 0, y: 0, w: 0, h: 0 });
   };
 
   const onMouseMove = (e: React.MouseEvent) => {
-    // 팬 중이면 pan만 업데이트
-    if (isPanning && panStartRef.current) {
-      const { sx, sy, px, py } = panStartRef.current;
-      const dx = e.clientX - sx;
-      const dy = e.clientY - sy;
-      setPan(px + dx, py + dy);
+    if (!bgDown || !downPt) return;
+
+    const p = toLogical(e.clientX, e.clientY);
+    const dx = Math.abs(p.x - downPt.x);
+    const dy = Math.abs(p.y - downPt.y);
+
+    // 임계치 넘으면 그때 마퀴 시작
+    if (!marquee.on) {
+      if (dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD) {
+        const nx = Math.min(downPt.x, p.x);
+        const ny = Math.min(downPt.y, p.y);
+        const nw = Math.abs(p.x - downPt.x);
+        const nh = Math.abs(p.y - downPt.y);
+        setMarquee({ on: true, x: nx, y: ny, w: nw, h: nh });
+
+        // 마퀴 시작 시 선택 초기화
+        setSelectedIds([]);
+      }
       return;
     }
 
-    if (!marquee.on) return;
-    const { x, y } = toLogical(e.clientX, e.clientY);
-    const nx = Math.min(marquee.x, x);
-    const ny = Math.min(marquee.y, y);
-    const nw = Math.abs(x - marquee.x);
-    const nh = Math.abs(y - marquee.y);
+    // 마퀴 업데이트
+    const nx = Math.min(downPt.x, p.x);
+    const ny = Math.min(downPt.y, p.y);
+    const nw = Math.abs(p.x - downPt.x);
+    const nh = Math.abs(p.y - downPt.y);
     setMarquee({ on: true, x: nx, y: ny, w: nw, h: nh });
 
-    // AABB 교차 선택
+    // 교차 선택
     const hit = sections
       .filter(
         s =>
@@ -352,23 +264,19 @@ export default function CanvasStage() {
     setSelectedIds(hit);
   };
 
-  const finishPointerOps = () => {
+  const onMouseUp = () => {
+    // 배경에서 클릭만 한 경우(마퀴 미시작) → 선택 해제
+    if (bgDown && !marquee.on) {
+      setSelectedIds([]);
+    }
+    // 상태 초기화
+    setBgDown(false);
+    setDownPt(null);
     setMarquee(m => ({ ...m, on: false }));
-    setIsPanning(false);
-    panStartRef.current = null;
   };
+  /* ========================================================= */
 
-  const onMouseUp = () => finishPointerOps();
-  const onMouseLeave = () => finishPointerOps();
-
-  // ---- 그룹 타겟/가이드 DOM 수집 ----
-  const [domEpoch, setDomEpoch] = useState(0);
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setDomEpoch(e => e + 1));
-    return () => cancelAnimationFrame(id);
-  }, [sections, selectedIds, zoom, panX, panY]);
-
-  // getElementById는 HTMLElement | null을 반환 → HTMLElement로만 좁혀야 함
+  // 선택된 DOM(그룹 핸들)
   const selectedEls: HTMLElement[] = useMemo(
     () =>
       selectedIds
@@ -384,14 +292,45 @@ export default function CanvasStage() {
       .filter((el): el is HTMLElement => !!el && !selectedIds.includes(el.id));
   }, [sections, selectedIds, snapToElements]);
 
-  // Alt(Option)로 스냅 임시 해제
-  const snappableBase = snapToGrid || snapToElements || snapToGuides;
-  const snappable = snappableBase && !altPressed;
+  const snappable = snapToGrid || snapToElements || snapToGuides;
   const snapGrid = snapToGrid ? gridSize : 0;
-
   const activeId = selectedIds.length
     ? selectedIds[selectedIds.length - 1]
     : "";
+
+  // 다른 아이템들 Rect
+  const rectsExcept = useCallback(
+    (selfId: string): Rect[] =>
+      sections
+        .filter(s => s.id !== selfId)
+        .map(s => ({ id: s.id, x: s.x, y: s.y, w: s.width, h: s.height })),
+    [sections],
+  );
+
+  // 실시간 겹침 하이라이트 계산 (막지는 않음)
+  const calcOverlapsLive = useCallback(
+    (selfId: string, cand: Rect) => {
+      const others = rectsExcept(selfId);
+      const merged: Rect[] = [];
+      for (const ob of others) {
+        const r = intersectionRect(cand, ob);
+        if (r) merged.push(r);
+      }
+      setOverlaps(merged);
+    },
+    [rectsExcept],
+  );
+
+  // 종료 시 겹침 해소(밀어내기)
+  const resolveAtEnd = useCallback(
+    (selfId: string, proposal: Rect, prev: Rect) => {
+      const others = rectsExcept(selfId);
+      const fixed = resolveNoOverlap(proposal, others, prev.x, prev.y);
+      setOverlaps([]); // 종료 후 하이라이트 제거
+      return fixed;
+    },
+    [rectsExcept],
+  );
 
   return (
     <div
@@ -400,7 +339,6 @@ export default function CanvasStage() {
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
-      onMouseLeave={onMouseLeave}
       style={{
         position: "relative",
         border: "1px solid rgba(0,0,0,.12)",
@@ -408,11 +346,9 @@ export default function CanvasStage() {
         overflow: "hidden",
         background: "#fff",
         userSelect: "none",
-        // Space로 팬 모드 시 커서 힌트
-        cursor: spacePressed ? (isPanning ? "grabbing" : "grab") : "default",
       }}
     >
-      {/* 🔹 줌/팬이 적용되는 레이어 */}
+      {/* 🔹 줌/팬 레이어 */}
       <div
         ref={setZoomLayerRef}
         className="zoom-layer"
@@ -435,59 +371,115 @@ export default function CanvasStage() {
           .map(s => {
             const isSelected = selectedIds.includes(s.id);
             const isActive = activeId === s.id;
+
             return (
               <Box
                 key={s.id}
                 id={s.id}
                 active={isActive}
                 onActiveChange={act => {
-                  if (act) setSelectedIds([s.id]); // 활성화 시 단일 선택
+                  if (act) setSelectedIds([s.id]);
                 }}
                 width={s.width}
                 height={s.height}
                 x={s.x}
                 y={s.y}
-                rotate={s.rotate ?? 0}
                 draggable
                 resizable
-                rotatable
-                zoom={zoom}
-                containerEl={containerEl}
-                // ✅ HTMLElement[]은 (HTMLElement | SVGElement)[]에 할당 가능
+                // rotatable
+                containerEl={containerEl as any}
                 targets={selectedEls.length > 1 ? selectedEls : undefined}
                 snappable={snappable}
                 snapGridWidth={snapGrid}
                 snapGridHeight={snapGrid}
                 elementGuidelines={guidelineEls}
-                // === Drag 커밋 ===
-                onDragEnd={e => {
+                // ===== 실시간 하이라이트: drag 중
+                onDrag={(e: any) => {
+                  const target = e.target as HTMLElement;
+                  const cs = getComputedStyle(target);
+                  const w = parseFloat(cs.width || "") || s.width;
+                  const h = parseFloat(cs.height || "") || s.height;
+                  const cand: Rect = { x: e.left, y: e.top, w, h };
+                  calcOverlapsLive(s.id, cand);
+                }}
+                // ===== 실시간 하이라이트: resize 중
+                onResize={(e: any) => {
+                  const target = e.target as HTMLElement;
+                  const l =
+                    e.drag?.left ?? parseFloat(target.style.left || "") ?? s.x;
+                  const t =
+                    e.drag?.top ?? parseFloat(target.style.top || "") ?? s.y;
+                  const w =
+                    e.width ?? parseFloat(target.style.width || "") ?? s.width;
+                  const h =
+                    e.height ??
+                    parseFloat(target.style.height || "") ??
+                    s.height;
+                  const cand: Rect = { x: l, y: t, w, h };
+                  calcOverlapsLive(s.id, cand);
+                }}
+                // ===== Drag End: 여기서만 겹침 해소 + 커밋
+                onDragEnd={(e: any) => {
+                  const el = e.target as HTMLElement;
+                  const cs = getComputedStyle(el);
                   const nx =
-                    e.lastEvent?.left ??
-                    parseFloat((e.target as HTMLElement).style.left) ??
-                    s.x;
+                    e.lastEvent?.left ?? parseFloat(cs.left || "") ?? s.x;
                   const ny =
-                    e.lastEvent?.top ??
-                    parseFloat((e.target as HTMLElement).style.top) ??
-                    s.y;
-                  updateFrame(s.id, { x: nx, y: ny });
+                    e.lastEvent?.top ?? parseFloat(cs.top || "") ?? s.y;
+                  const w = parseFloat(cs.width || "") || s.width;
+                  const h = parseFloat(cs.height || "") || s.height;
+
+                  const proposal: Rect = { x: nx, y: ny, w, h };
+                  const prev: Rect = {
+                    x: s.x,
+                    y: s.y,
+                    w: s.width,
+                    h: s.height,
+                  };
+                  const fixed = resolveAtEnd(s.id, proposal, prev);
+
+                  // DOM 보정
+                  el.style.left = `${fixed.x}px`;
+                  el.style.top = `${fixed.y}px`;
+
+                  updateFrame(s.id, { x: fixed.x, y: fixed.y });
                   commitAfterTransform();
                 }}
-                // === Resize 커밋 ===
-                onResizeEnd={e => {
-                  const cs = getComputedStyle(e.target as HTMLElement);
-                  const nx = parseFloat(cs.left) || s.x;
-                  const ny = parseFloat(cs.top) || s.y;
-                  const nw =
-                    e.lastEvent?.width ?? parseFloat(cs.width) ?? s.width;
-                  const nh =
-                    e.lastEvent?.height ?? parseFloat(cs.height) ?? s.height;
-                  updateFrame(s.id, { x: nx, y: ny, width: nw, height: nh });
-                  commitAfterTransform();
-                }}
-                // === Rotate 커밋 ===
-                onRotateEnd={e => {
-                  const angle = e.lastEvent?.rotate ?? 0;
-                  updateFrame(s.id, { rotate: angle });
+                // ===== Resize End: 여기서만 겹침 해소 + 커밋
+                onResizeEnd={(e: any) => {
+                  const el = e.target as HTMLElement;
+                  const cs = getComputedStyle(el);
+
+                  const l = parseFloat(cs.left || "") || s.x;
+                  const t = parseFloat(cs.top || "") || s.y;
+                  const w =
+                    e.lastEvent?.width ?? parseFloat(cs.width || "") ?? s.width;
+                  const h =
+                    e.lastEvent?.height ??
+                    parseFloat(cs.height || "") ??
+                    s.height;
+
+                  const proposal: Rect = { x: l, y: t, w, h };
+                  const prev: Rect = {
+                    x: s.x,
+                    y: s.y,
+                    w: s.width,
+                    h: s.height,
+                  };
+                  const fixed = resolveAtEnd(s.id, proposal, prev);
+
+                  // DOM 보정
+                  el.style.left = `${fixed.x}px`;
+                  el.style.top = `${fixed.y}px`;
+                  el.style.width = `${w}px`;
+                  el.style.height = `${h}px`;
+
+                  updateFrame(s.id, {
+                    x: fixed.x,
+                    y: fixed.y,
+                    width: w,
+                    height: h,
+                  });
                   commitAfterTransform();
                 }}
               >
@@ -507,6 +499,29 @@ export default function CanvasStage() {
               </Box>
             );
           })}
+
+        {/* 겹침 하이라이트 레이어 */}
+        {overlaps.length > 0 && (
+          <div aria-hidden>
+            {overlaps.map((r, i) => (
+              <div
+                key={`ov-${i}-${r.x}-${r.y}-${r.w}-${r.h}`}
+                style={{
+                  position: "absolute",
+                  left: r.x,
+                  top: r.y,
+                  width: r.w,
+                  height: r.h,
+                  background: "rgba(220, 38, 38, 0.18)", // 빨강 반투명
+                  border: "1px solid rgba(220, 38, 38, 0.65)",
+                  pointerEvents: "none",
+                  mixBlendMode: "multiply",
+                  borderRadius: 2,
+                }}
+              />
+            ))}
+          </div>
+        )}
 
         {/* <GuidesLayer lines={guideLines} /> */}
         {marquee.on && <MarqueeSelection rect={marquee} />}
