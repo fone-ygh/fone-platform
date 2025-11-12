@@ -10,14 +10,14 @@ interface ResizeSelectProps extends Omit<DsSelectProps, "ref"> {
   resizable?: boolean;
   draggable?: boolean;
   throttleResize?: number;
-  width?: number;
+  width: number;
   minWidth?: number;
   maxWidth?: number;
-  height?: number;
+  height: number;
   minHeight?: number;
   maxHeight?: number;
-  x?: number;
-  y?: number;
+  x: number;
+  y: number;
   /** 클릭해도 옵션이 열리지 않도록 차단 */
 }
 
@@ -51,7 +51,7 @@ export default function Select({
       height={height}
       x={x}
       y={y}
-      renderDirections={["e", "w"]} // ["nw", "n", "ne", "w", "e", "sw", "s", "se"]
+      //renderDirections={["e", "w"]} // ["nw", "n", "ne", "w", "e", "sw", "s", "se"]
     >
       <div
         style={{

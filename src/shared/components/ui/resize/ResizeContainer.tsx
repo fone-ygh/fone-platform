@@ -8,73 +8,78 @@ import Moveable, {
 import { useOutsideClick } from "@/shared/hooks/useOutsideClick";
 import useResizeStore from "@/shared/store/resize";
 
-interface Props {
-  id?: string;
+/** Moveable 그룹 타겟 타입 */
+type TargetsType =
+  | ((ElementGuidelineValueOption | MoveableRefType<Element>)[] &
+      (HTMLElement | SVGElement)[])
+  | (HTMLElement | SVGElement)[]
+  | undefined;
 
-  // 활성화 제어(외부/내부 둘 다 가능)
+interface Props {
+  /** 컨트롤(조작 핸들) 표시 여부 - Controlled */
   active?: boolean;
+  /** active 변경 시 알림(외부 클릭 등으로 비활성 요청) */
   onActiveChange?: (active: boolean) => void;
 
-  // Moveable 대상(그룹)
-  targets?: (HTMLElement | SVGElement)[];
+  /** Moveable 그룹 대상 */
+  targets?: TargetsType;
 
-  // 기능 플래그
+  /** 컴포넌트를 구분하는 ID */
+  id?: string;
+
+  /** 리사이즈/드래그 가능 여부 */
   resizable?: boolean;
   draggable?: boolean;
   rotatable?: boolean;
 
-  // 보정/스냅/좌표계
-  zoom?: number; // ← NEW (배율 보정은 Moveable에 맡김)
-  containerEl?: HTMLElement | null; // ← NEW (좌표계 기준 컨테이너)
-
+  /** 리사이즈, 드래그 최소 단위 */
   throttleResize?: number;
 
-  // 최소/최대 크기
+  /** 최소/최대 너비/높이 */
   minWidth?: number;
   maxWidth?: number;
   minHeight?: number;
   maxHeight?: number;
 
-  // 자식
+  /** 자식 요소 */
   children: ReactNode;
 
-  // 초기 프레임(논리 px)
-  width?: number;
-  height?: number;
-  x?: number;
-  y?: number;
-  rotate?: number; // ← NEW (커밋된 회전값을 스타일에 반영)
+  /** 초기 크기/좌표(논리 px) */
+  width: number;
+  height: number;
+  x: number;
+  y: number;
 
-  // 핸들 방향
-  renderDirections: string[];
+  /** 회전 각도(도) */
+  rotate?: number;
 
-  // 이벤트들
+  /** 뷰포트 줌값 (ex. 1.25) */
+  zoom?: number;
+
+  /** 스케일이 적용된 레이어 DOM (좌표계 기준 컨테이너) */
+  containerEl?: HTMLElement | null;
+
+  /* Moveable 이벤트 */
   onResizeStart?: (e: any) => void;
   onResize?: (e: any) => void;
   onResizeEnd?: (e: any) => void;
   onResizeGroupStart?: (e: any) => void;
   onResizeGroup?: (e: any) => void;
   onResizeGroupEnd?: (e: any) => void;
-
   onDragStart?: (e: any) => void;
   onDrag?: (e: any) => void;
   onDragEnd?: (e: any) => void;
   onDragGroupStart?: (e: any) => void;
   onDragGroup?: (e: any) => void;
   onDragGroupEnd?: (e: any) => void;
+  onRotateStart?: (e: any) => void;
+  onRotate?: (e: any) => void;
+  onRotateEnd?: (e: any) => void;
 
-  onRotateStart?: (e: any) => void; // ← NEW
-  onRotate?: (e: any) => void; // ← NEW
-  onRotateEnd?: (e: any) => void; // ← NEW
-  onRotateGroupStart?: (e: any) => void; // ← NEW
-  onRotateGroup?: (e: any) => void; // ← NEW
-  onRotateGroupEnd?: (e: any) => void; // ← NEW
-
-  // 스냅
+  /** 스냅 */
   snappable?: boolean | (string[] & false) | (string[] & true);
   snapGridWidth?: number;
   snapGridHeight?: number;
-  snapDigit?: number;
   elementGuidelines?:
     | ((ElementGuidelineValueOption | MoveableRefType<Element>)[] &
         (HTMLDivElement | null)[])
@@ -88,22 +93,35 @@ interface Props {
 export default function ResizeContainer({
   id = "",
   children,
-  active: activeProp,
+
+  /** Controlled 표시 여부 */
+  active = false,
   onActiveChange,
+
+  /** 기능 */
   resizable,
   draggable,
   rotatable,
   throttleResize,
-  renderDirections,
+
+  /** 제한 */
   minWidth = 0,
   maxWidth = Infinity,
   minHeight = 0,
   maxHeight = Infinity,
+
+  /** 초기 상태 */
   width: propWidth,
   height: propHeight,
   x: propX = 0,
   y: propY = 0,
-  rotate: propRotate = 0,
+  rotate = 0,
+
+  /** 좌표계/줌 */
+  zoom = 1,
+  containerEl,
+
+  /** 이벤트 */
   onResizeStart,
   onResize,
   onResizeEnd,
@@ -119,33 +137,24 @@ export default function ResizeContainer({
   onRotateStart,
   onRotate,
   onRotateEnd,
-  onRotateGroupStart,
-  onRotateGroup,
-  onRotateGroupEnd,
+
+  /** 그룹/스냅 */
   targets,
   snappable = true,
   snapGridWidth = 16,
   snapGridHeight = 16,
-  snapDigit,
   elementGuidelines,
-  zoom = 1,
-  containerEl,
 }: Props) {
-  const [internalActive, setInternalActive] = useState(false);
-  const active = activeProp ?? internalActive;
+  /** 외부 클릭 시 비활성화 요청 */
+  const moveableRef = useOutsideClick(() => onActiveChange?.(false));
 
-  const moveableRef = useOutsideClick(() => {
-    if (onActiveChange) onActiveChange(false);
-    else setInternalActive(false);
-  });
-
+  /** 레이아웃(크기/좌표) 캐시 */
   const { resize, setResize, setId } = useResizeStore();
 
   const width = resize[id]?.width ?? propWidth;
   const height = resize[id]?.height ?? propHeight;
   const x = resize[id]?.x ?? propX ?? 0;
   const y = resize[id]?.y ?? propY ?? 0;
-  const rotate = resize[id]?.rotate ?? propRotate ?? 0; // 회전값도 저장 가능하도록 확장
 
   useEffect(() => {
     setResize(id, {
@@ -153,12 +162,11 @@ export default function ResizeContainer({
       height: propHeight || 0,
       x: propX || 0,
       y: propY || 0,
-      rotate: propRotate || 0,
     });
     setId(id);
-  }, [id, propWidth, propHeight, propX, propY, propRotate, setId, setResize]);
+  }, [id, propWidth, propHeight, propX, propY, setId, setResize]);
 
-  // 리사이즈 시작 시 기준값 저장
+  // 리사이즈 시작 기준값
   const resizeStartRef = useRef<{
     width: number;
     height: number;
@@ -168,32 +176,42 @@ export default function ResizeContainer({
     dirY: number;
   } | null>(null);
 
-  // 클릭으로 활성화 (비제어 모드에서만)
-  const handleClick = () => {
-    if (onActiveChange) onActiveChange(true);
-    else setInternalActive(true);
-  };
-
   return (
     <>
+      {/* Moveable는 active일 때만 렌더 → 배경 클릭으로 selectedIds가 비면 자동 숨김 */}
       {active && (
         <Moveable
+          /* 단일/그룹 전환 */
           target={moveableRef}
           targets={targets || undefined}
-          resizable={resizable}
           draggable={draggable}
+          resizable={resizable}
           rotatable={rotatable}
           origin={false}
           throttleResize={throttleResize}
-          renderDirections={renderDirections}
+          /* 좌표계 고정 */
+          container={containerEl ?? undefined}
+          rootContainer={containerEl ?? undefined}
+          zoom={zoom}
+          /* 스냅 */
           snappable={snappable}
           snapGridWidth={snapGridWidth}
           snapGridHeight={snapGridHeight}
           elementGuidelines={elementGuidelines ?? []}
-          container={containerEl ?? undefined}
-          rootContainer={containerEl ?? undefined}
-          zoom={zoom}
-          snapDigit={snapDigit}
+          /* ===== Drag ===== */
+          onDragStart={e => {
+            onDragStart?.(e);
+          }}
+          onDrag={e => {
+            // 미리보기
+            const el = e.target as HTMLElement;
+            el.style.left = `${e.left}px`;
+            el.style.top = `${e.top}px`;
+            onDrag?.(e);
+          }}
+          onDragEnd={e => {
+            onDragEnd?.(e);
+          }}
           /* ===== Resize ===== */
           onResizeStart={e => {
             const cs = getComputedStyle(e.target as HTMLElement);
@@ -218,89 +236,86 @@ export default function ResizeContainer({
               minHeight,
               Math.min(e.height, maxHeight),
             );
-            e.target.style.width = `${newWidth}px`;
-            e.target.style.height = `${newHeight}px`;
+            const target = e.target as HTMLElement;
 
-            // 상/좌측 리사이즈 시 보정
-            if (draggable) {
-              const start = resizeStartRef.current;
-              if (start) {
-                const { dirX, dirY } = start; // -1 / 0 / 1
-                if (dirX === -1) {
-                  const newLeft = start.left + (start.width - newWidth);
-                  (e.target as HTMLElement).style.left = `${newLeft}px`;
-                }
-                if (dirY === -1) {
-                  const newTop = start.top + (start.height - newHeight);
-                  (e.target as HTMLElement).style.top = `${newTop}px`;
-                }
+            // 크기 반영
+            target.style.width = `${newWidth}px`;
+            target.style.height = `${newHeight}px`;
+
+            // 상/좌측 핸들 보정
+            const start = resizeStartRef.current;
+            if (start) {
+              const { dirX, dirY } = start;
+              if (dirX === -1) {
+                const newLeft = start.left + (start.width - newWidth);
+                target.style.left = `${newLeft}px`;
+              }
+              if (dirY === -1) {
+                const newTop = start.top + (start.height - newHeight);
+                target.style.top = `${newTop}px`;
               }
             }
             onResize?.(e);
           }}
           onResizeEnd={e => {
-            const cs = getComputedStyle(e.target as HTMLElement);
+            // e.lastEvent가 없을 수 있으니 안전하게 처리
+            const target = e.target as HTMLElement;
+            const cs = getComputedStyle(target);
             const finalLeft = parseFloat(cs.left) || x || 0;
             const finalTop = parseFloat(cs.top) || y || 0;
+
+            const lastW = e?.lastEvent?.width;
+            const lastH = e?.lastEvent?.height;
+
+            const finalW =
+              typeof lastW === "number"
+                ? lastW
+                : parseFloat(cs.width) || width || 0;
+            const finalH =
+              typeof lastH === "number"
+                ? lastH
+                : parseFloat(cs.height) || height || 0;
+
             setResize(id, {
-              width: e.lastEvent.width,
-              height: e.lastEvent.height,
+              width: finalW,
+              height: finalH,
               x: draggable ? finalLeft : x,
               y: draggable ? finalTop : y,
-              rotate, // 유지
             });
             resizeStartRef.current = null;
+
             onResizeEnd?.(e);
-          }}
-          /* ===== Drag ===== */
-          onDragStart={e => onDragStart?.(e)}
-          onDrag={e => {
-            e.target.style.left = `${e.left}px`;
-            e.target.style.top = `${e.top}px`;
-            onDrag?.(e);
-          }}
-          onDragEnd={e => {
-            setResize(id, {
-              width,
-              height,
-              x: e.lastEvent?.left ?? x,
-              y: e.lastEvent?.top ?? y,
-              rotate,
-            });
-            onDragEnd?.(e);
           }}
           /* ===== Rotate ===== */
           onRotateStart={e => onRotateStart?.(e)}
           onRotate={e => onRotate?.(e)}
-          onRotateEnd={e => {
-            // 종료 시 최종 각도는 lastEvent에서
-            const angle = e.lastEvent?.rotate ?? 0;
-            setResize(id, { width, height, x, y, rotate: angle });
-            onRotateEnd?.(e);
-          }}
-          /* ===== Group ===== */
+          onRotateEnd={e => onRotateEnd?.(e)}
+          /* 그룹 이벤트 패스스루 */
           onResizeGroupStart={e => onResizeGroupStart?.(e)}
           onResizeGroup={e => onResizeGroup?.(e)}
           onResizeGroupEnd={e => onResizeGroupEnd?.(e)}
           onDragGroupStart={e => onDragGroupStart?.(e)}
           onDragGroup={e => onDragGroup?.(e)}
           onDragGroupEnd={e => onDragGroupEnd?.(e)}
-          onRotateGroupStart={e => onRotateGroupStart?.(e)}
-          onRotateGroup={e => onRotateGroup?.(e)}
-          onRotateGroupEnd={e => onRotateGroupEnd?.(e)}
+          /* 핸들 방향 */
+          renderDirections={["nw", "n", "ne", "w", "e", "sw", "s", "se"]}
         />
       )}
 
       <StyledContainer
         id={id}
         ref={moveableRef}
-        onClick={handleClick}
         width={width || "auto"}
         height={height || "auto"}
         x={x}
         y={y}
         draggable={draggable}
-        rotate={rotate}
+        style={{
+          transform: rotate ? `rotate(${rotate}deg)` : "none",
+          transformOrigin: "left top",
+        }}
+        // 내부에서 활성 전환이 필요하면 아래 주석을 사용
+        // onMouseDown={() => onActiveChange?.(true)}
       >
         {children}
       </StyledContainer>
@@ -314,7 +329,6 @@ interface StyledContainerProps {
   x?: number;
   y?: number;
   draggable?: boolean;
-  rotate?: number;
 }
 
 const StyledContainer = styled.div<StyledContainerProps>`
@@ -322,8 +336,6 @@ const StyledContainer = styled.div<StyledContainerProps>`
   height: ${({ height }) =>
     typeof height === "number" ? `${height}px` : height};
   position: ${({ draggable }) => (draggable ? "absolute" : "static")};
-  left: ${({ x }) => `${x ?? 0}px`};
-  top: ${({ y }) => `${y ?? 0}px`};
-  transform: ${({ rotate }) => (rotate ? `rotate(${rotate}deg)` : "none")};
-  transform-origin: center center;
+  left: ${({ x }) => `${x}px`};
+  top: ${({ y }) => `${y}px`};
 `;

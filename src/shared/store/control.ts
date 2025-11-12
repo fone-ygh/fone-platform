@@ -82,7 +82,7 @@ export const useEDITORStore = create<EditorStore>()(
 
         snapToGrid: true,
         snapToGuides: true,
-        snapToElements: false,
+        snapToElements: true,
         snapTolerance: 6,
 
         showRulers: false,

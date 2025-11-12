@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import { Button, Flex, Label, TextField2 } from "fone-design-system_v1";
 
 import Aside from "@/shared/components/layout/aside/Aside";
 import { AccordionCard } from "@/shared/components/ui/cardAccordion/CardAccordion";
@@ -34,7 +35,6 @@ export default function RightPanel() {
     s => s.actions.applyColorToSelection,
   );
 
-  // 액션 폴백을 위한 any 핸들
   const actionsAny = useLayoutStore(s => s.actions as any);
   const setSelectedIds = useLayoutStore(s => s.actions.setSelectedIds);
 
@@ -65,17 +65,20 @@ export default function RightPanel() {
       patchSection(one.id, { [key]: v as any });
     };
 
-  // ✅ 전체 삭제
+  // 전체 삭제
   const onClearAll = React.useCallback(() => {
     if (!sections.length) return;
-    if (!window.confirm("모든 컴포넌트를 삭제할까요?")) return;
+    if (
+      typeof window !== "undefined" &&
+      !window.confirm("모든 컴포넌트를 삭제할까요?")
+    )
+      return;
 
     if (typeof actionsAny.clearSections === "function") {
       actionsAny.clearSections();
     } else if (typeof actionsAny.setSections === "function") {
       actionsAny.setSections([]);
     } else {
-      // 폴백: 모두 선택 후 deleteSelected 호출
       setSelectedIds(sections.map(s => s.id));
       deleteSelected();
     }
@@ -90,15 +93,20 @@ export default function RightPanel() {
     commitAfterTransform,
   ]);
 
-  // ✅ 선택 삭제(확인)
+  // 선택 삭제
   const onDeleteSelected = React.useCallback(() => {
     if (!selectedIds.length) return;
-    if (!window.confirm(`선택된 ${selectedIds.length}개 항목을 삭제할까요?`))
+    if (
+      typeof window !== "undefined" &&
+      !window.confirm(`선택된 ${selectedIds.length}개 항목을 삭제할까요?`)
+    )
       return;
     deleteSelected();
     setSelectedIds([]);
     commitAfterTransform?.();
   }, [selectedIds, deleteSelected, setSelectedIds, commitAfterTransform]);
+
+  const hasSelection = selectedIds.length > 0;
 
   return (
     <Aside position="right" defaultWidth={340} minWidth={260} maxWidth={560}>
@@ -115,49 +123,44 @@ export default function RightPanel() {
               title: "Summary",
               content: (
                 <div className="card-body">
-                  <div
-                    className="row"
-                    style={{ display: "flex", gap: 8, alignItems: "center" }}
-                  >
+                  <Flex flexDirection="column" gap={1}>
                     <div>Selected: {selectedIds.length}</div>
-                    <div
-                      style={{ marginLeft: "auto", display: "flex", gap: 8 }}
-                    >
-                      <button
-                        type="button"
+                    <Flex spacing={1}>
+                      <Button
+                        variant="outlined"
+                        size="xsmall"
                         onClick={() => duplicateSelected()}
-                        disabled={!selectedIds.length}
+                        disabled={!hasSelection}
                       >
-                        Duplicate
-                      </button>
-                      <button
-                        type="button"
+                        복사하기
+                      </Button>
+                      <Button
+                        variant="contained"
+                        size="xsmall"
                         onClick={onDeleteSelected}
-                        disabled={!selectedIds.length}
+                        disabled={!hasSelection}
                       >
-                        Delete
-                      </button>
-                      <button
-                        type="button"
+                        삭제
+                      </Button>
+                      <Button
                         onClick={onClearAll}
                         disabled={!sections.length}
-                        style={{
-                          color: "#b91c1c",
-                          borderColor: "rgba(220,38,38,.35)",
-                        }}
+                        color="#b91c1c"
                         title="모든 컴포넌트를 삭제"
+                        variant="contained"
+                        size="xsmall"
                       >
-                        Clear All
-                      </button>
-                    </div>
-                  </div>
+                        전체삭제
+                      </Button>
+                    </Flex>
+                  </Flex>
                 </div>
               ),
             },
           ]}
         />
 
-        {/* ===== Add Components (오른쪽 패널로 이동) ===== */}
+        {/* ===== Add Components (오른쪽 패널에 배치) ===== */}
         <AccordionCard
           title="Add Components"
           allowMultiple
@@ -177,8 +180,9 @@ export default function RightPanel() {
                       gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
                     }}
                   >
-                    <button
-                      type="button"
+                    <Button
+                      variant="outlined"
+                      size="xsmall"
                       onClick={() =>
                         addSection("box", {
                           width: 320,
@@ -188,9 +192,10 @@ export default function RightPanel() {
                       }
                     >
                       + Box
-                    </button>
-                    <button
-                      type="button"
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      size="xsmall"
                       onClick={() =>
                         addSection("button", {
                           width: 160,
@@ -201,23 +206,24 @@ export default function RightPanel() {
                       }
                     >
                       + Button
-                    </button>
-                    <button
-                      type="button"
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      size="xsmall"
                       onClick={() =>
                         addSection("tabs", {
                           width: 360,
                           height: 200,
                           title: "Tabs",
                           tabs: [
-                            { label: "Tab 1", content: "첫 번째" },
+                            { label: "Tab 1", content: "첫 번째" }, // ← 'label'로 교정
                             { label: "Tab 2", content: "두 번째" },
                           ],
                         })
                       }
                     >
                       + Tabs
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ),
@@ -241,11 +247,11 @@ export default function RightPanel() {
                   content: (
                     <div className="card-body">
                       <div className="row" style={{ display: "grid", gap: 8 }}>
-                        <label className="inline">Title</label>
-                        <input
-                          type="text"
+                        <Label>Title</Label>
+                        <TextField2
                           value={one.title || ""}
                           onChange={e => onText("title")(e.target.value)}
+                          size="xs"
                         />
                       </div>
                     </div>
@@ -264,45 +270,52 @@ export default function RightPanel() {
                           gridTemplateColumns: "1fr 1fr",
                         }}
                       >
-                        <label className="inline">X</label>
-                        <input
+                        <Label>X</Label>
+                        <TextField2
                           type="number"
+                          size="xs"
                           value={one.x}
                           onChange={e => onNum("x")(e.target.value)}
                         />
-                        <label className="inline">Y</label>
-                        <input
+                        <Label>Y</Label>
+                        <TextField2
                           type="number"
+                          size="xs"
                           value={one.y}
                           onChange={e => onNum("y")(e.target.value)}
                         />
-                        <label className="inline">W</label>
-                        <input
+                        <Label>W</Label>
+                        <TextField2
                           type="number"
+                          size="xs"
                           value={one.width}
                           onChange={e => onNum("width")(e.target.value)}
                         />
-                        <label className="inline">H</label>
-                        <input
+                        <Label>H</Label>
+                        <TextField2
                           type="number"
+                          size="xs"
                           value={one.height}
                           onChange={e => onNum("height")(e.target.value)}
                         />
-                        <label className="inline">Rotate</label>
-                        <input
+                        <Label>Rotate</Label>
+                        <TextField2
                           type="number"
+                          size="xs"
                           value={one.rotate ?? 0}
                           onChange={e => onNum("rotate")(e.target.value)}
                         />
-                        <label className="inline">Radius</label>
-                        <input
+                        <Label>Radius</Label>
+                        <TextField2
                           type="number"
+                          size="xs"
                           value={one.radius ?? 8}
                           onChange={e => onNum("radius")(e.target.value)}
                         />
-                        <label className="inline">Shadow</label>
-                        <input
+                        <Label>Shadow</Label>
+                        <TextField2
                           type="number"
+                          size="xs"
                           value={one.shadow ?? 0}
                           onChange={e => onNum("shadow")(e.target.value)}
                         />
@@ -330,23 +343,29 @@ export default function RightPanel() {
                           className="row"
                           style={{ display: "grid", gap: 8 }}
                         >
-                          <label className="inline">Text</label>
-                          <input
-                            type="text"
+                          <Label>Text</Label>
+                          <TextField2
                             value={one.text || ""}
                             onChange={e => onText("text")(e.target.value)}
+                            size="xs"
                           />
                         </div>
                         <div
                           className="row"
                           style={{ display: "grid", gap: 8, marginTop: 10 }}
                         >
-                          <label className="inline">Align</label>
+                          <Label>Align</Label>
+                          {/* NOTE: DS Select 컴포넌트가 있다면 여기로 교체 */}
                           <select
                             value={one.textAlign ?? "left"}
                             onChange={e =>
                               onSelect("textAlign")(e.target.value)
                             }
+                            style={{
+                              height: 28,
+                              fontSize: 12,
+                              padding: "2px 6px",
+                            }}
                           >
                             <option value="left">left</option>
                             <option value="center">center</option>
@@ -376,23 +395,28 @@ export default function RightPanel() {
                           className="row"
                           style={{ display: "grid", gap: 8 }}
                         >
-                          <label className="inline">URL</label>
-                          <input
-                            type="text"
+                          <Label>URL</Label>
+                          <TextField2
                             value={one.imageUrl || ""}
                             onChange={e => onText("imageUrl")(e.target.value)}
+                            size="xs"
                           />
                         </div>
                         <div
                           className="row"
                           style={{ display: "grid", gap: 8, marginTop: 10 }}
                         >
-                          <label className="inline">ObjectFit</label>
+                          <Label>ObjectFit</Label>
                           <select
                             value={one.objectFit ?? "cover"}
                             onChange={e =>
                               onSelect("objectFit")(e.target.value)
                             }
+                            style={{
+                              height: 28,
+                              fontSize: 12,
+                              padding: "2px 6px",
+                            }}
                           >
                             <option value="cover">cover</option>
                             <option value="contain">contain</option>
@@ -422,34 +446,39 @@ export default function RightPanel() {
                           className="row"
                           style={{ display: "grid", gap: 8 }}
                         >
-                          <label className="inline">Label</label>
-                          <input
-                            type="text"
+                          <Label>Label</Label>
+                          <TextField2
                             value={one.btnLabel || ""}
                             onChange={e => onText("btnLabel")(e.target.value)}
+                            size="xs"
                           />
                         </div>
                         <div
                           className="row"
                           style={{ display: "grid", gap: 8, marginTop: 10 }}
                         >
-                          <label className="inline">Href</label>
-                          <input
-                            type="text"
+                          <Label>Href</Label>
+                          <TextField2
                             value={one.btnHref || ""}
                             onChange={e => onText("btnHref")(e.target.value)}
+                            size="xs"
                           />
                         </div>
                         <div
                           className="row"
                           style={{ display: "grid", gap: 8, marginTop: 10 }}
                         >
-                          <label className="inline">Variant</label>
+                          <Label>Variant</Label>
                           <select
                             value={one.btnVariant ?? "solid"}
                             onChange={e =>
                               onSelect("btnVariant")(e.target.value)
                             }
+                            style={{
+                              height: 28,
+                              fontSize: 12,
+                              padding: "2px 6px",
+                            }}
                           >
                             <option value="solid">solid</option>
                             <option value="ghost">ghost</option>
@@ -475,10 +504,15 @@ export default function RightPanel() {
                   content: (
                     <div className="card-body">
                       <div className="row" style={{ display: "grid", gap: 8 }}>
-                        <label className="inline">Purpose</label>
+                        <Label>Purpose</Label>
                         <select
                           value={one.purpose ?? "neutral"}
                           onChange={e => onSelect("purpose")(e.target.value)}
+                          style={{
+                            height: 28,
+                            fontSize: 12,
+                            padding: "2px 6px",
+                          }}
                         >
                           {[
                             "neutral",
@@ -507,19 +541,31 @@ export default function RightPanel() {
                         className="row"
                         style={{ display: "grid", gap: 8, marginTop: 10 }}
                       >
-                        <label className="inline">Set BG</label>
+                        <Label>Set BG</Label>
                         <input
                           type="color"
                           onChange={e =>
                             applyColorToSelection(e.target.value, "bg")
                           }
+                          style={{
+                            width: 32,
+                            height: 28,
+                            padding: 0,
+                            border: 0,
+                          }}
                         />
-                        <label className="inline">Set Text</label>
+                        <Label>Set Text</Label>
                         <input
                           type="color"
                           onChange={e =>
                             applyColorToSelection(e.target.value, "text")
                           }
+                          style={{
+                            width: 32,
+                            height: 28,
+                            padding: 0,
+                            border: 0,
+                          }}
                         />
                       </div>
                     </div>
@@ -545,21 +591,41 @@ export default function RightPanel() {
                         style={{
                           display: "grid",
                           gap: 8,
-                          gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
                         }}
                       >
-                        <button type="button" onClick={() => sendToFront()}>
+                        <Button
+                          variant="outlined"
+                          size="xsmall"
+                          disabled={!hasSelection}
+                          onClick={() => sendToFront()}
+                        >
                           To Front
-                        </button>
-                        <button type="button" onClick={() => bringForward()}>
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          size="xsmall"
+                          disabled={!hasSelection}
+                          onClick={() => bringForward()}
+                        >
                           Forward
-                        </button>
-                        <button type="button" onClick={() => sendBackward()}>
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          size="xsmall"
+                          disabled={!hasSelection}
+                          onClick={() => sendBackward()}
+                        >
                           Backward
-                        </button>
-                        <button type="button" onClick={() => sendToBack()}>
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          size="xsmall"
+                          disabled={!hasSelection}
+                          onClick={() => sendToBack()}
+                        >
                           To Back
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   ),
