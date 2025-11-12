@@ -93,7 +93,7 @@ export default function LeftPanel() {
                       label="Grid"
                       size="small"
                     />
-                    <Checkbox
+                    {/* <Checkbox
                       type="checkbox"
                       checked={showGuides}
                       onChange={e => setShowGuides(e.target.checked)}
@@ -106,7 +106,7 @@ export default function LeftPanel() {
                       onChange={e => setShowRulers(e.target.checked)}
                       label="Rulers"
                       size="small"
-                    />
+                    /> */}
                   </div>
 
                   <div

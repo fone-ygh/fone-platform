@@ -591,7 +591,7 @@ export default function RightPanel() {
                         style={{
                           display: "grid",
                           gap: 8,
-                          gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
                         }}
                       >
                         <Button
