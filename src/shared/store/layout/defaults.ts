@@ -1,88 +1,162 @@
-import type { Breakpoint, LayoutState, Page, SectionItem } from "./types";
-import { deepClone, genId } from "./utils";
+// src/shared/store/layout/defaults.ts
+import type { Section, SectionType } from "./types";
 
-export const DEFAULT_BREAKPOINTS: Breakpoint[] = [
-  { id: "base", label: "Base", width: 1200 },
-  { id: "sm", label: "SM", width: 640 },
-  { id: "md", label: "MD", width: 768 },
-  { id: "lg", label: "LG", width: 1024 },
-  { id: "xl", label: "XL", width: 1280 },
-];
+/** Editor와 일치시키면 혼란이 줄어든다. */
+export const DEFAULT_CANVAS_WIDTH = 1920;
+export const DEFAULT_CANVAS_HEIGHT = 2000;
 
-export const START_SECTIONS: SectionItem[] = [
-  {
-    id: "s-1",
+/** SSR/CSR 공통에서 안전한 간단 UID */
+const uid = () =>
+  `sec_${Math.random().toString(36).slice(2, 9)}_${Date.now().toString(36)}`;
+
+/**
+ * 타입별 기본값
+ * - init으로 주는 값은 기본을 덮어쓴다.
+ * - z는 외부에서 계산해서 주입 (store에서 maxZ + 1)
+ */
+export function createSection(
+  type: SectionType,
+  z: number,
+  init: Partial<Section> = {},
+): Section {
+  // 공통 기본
+  const base: Section = {
+    id: uid(),
+    type,
+    x: 0,
+    y: 0,
+    width: 320,
+    height: 200,
+    z,
+    rotate: 0,
+    radius: 8,
+    shadow: 0,
+    title: capitalize(type),
+    bg: "#ffffff",
+    color: "#0f172a",
+  };
+
+  // 타입별 기본
+  switch (type) {
+    case "box":
+      // 그대로 base 사용
+      break;
+
+    case "text":
+      base.width = 360;
+      base.height = 120;
+      base.text = "Lorem ipsum";
+      base.textAlign = "left";
+      base.title = "Text";
+      break;
+
+    case "image":
+      base.width = 360;
+      base.height = 240;
+      base.imageUrl = "https://picsum.photos/seed/fone/720/480"; // 샘플 이미지
+      base.objectFit = "cover";
+      base.title = "Image";
+      break;
+
+    case "button":
+      base.width = 160;
+      base.height = 48;
+      base.btnLabel = "Button";
+      base.btnVariant = "solid";
+      base.title = "Button";
+      break;
+
+    case "tabs":
+      base.width = 360;
+      base.height = 200;
+      base.title = "Tabs";
+      base.tabs = [
+        { label: "Tab 1", content: "첫 번째" },
+        { label: "Tab 2", content: "두 번째" },
+      ];
+      break;
+  }
+
+  // init으로 덮어쓰기
+  const merged = { ...base, ...init } as Section;
+  // width/height/x/y/rotate 등 숫자 필드가 NaN 되는 걸 방지
+  merged.x = toInt(merged.x, 0);
+  merged.y = toInt(merged.y, 0);
+  merged.width = Math.max(1, toInt(merged.width, base.width));
+  merged.height = Math.max(1, toInt(merged.height, base.height));
+  merged.rotate = toInt(merged.rotate ?? 0, 0);
+  merged.radius = toInt(merged.radius ?? 0, 0);
+  merged.shadow = toInt(merged.shadow ?? 0, 0);
+  merged.z = toInt(z, 0);
+
+  return merged;
+}
+
+/**
+ * 초기 레이아웃 (header / aside / main / footer)
+ * - 모두 type: "box" 로 생성하고 purpose로 역할 지정
+ * - 배치 간단히: 상단 헤더, 좌측 사이드, 본문, 하단 푸터
+ */
+export const INITIAL_SECTIONS: Section[] = [
+  // Header
+  createSection("box", 1, {
+    id: `header_${uid()}`,
     title: "Header",
-    type: "box",
-    x: 12,
-    y: 12,
-    width: 1160,
-    height: 80,
-    radius: 8,
-    shadow: 0,
-    z: 1,
     purpose: "header",
-    autoColor: true,
-  },
-  {
-    id: "s-2",
-    title: "Sidebar",
-    type: "box",
-    x: 12,
-    y: 108,
-    width: 280,
-    height: 300,
-    radius: 8,
-    shadow: 0,
-    z: 1,
+    x: 0,
+    y: 0,
+    width: DEFAULT_CANVAS_WIDTH,
+    height: 120,
+    bg: "#f8fafc", // slate-50
+    color: "#0f172a",
+    radius: 0,
+  }),
+  // Aside
+  createSection("box", 2, {
+    id: `aside_${uid()}`,
+    title: "Aside",
     purpose: "sidebar",
-    autoColor: true,
-  },
-  {
-    id: "s-3",
+    x: 0,
+    y: 140,
+    width: 320,
+    height: 980,
+    bg: "#f1f5f9", // slate-100
+    color: "#0f172a",
+    radius: 8,
+  }),
+  // Main
+  createSection("box", 3, {
+    id: `main_${uid()}`,
     title: "Main",
-    type: "box",
-    x: 304,
-    y: 108,
-    width: 868,
-    height: 300,
-    radius: 8,
-    shadow: 0,
-    z: 1,
     purpose: "main",
-    autoColor: true,
-  },
-  {
-    id: "s-4",
-    title: "Footer",
-    type: "box",
-    x: 12,
-    y: 422,
-    width: 1160,
-    height: 80,
+    x: 340, // 사이드바(320) + 20px 여백
+    y: 140,
+    width: DEFAULT_CANVAS_WIDTH - 340, // 우측까지 꽉
+    height: 980,
+    bg: "#ffffff",
+    color: "#0f172a",
     radius: 8,
-    shadow: 0,
-    z: 1,
+  }),
+  // Footer
+  createSection("box", 4, {
+    id: `footer_${uid()}`,
+    title: "Footer",
     purpose: "footer",
-    autoColor: true,
-  },
+    x: 0,
+    y: 1140, // header(120) + gap(20) + main block(1000)
+    width: DEFAULT_CANVAS_WIDTH,
+    height: 120,
+    bg: "#f8fafc",
+    color: "#0f172a",
+    radius: 0,
+  }),
 ];
 
-export const makeDefaultLayout = (): LayoutState => ({
-  version: 9,
-  canvasWidth: 1200,
-  canvasHeight: 900,
-  sections: deepClone(START_SECTIONS),
-  breakpoints: DEFAULT_BREAKPOINTS,
-  activeBp: "base",
-  responsive: { inheritScale: true, viewportWidth: 1200 },
-  showColumns: false,
-  columns: 0,
-  gutter: 0,
-  containerPadding: 0,
-});
-
-export const DEFAULT_PAGES: Page[] = [
-  { id: genId("page"), name: "Home", layout: makeDefaultLayout() },
-  { id: genId("page"), name: "About", layout: makeDefaultLayout() },
-];
+/* ------------------ utils (local) ------------------ */
+function toInt(v: unknown, fallback: number) {
+  const n = Number(v);
+  return Number.isFinite(n) ? Math.round(n) : fallback;
+}
+function capitalize(s: string) {
+  return s.length ? s[0].toUpperCase() + s.slice(1) : s;
+}
