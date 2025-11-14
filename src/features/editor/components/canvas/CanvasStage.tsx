@@ -8,7 +8,6 @@ import { useEDITORActions, useEDITORStore } from "@/shared/store/control";
 import { useLayoutStore } from "@/shared/store/layout";
 import { useLayoutActions } from "@/shared/store/layout/store";
 
-import ColumnsOverlay from "../overlays/ColumnsOverlay";
 import type { Rect } from "./hooks/collision";
 import { useDomHandles } from "./hooks/useDomHandles";
 import { useMarqueeSelection } from "./hooks/useMarqueeSelection";
@@ -170,8 +169,6 @@ export default function CanvasStage() {
           cursor,
         }}
       >
-        <ColumnsOverlay />
-
         {sections
           .slice()
           .sort((a, b) => (a.z ?? 0) - (b.z ?? 0))
