@@ -1,7 +1,7 @@
 // src/features/editor/components/canvas/hooks/useOverlapResolver.ts
 import { useCallback, useState } from "react";
 
-import { GAP, intersectionRect, Rect, resolveNoOverlap } from "./collision";
+import { intersectionRect, Rect } from "./collision";
 
 type SectionLike = {
   id: string;
@@ -37,20 +37,13 @@ export function useOverlapResolver(sections: SectionLike[]) {
     [rectsExcept],
   );
 
-  // 종료 시 겹침/근접 해소(최소 1px 보장)
+  // 종료 시: 겹치면 prev로 즉시 되돌리고, 아니면 proposal 확정
   const resolveOnEnd = useCallback(
-    (selfId: string, proposal: Rect, prev: Rect, gap = GAP) => {
+    (selfId: string, proposal: Rect, prev: Rect) => {
       const others = rectsExcept(selfId);
-      const fixed = resolveNoOverlap(
-        proposal,
-        others,
-        prev.x,
-        prev.y,
-        128,
-        gap,
-      );
-      setOverlaps([]); // 종료 후 하이라이트 제거
-      return fixed;
+      const hasOverlap = others.some(ob => intersectionRect(proposal, ob));
+      setOverlaps([]);
+      return hasOverlap ? prev : proposal;
     },
     [rectsExcept],
   );
