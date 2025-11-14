@@ -48,5 +48,5 @@ export function useOverlapResolver(sections: SectionLike[]) {
     [rectsExcept],
   );
 
-  return { overlaps, calcLive, resolveOnEnd };
+  return { overlaps, calcLive, resolveOnEnd, setOverlaps };
 }

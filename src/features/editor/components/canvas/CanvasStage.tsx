@@ -100,7 +100,8 @@ export default function CanvasStage() {
   });
 
   // 겹침 하이라이트(드래그/리사이즈 중), 종료 시 1px도 겹치지 않도록 해소
-  const { overlaps, calcLive, resolveOnEnd } = useOverlapResolver(sections);
+  const { overlaps, calcLive, resolveOnEnd, setOverlaps } =
+    useOverlapResolver(sections);
 
   // DOM 핸들 수집(그룹/가이드라인)
   const { selectedEls, guidelineEls } = useDomHandles({
@@ -133,6 +134,13 @@ export default function CanvasStage() {
   const onMouseUp = () => {
     panUp();
     marqueeUp();
+  };
+
+  // 컨테이너(zoom-layer) 경계 밖 여부 판단
+  const isOutOfBounds = (r: Rect) => {
+    return (
+      r.x < 0 || r.y < 0 || r.x + r.w > canvasWidth || r.y + r.h > canvasHeight
+    );
   };
 
   /* ========== 렌더링 ========== */
@@ -243,9 +251,16 @@ export default function CanvasStage() {
                     w: s.width,
                     h: s.height,
                   };
+                  // 컨테이너 경계 밖이면 prev로 복귀, 아니면 겹침 규칙 적용
 
-                  // 종료 시 "1px도 겹치지 않게" 확정
-                  const fixed = resolveOnEnd(s.id, proposal, prev);
+                  let fixed = proposal;
+
+                  if (isOutOfBounds(proposal)) {
+                    fixed = prev;
+                    setOverlaps([]);
+                  } else {
+                    fixed = resolveOnEnd(s.id, proposal, prev);
+                  }
 
                   // DOM 보정
                   el.style.left = `${fixed.x}px`;
@@ -277,8 +292,15 @@ export default function CanvasStage() {
                     w: s.width,
                     h: s.height,
                   };
-                  // 종료 시 겹치면 prev로 완전 되돌림, 아니면 proposal 확정
-                  const fixed = resolveOnEnd(s.id, proposal, prev);
+
+                  let fixed = proposal;
+
+                  if (isOutOfBounds(proposal)) {
+                    fixed = prev;
+                    setOverlaps([]);
+                  } else {
+                    fixed = resolveOnEnd(s.id, proposal, prev);
+                  }
 
                   // DOM 보정
                   el.style.left = `${fixed.x}px`;
