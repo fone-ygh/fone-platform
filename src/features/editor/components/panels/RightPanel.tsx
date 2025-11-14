@@ -18,21 +18,21 @@ export default function RightPanel() {
   const selectedIds = useLayoutStore(s => s.selectedIds);
   const sections = useLayoutStore(s => s.sections);
 
-  const patchSection = useLayoutStore(s => s.actions.patchSection);
-  const deleteSelected = useLayoutStore(s => s.actions.deleteSelected);
-  const duplicateSelected = useLayoutStore(s => s.actions.duplicateSelected);
-  const addSection = useLayoutStore(s => s.actions.addSection);
+  const patchSection = useLayoutStore(s => s.actions.setPatchSection);
+  const deleteSelected = useLayoutStore(s => s.actions.setDeleteSelected);
+  const duplicateSelected = useLayoutStore(s => s.actions.setDuplicateSelected);
+  const addSection = useLayoutStore(s => s.actions.setAddSection);
   const commitAfterTransform = useLayoutStore(
-    s => s.actions.commitAfterTransform,
+    s => s.actions.setCommitAfterTransform,
   );
 
-  const sendToFront = useLayoutStore(s => s.actions.sendToFront);
-  const sendToBack = useLayoutStore(s => s.actions.sendToBack);
-  const bringForward = useLayoutStore(s => s.actions.bringForward);
-  const sendBackward = useLayoutStore(s => s.actions.sendBackward);
+  // const sendToFront = useLayoutStore(s => s.actions.setSendToFront);
+  // const sendToBack = useLayoutStore(s => s.actions.setSendToBack);
+  // const bringForward = useLayoutStore(s => s.actions.setBringForward);
+  // const sendBackward = useLayoutStore(s => s.actions.setSendBackward);
 
   const applyColorToSelection = useLayoutStore(
-    s => s.actions.applyColorToSelection,
+    s => s.actions.setApplyColorToSelection,
   );
 
   const actionsAny = useLayoutStore(s => s.actions as any);
@@ -575,7 +575,7 @@ export default function RightPanel() {
             />
 
             {/* Z-Order */}
-            <AccordionCard
+            {/* <AccordionCard
               title="Z-Order"
               allowMultiple
               defaultOpenAll
@@ -631,7 +631,7 @@ export default function RightPanel() {
                   ),
                 },
               ]}
-            />
+            /> */}
           </>
         )}
 

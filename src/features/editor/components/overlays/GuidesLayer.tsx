@@ -2,9 +2,7 @@
 
 import React from "react";
 
-import type { GuideLine } from "@/shared/hooks/useGuides";
-
-export default function GuidesLayer({ lines }: { lines: GuideLine[] }) {
+export default function GuidesLayer({ lines }: { lines: any[] }) {
   if (!lines?.length) return null;
   return (
     <>
