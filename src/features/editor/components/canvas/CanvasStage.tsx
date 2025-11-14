@@ -4,8 +4,9 @@
 import React, { useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 
-import { useEDITORStore } from "@/shared/store/control";
+import { useEDITORActions, useEDITORStore } from "@/shared/store/control";
 import { useLayoutStore } from "@/shared/store/layout";
+import { useLayoutActions } from "@/shared/store/layout/store";
 
 import ColumnsOverlay from "../overlays/ColumnsOverlay";
 import type { Rect } from "./hooks/collision";
@@ -23,42 +24,46 @@ const Box = dynamic(() => import("@/shared/components/ui/box/Box"), {
 });
 
 export default function CanvasStage() {
-  // ---- layout ----
-  const canvasWidth = useLayoutStore(s => s.canvasWidth);
-  const canvasHeight = useLayoutStore(s => s.canvasHeight);
-  const sections = useLayoutStore(s => s.sections);
-  const selectedIds = useLayoutStore(s => s.selectedIds);
-  const setSelectedIds = useLayoutStore(s => s.actions.setSelectedIds);
-  const updateFrame = useLayoutStore(s => s.actions.setUpdateFrame);
-  const commitAfterTransform = useLayoutStore(
-    s => s.actions.setCommitAfterTransform,
-  );
+  /* ========== Layout 상태 ========== */
+  const { canvasWidth, canvasHeight, sections, selectedIds } = useLayoutStore();
+  const { setSelectedIds, setUpdateFrame, setCommitAfterTransform } =
+    useLayoutActions();
 
-  // ---- editor (grid/zoom/pan/snap) ----
-  const showGrid = useEDITORStore(s => s.showGrid);
-  const gridSize = useEDITORStore(s => s.gridSize);
-  const gridColor = useEDITORStore(s => s.gridColor);
+  /* ========== Editor 전역 상태(줌/팬/그리드/스냅) ========== */
+  const {
+    showGrid,
+    gridSize,
+    gridColor,
+    canvasZoom: canvasZoomPct,
+    panX,
+    panY,
+    snapToGrid,
+    snapToElements,
+    snapToGuides,
+  } = useEDITORStore();
+  const { setCanvasZoom, setPan } = useEDITORActions();
 
-  const canvasZoomPct = useEDITORStore(s => s.canvasZoom);
-  const setCanvasZoom = useEDITORStore(s => s.actions.setCanvasZoom);
-
-  const panX = useEDITORStore(s => s.panX);
-  const panY = useEDITORStore(s => s.panY);
-  const setPan = useEDITORStore(s => s.actions.setPan);
-
-  const snapToGrid = useEDITORStore(s => s.snapToGrid);
-  const snapToElements = useEDITORStore(s => s.snapToElements);
-  const snapToGuides = useEDITORStore(s => s.snapToGuides);
-
+  // 25%~200% 사이에서 동작하도록 보정
   const zoom = Math.max(0.25, Math.min(2, canvasZoomPct / 100));
 
+  /* ========== Stage/Zoom-Layer Ref ========== */
+  // 전체 캔버스 래퍼(<div className="stage">)
   const stageRef = useRef<HTMLDivElement | null>(null);
 
-  // 줌/팬 레이어 DOM
+  /**
+   * zoom-layer <div>가 실제 DOM으로 만들어지는 순간
+   * React가 setZoomLayerRef(domNode)를 불러주고
+   * 그 안에서 setContainerEl(domNode)를 호출해서
+   * containerEl에 DOM을 저장하고, 그걸 Box/Moveable로 내려보내는 구조
+   */
+  // 실제로 scale/translate 되는 레이어 (좌표계 기준 컨테이너)
   const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
+
+  // 콜백으로 쓰기 위한 함수정의
+  // node(DOM 또는 null)를 받아서 setContainerEl(node)를 호출하는 함수
   const setZoomLayerRef = (node: HTMLDivElement | null) => setContainerEl(node);
 
-  // 배경 격자
+  /* ========== 배경 격자 ========== */
   const gridBg = useMemo(
     () =>
       `linear-gradient(to right, ${gridColor} 1px, transparent 1px),
@@ -66,11 +71,13 @@ export default function CanvasStage() {
     [gridColor],
   );
 
-  // === 훅들 연결 ===
+  /* ========== 훅 결합 ========== */
+
+  // Ctrl+휠 줌(커서 기준 줌, 페이지 스크롤 방지)
   useZoomWheel({ stageRef, panX, panY, zoom, setCanvasZoom, setPan });
 
+  // Space+Drag 팬(줌과 무관하게 화면 px 기준으로 이동)
   const {
-    isSpace,
     isPanning,
     cursor,
     onMouseDownCapture,
@@ -78,6 +85,7 @@ export default function CanvasStage() {
     onMouseUp: panUp,
   } = useSpaceDragPan({ zoom, panX, panY, setPan, compensateZoom: true });
 
+  // 배경 마퀴 드래그 선택(교차 선택)
   const {
     marquee,
     onDown: marqueeDown,
@@ -92,28 +100,34 @@ export default function CanvasStage() {
     setSelectedIds,
   });
 
+  // 겹침 하이라이트(드래그/리사이즈 중), 종료 시 1px도 겹치지 않도록 해소
   const { overlaps, calcLive, resolveOnEnd } = useOverlapResolver(sections);
 
+  // DOM 핸들 수집(그룹/가이드라인)
   const { selectedEls, guidelineEls } = useDomHandles({
     sections,
     selectedIds,
     snapToElements,
   });
 
+  // 스냅 설정
   const snappable = snapToGrid || snapToElements || snapToGuides;
-  const snapGrid = snapToGrid ? gridSize : 0;
+  const snapGridSize = snapToGrid ? gridSize : 0;
+
+  // 활성 아이템(마지막 선택)
   const activeId = selectedIds.length
     ? selectedIds[selectedIds.length - 1]
     : "";
 
-  // === Stage 이벤트 ===
+  /* ========== Stage 이벤트 ========== */
   const onMouseDown = (e: React.MouseEvent) => {
-    if (isPanning) return;
+    if (isPanning) return; // 팬 중이면 마퀴 막기
     marqueeDown(e);
   };
 
   const onMouseMove = (e: React.MouseEvent) => {
-    if (handlePanMouseMove(e)) return; // 팬 중이면 여기서 종료
+    // 팬 중이면 여기서 처리 완료
+    if (handlePanMouseMove(e)) return;
     marqueeMove(e);
   };
 
@@ -122,6 +136,7 @@ export default function CanvasStage() {
     marqueeUp();
   };
 
+  /* ========== 렌더링 ========== */
   return (
     <div
       ref={stageRef}
@@ -181,19 +196,21 @@ export default function CanvasStage() {
                 containerEl={containerEl as any}
                 targets={selectedEls.length > 1 ? selectedEls : undefined}
                 snappable={snappable}
-                snapGridWidth={snapGrid}
-                snapGridHeight={snapGrid}
+                snapGridWidth={snapGridSize}
+                snapGridHeight={snapGridSize}
                 elementGuidelines={guidelineEls}
-                // 실시간 겹침 하이라이트
+                /* ===== 실시간 겹침 하이라이트: 드래그 중 ===== */
                 onDrag={(e: any) => {
-                  if (isPanning) return;
+                  if (isPanning) return; // 팬 중엔 무시
                   const target = e.target as HTMLElement;
                   const cs = getComputedStyle(target);
+
                   const w = parseFloat(cs.width || "") || s.width;
                   const h = parseFloat(cs.height || "") || s.height;
                   const cand: Rect = { x: e.left, y: e.top, w, h };
                   calcLive(s.id, cand);
                 }}
+                /* ===== 실시간 겹침 하이라이트: 리사이즈 중 ===== */
                 onResize={(e: any) => {
                   if (isPanning) return;
                   const target = e.target as HTMLElement;
@@ -210,7 +227,7 @@ export default function CanvasStage() {
                   const cand: Rect = { x: l, y: t, w, h };
                   calcLive(s.id, cand);
                 }}
-                // 종료 시 겹침 해소 + 커밋
+                /* ===== Drag End: 여기서만 겹침 해소 + 커밋 ===== */
                 onDragEnd={(e: any) => {
                   if (isPanning) return;
                   const el = e.target as HTMLElement;
@@ -229,14 +246,18 @@ export default function CanvasStage() {
                     w: s.width,
                     h: s.height,
                   };
-                  const fixed = resolveOnEnd(s.id, proposal, prev); // GAP=1 보장
+                  // 종료 시 "1px도 겹치지 않게" 확정
+                  const fixed = resolveOnEnd(s.id, proposal, prev);
 
+                  // DOM 보정
                   el.style.left = `${fixed.x}px`;
                   el.style.top = `${fixed.y}px`;
 
-                  updateFrame(s.id, { x: fixed.x, y: fixed.y });
-                  commitAfterTransform();
+                  // 상태 커밋
+                  setUpdateFrame(s.id, { x: fixed.x, y: fixed.y });
+                  setCommitAfterTransform();
                 }}
+                /* ===== Resize End: 여기서만 겹침 해소 + 커밋 ===== */
                 onResizeEnd={(e: any) => {
                   if (isPanning) return;
                   const el = e.target as HTMLElement;
@@ -258,20 +279,23 @@ export default function CanvasStage() {
                     w: s.width,
                     h: s.height,
                   };
-                  const fixed = resolveOnEnd(s.id, proposal, prev); // GAP=1 보장
+                  // 종료 시 "1px도 겹치지 않게" 확정
+                  const fixed = resolveOnEnd(s.id, proposal, prev);
 
+                  // DOM 보정
                   el.style.left = `${fixed.x}px`;
                   el.style.top = `${fixed.y}px`;
                   el.style.width = `${w}px`;
                   el.style.height = `${h}px`;
 
-                  updateFrame(s.id, {
+                  // 상태 커밋
+                  setUpdateFrame(s.id, {
                     x: fixed.x,
                     y: fixed.y,
                     width: w,
                     height: h,
                   });
-                  commitAfterTransform();
+                  setCommitAfterTransform();
                 }}
               >
                 <SectionItemView

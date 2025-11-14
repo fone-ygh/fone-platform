@@ -7,8 +7,8 @@ const EPS = 0.001; // 부동소수 오차 방지
 export type Rect = { x: number; y: number; w: number; h: number; id?: string };
 
 /**
- * 실제 교차 영역(겹친 픽셀 영역)을 돌려줍니다.
- * 라이브 하이라이트(빨간 박스) 표시용으로 사용하세요.
+ * 실제 교차 영역(겹친 픽셀 영역)을 돌려준다.
+ * 라이브 하이라이트(빨간 박스) 표시용
  */
 export function intersectionRect(a: Rect, b: Rect): Rect | null {
   const ix1 = Math.max(a.x, b.x);
@@ -22,7 +22,7 @@ export function intersectionRect(a: Rect, b: Rect): Rect | null {
 }
 
 /**
- * GAP까지도 '겹침 또는 과도한 근접'으로 간주하여 충돌 여부를 판정합니다.
+ * GAP까지도 '겹침 또는 과도한 근접'으로 간주하여 충돌 여부를 판정
  * (즉, 0px 맞닿음도 허용하지 않으려면 gap=1)
  */
 export function intersectsWithGap(
@@ -40,7 +40,7 @@ export function intersectsWithGap(
 
 /**
  * a를 b 바깥으로 내보내는 최소 이동량(MTV) (GAP 포함).
- * 네 방향(좌/우/상/하) 후보 이동량 중 '가장 적은' 이동으로 탈출합니다.
+ * 네 방향(좌/우/상/하) 후보 이동량 중 '가장 적은' 이동으로 탈출한다.
  * prevX/prevY는 인터페이스 유지용(사용하지 않음).
  */
 function pushOutOnce(
@@ -74,8 +74,8 @@ function pushOutOnce(
 }
 
 /**
- * 여러 충돌체에 대해 반복적으로 겹침/근접을 해소합니다.
- * 종료 시점에는 반드시 GAP 이상 떨어지도록 보장됩니다.
+ * 여러 충돌체에 대해 반복적으로 겹침/근접을 해소한다.
+ * 종료 시점에는 반드시 GAP 이상 떨어지도록 보장된다.
  */
 export function resolveNoOverlap(
   a: Rect,

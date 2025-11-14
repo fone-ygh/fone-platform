@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import styled from "@emotion/styled";
 import Moveable from "react-moveable";
 
@@ -7,49 +7,59 @@ import useResizeStore from "@/shared/store/resize";
 type TargetsType = (HTMLElement | SVGElement)[] | undefined;
 
 interface Props {
-  /** === Selection(외부 제어) === */
-  active?: boolean; // 외부에서 선택 상태를 내려줌
-  onActiveChange?: (active: boolean) => void; // 내부 상호작용으로 바꿔달라고 신호
-
-  /** 테스트 편의: 내부 디폴트 활성 (Controlled 안 쓰는 샌드박스에서만) */
+  /* Selection */
+  active?: boolean;
+  onActiveChange?: (active: boolean) => void;
   defaultActive?: boolean;
 
-  /** id & 레이아웃/동작 옵션 */
+  /* Identity + features */
   id?: string;
   resizable?: boolean;
   draggable?: boolean;
   rotatable?: boolean;
   throttleResize?: number;
 
+  /* limits */
   minWidth?: number;
   maxWidth?: number;
   minHeight?: number;
   maxHeight?: number;
 
+  /* layout */
   width: number;
   height: number;
   x: number;
   y: number;
   rotate?: number;
 
-  /** 캔버스 좌표계/줌 */
+  /* coords */
   zoom?: number;
   containerEl?: HTMLElement | null;
 
-  /** 그룹/스냅 */
+  /* group + snap */
   targets?: TargetsType;
   snappable?: boolean | string[];
   snapGridWidth?: number;
   snapGridHeight?: number;
   elementGuidelines?: any;
 
-  /** Moveable 콜백들 */
+  /* events (single / group) */
   onResizeStart?: (e: any) => void;
   onResize?: (e: any) => void;
   onResizeEnd?: (e: any) => void;
+
+  onResizeGroupStart?: (e: any) => void;
+  onResizeGroup?: (e: any) => void;
+  onResizeGroupEnd?: (e: any) => void;
+
   onDragStart?: (e: any) => void;
   onDrag?: (e: any) => void;
   onDragEnd?: (e: any) => void;
+
+  onDragGroupStart?: (e: any) => void;
+  onDragGroup?: (e: any) => void;
+  onDragGroupEnd?: (e: any) => void;
+
   onRotateStart?: (e: any) => void;
   onRotate?: (e: any) => void;
   onRotateEnd?: (e: any) => void;
@@ -61,59 +71,65 @@ export default function ResizeContainer({
   id = "",
   children,
 
-  // Selection
+  // selection
   active,
   onActiveChange,
   defaultActive = false,
 
-  // 기능
+  // features
   resizable,
   draggable,
   rotatable,
   throttleResize,
 
-  // 제한
+  // limits
   minWidth = 0,
   maxWidth = Infinity,
   minHeight = 0,
   maxHeight = Infinity,
 
-  // 초기 레이아웃
+  // initial layout
   width: propWidth,
   height: propHeight,
   x: propX = 0,
   y: propY = 0,
   rotate = 0,
 
-  // 좌표계
+  // coords
   zoom = 1,
   containerEl,
 
-  // 그룹/스냅
+  // group/snap
   targets,
   snappable = true,
   snapGridWidth = 16,
   snapGridHeight = 16,
   elementGuidelines,
 
-  // 이벤트
+  // callbacks
   onResizeStart,
   onResize,
   onResizeEnd,
+  onResizeGroupStart,
+  onResizeGroup,
+  onResizeGroupEnd,
   onDragStart,
   onDrag,
   onDragEnd,
+  onDragGroupStart,
+  onDragGroup,
+  onDragGroupEnd,
   onRotateStart,
   onRotate,
   onRotateEnd,
 }: Props) {
   const targetRef = useRef<HTMLDivElement | null>(null);
 
-  // 내부 선택 상태 (Uncontrolled 용 / Controlled이면 active prop 우선)
+  // internal selection (uncontrolled fallback)
   const [internalActive, setInternalActive] = useState(defaultActive);
   const isActive = active ?? internalActive;
 
-  // 레이아웃 캐시 (zustand)
+  // layout cache (zustand)
   const { resize, setResize } = useResizeStore();
   const width = resize[id]?.width ?? propWidth;
   const height = resize[id]?.height ?? propHeight;
@@ -129,7 +145,7 @@ export default function ResizeContainer({
     });
   }, [id, propWidth, propHeight, propX, propY, setResize]);
 
-  // 리사이즈 기준값 저장
+  // resize anchor state (for N/W handles)
   const resizeStartRef = useRef<{
     width: number;
     height: number;
@@ -139,32 +155,27 @@ export default function ResizeContainer({
     dirY: number;
   } | null>(null);
 
-  /** 컨테이너 클릭 → 선택 요청(상위로) */
+  /** click → request select (bubble up) */
   const handlePointerDownCapture = (e: React.PointerEvent) => {
-    // 좌클릭만
-    if (e.button !== 0) return;
-
-    // Controlled이면 상위에게 “켜달라” 신호만 보냄
+    if (e.button !== 0) return; // only left button
     if (active !== undefined) {
       if (!active) onActiveChange?.(true);
     } else {
-      // Uncontrolled이면 내부 상태 켬 + 상위에도 알려줌(선택 싱크 맞춤)
       if (!internalActive) setInternalActive(true);
       onActiveChange?.(true);
     }
   };
 
-  /** 선택 해제 요청 (원칙상 상위에서 배경 클릭으로 관리하는 걸 권장) */
-  const requestDeactivate = () => {
-    if (active !== undefined) onActiveChange?.(false);
-    else setInternalActive(false);
-  };
+  /** Moveable: single vs group target 선택 */
+  const hasGroup = isActive && targets && targets.length > 1;
+  const moveableTarget = isActive && !hasGroup ? targetRef : undefined;
+  const moveableTargets = hasGroup ? targets : undefined;
 
   return (
     <>
-      {/* Moveable은 항상 마운트하지만, 선택된 경우에만 target 연결 */}
       <Moveable
-        target={isActive ? targetRef : undefined}
+        target={moveableTarget}
+        targets={moveableTargets}
         draggable={!!draggable && isActive}
         resizable={!!resizable && isActive}
         rotatable={!!rotatable && isActive}
@@ -180,7 +191,7 @@ export default function ResizeContainer({
         renderDirections={
           isActive ? ["nw", "n", "ne", "w", "e", "sw", "s", "se"] : []
         }
-        /* Drag */
+        /* ----- Drag (single) ----- */
         onDragStart={e => onDragStart?.(e)}
         onDrag={e => {
           const el = e.target as HTMLElement;
@@ -189,7 +200,19 @@ export default function ResizeContainer({
           onDrag?.(e);
         }}
         onDragEnd={e => onDragEnd?.(e)}
-        /* Resize */
+        /* ----- Drag (group) ----- */
+        onDragGroupStart={e => onDragGroupStart?.(e)}
+        onDragGroup={e => {
+          // 미리보기: 각각의 타겟에 반영
+          e.events.forEach((ev: any) => {
+            const el = ev.target as HTMLElement;
+            el.style.left = `${ev.left}px`;
+            el.style.top = `${ev.top}px`;
+          });
+          onDragGroup?.(e);
+        }}
+        onDragGroupEnd={e => onDragGroupEnd?.(e)}
+        /* ----- Resize (single) ----- */
         onResizeStart={e => {
           const cs = getComputedStyle(e.target as HTMLElement);
           const startWidth = parseFloat(cs.width) || 0;
@@ -250,7 +273,28 @@ export default function ResizeContainer({
           resizeStartRef.current = null;
           onResizeEnd?.(e);
         }}
-        /* Rotate (옵션) */
+        /* ----- Resize (group) ----- */
+        onResizeGroupStart={e => onResizeGroupStart?.(e)}
+        onResizeGroup={e => {
+          // 미리보기: 각각의 타겟에 반영
+          e.events.forEach((ev: any) => {
+            const target = ev.target as HTMLElement;
+            const newW = Math.max(minWidth, Math.min(ev.width, maxWidth));
+            const newH = Math.max(minHeight, Math.min(ev.height, maxHeight));
+
+            target.style.width = `${newW}px`;
+            target.style.height = `${newH}px`;
+
+            // 좌/상 핸들 보정
+            const { direction, drag } = ev;
+            const [dirX, dirY] = (direction as number[]) || [0, 0];
+            if (dirX === -1) target.style.left = `${drag.left}px`;
+            if (dirY === -1) target.style.top = `${drag.top}px`;
+          });
+          onResizeGroup?.(e);
+        }}
+        onResizeGroupEnd={e => onResizeGroupEnd?.(e)}
+        /* ----- Rotate (optional) ----- */
         onRotateStart={e => onRotateStart?.(e)}
         onRotate={e => onRotate?.(e)}
         onRotateEnd={e => onRotateEnd?.(e)}
@@ -291,5 +335,4 @@ const StyledContainer = styled.div<StyledContainerProps>`
   width: ${({ width }) => (typeof width === "number" ? `${width}px` : width)};
   height: ${({ height }) =>
     typeof height === "number" ? `${height}px` : height};
-  /* 선택 상태 시 시각적 피드백을 주고 싶으면 여기에 outline 토글 로직 추가 */
 `;
