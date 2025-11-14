@@ -243,6 +243,7 @@ export default function CanvasStage() {
                     w: s.width,
                     h: s.height,
                   };
+
                   // 종료 시 "1px도 겹치지 않게" 확정
                   const fixed = resolveOnEnd(s.id, proposal, prev);
 
@@ -276,21 +277,21 @@ export default function CanvasStage() {
                     w: s.width,
                     h: s.height,
                   };
-                  // 종료 시 "1px도 겹치지 않게" 확정
+                  // 종료 시 겹치면 prev로 완전 되돌림, 아니면 proposal 확정
                   const fixed = resolveOnEnd(s.id, proposal, prev);
 
                   // DOM 보정
                   el.style.left = `${fixed.x}px`;
                   el.style.top = `${fixed.y}px`;
-                  el.style.width = `${w}px`;
-                  el.style.height = `${h}px`;
+                  el.style.width = `${fixed.w}px`;
+                  el.style.height = `${fixed.h}px`;
 
                   // 상태 커밋
                   setUpdateFrame(s.id, {
                     x: fixed.x,
                     y: fixed.y,
-                    width: w,
-                    height: h,
+                    width: fixed.w,
+                    height: fixed.h,
                   });
                   setCommitAfterTransform();
                 }}
