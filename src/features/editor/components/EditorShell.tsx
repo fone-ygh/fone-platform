@@ -1,6 +1,4 @@
 // src/features/editor/components/EditorShell.tsx
-// "use client";  // ❌ 제거
-
 import React from "react";
 import { Flex } from "fone-design-system_v1";
 
