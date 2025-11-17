@@ -1,6 +1,8 @@
 // src/features/editor/components/canvas/hooks/useMarqueeSelection.ts
 import { useCallback, useState } from "react";
 
+import { useLogicalPoint } from "./useLogicalPoint";
+
 type SectionLike = {
   id: string;
   x: number;
@@ -40,23 +42,14 @@ export function useMarqueeSelection(opts: {
   const [bgDown, setBgDown] = useState(false);
   const [downPt, setDownPt] = useState<{ x: number; y: number } | null>(null);
 
-  const toLogical = useCallback(
-    (clientX: number, clientY: number) => {
-      const stage = stageRef.current!;
-      const rect = stage.getBoundingClientRect();
-      const sx = clientX - rect.left;
-      const sy = clientY - rect.top;
-      return { x: (sx - panX) / zoom, y: (sy - panY) / zoom };
-    },
-    [panX, panY, zoom, stageRef],
-  );
+  const toLogical = useLogicalPoint({ stageRef, panX, panY, zoom });
 
   const onDown = useCallback(
     (e: React.MouseEvent) => {
       // 아이템 위면 무시 (아이템 쪽에서 stopPropagation 권장)
       if ((e.target as HTMLElement).closest(".section-item")) return;
 
-      const p = toLogical(e.clientX, e.clientY);
+      const p = toLogical(e);
       setBgDown(true);
       setDownPt(p);
       setMarquee({ on: false, x: 0, y: 0, w: 0, h: 0 });
@@ -68,7 +61,7 @@ export function useMarqueeSelection(opts: {
     (e: React.MouseEvent) => {
       if (!bgDown || !downPt) return;
 
-      const p = toLogical(e.clientX, e.clientY);
+      const p = toLogical(e);
       const dx = Math.abs(p.x - downPt.x);
       const dy = Math.abs(p.y - downPt.y);
 

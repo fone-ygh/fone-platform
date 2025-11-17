@@ -5,7 +5,7 @@ import type { Section, SectionType } from "./types";
 export const DEFAULT_CANVAS_WIDTH = 1920;
 export const DEFAULT_CANVAS_HEIGHT = 1080;
 
-/** SSR/CSR 공통에서 안전한 간단 UID */
+/** 섹션용 고유 id 문자열을 만드는 함수 */
 const uid = () =>
   `sec_${Math.random().toString(36).slice(2, 9)}_${Date.now().toString(36)}`;
 
@@ -29,7 +29,7 @@ export function createSection(
     height: 200,
     z,
     rotate: 0,
-    radius: 8,
+    radius: 0,
     shadow: 0,
     title: capitalize(type),
     bg: "#ffffff",
@@ -122,7 +122,7 @@ export const INITIAL_SECTIONS: Section[] = [
     height: 804,
     bg: "#f1f5f9", // slate-100
     color: "#0f172a",
-    radius: 8,
+    radius: 0,
   }),
   // Main
   createSection("box", 3, {
@@ -135,7 +135,7 @@ export const INITIAL_SECTIONS: Section[] = [
     height: 804,
     bg: "#ffffff",
     color: "#0f172a",
-    radius: 8,
+    radius: 0,
   }),
   // Footer
   createSection("box", 4, {
