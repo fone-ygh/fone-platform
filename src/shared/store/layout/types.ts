@@ -1,6 +1,8 @@
 // src/shared/store/layout/types.ts
 export type SectionType = "box" | "text" | "image" | "button" | "tabs";
 
+export type InsertTool = SectionType | null;
+
 export interface Section {
   id: string;
   type: SectionType;
@@ -45,6 +47,8 @@ export interface LayoutState {
   selectedIds: string[];
   version: number;
 
+  insertTool: InsertTool;
+
   actions: {
     setCanvasSize: (w: number, h: number) => void;
 
@@ -71,5 +75,7 @@ export interface LayoutState {
     setApplyColorToSelection: (color: string, target: "bg" | "text") => void;
 
     setCommitAfterTransform: () => void;
+
+    setInsertTool: (tool: InsertTool) => void;
   };
 }

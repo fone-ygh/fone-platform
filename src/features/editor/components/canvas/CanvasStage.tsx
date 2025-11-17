@@ -1,4 +1,3 @@
-// src/features/editor/components/canvas/CanvasStage.tsx
 "use client";
 
 import React, { useMemo, useRef, useState } from "react";
@@ -7,14 +6,16 @@ import dynamic from "next/dynamic";
 import { useEDITORActions, useEDITORStore } from "@/shared/store/control";
 import { useLayoutStore } from "@/shared/store/layout";
 import { useLayoutActions } from "@/shared/store/layout/store";
+import type { Section } from "@/shared/store/layout/types";
 
-import type { Rect } from "./hooks/collision";
-import { useDomHandles } from "./hooks/useDomHandles";
-import { useKeyboardControl } from "./hooks/useKeyboardControl";
-import { useMarqueeSelection } from "./hooks/useMarqueeSelection";
-import { useOverlapResolver } from "./hooks/useOverlapResolver";
-import { useSpaceDragPan } from "./hooks/useSpaceDragPan";
-import { useZoomWheel } from "./hooks/useZoomWheel";
+import type { Rect } from "../../hooks/collision";
+import { useDomHandles } from "../../hooks/useDomHandles";
+import { useDragRect } from "../../hooks/useDragRect";
+import { useKeyboardControl } from "../../hooks/useKeyboardControl";
+import { useMarqueeSelection } from "../../hooks/useMarqueeSelection";
+import { useOverlapResolver } from "../../hooks/useOverlapResolver";
+import { useSpaceDragPan } from "../../hooks/useSpaceDragPan";
+import { useZoomWheel } from "../../hooks/useZoomWheel";
 import MarqueeSelection from "./MarqueeSelection";
 import SectionItemView from "./SectionItemView";
 
@@ -27,9 +28,17 @@ export default function CanvasStage() {
   useKeyboardControl();
 
   /* ========== Layout 상태 ========== */
-  const { canvasWidth, canvasHeight, sections, selectedIds } = useLayoutStore();
-  const { setSelectedIds, setUpdateFrame, setCommitAfterTransform } =
-    useLayoutActions();
+  const { canvasWidth, canvasHeight, sections, selectedIds, insertTool } =
+    useLayoutStore();
+
+  const {
+    setSelectedIds,
+    setUpdateFrame,
+    setCommitAfterTransform,
+    setInsertTool,
+  } = useLayoutActions() as any;
+
+  const addSection = useLayoutStore(s => s.actions.setAddSection);
 
   /* ========== Editor 전역 상태(줌/팬/그리드/스냅) ========== */
   const {
@@ -49,22 +58,12 @@ export default function CanvasStage() {
   const zoom = Math.max(0.25, Math.min(2, canvasZoomPct / 100));
 
   /* ========== Stage/Zoom-Layer Ref ========== */
-  // 전체 캔버스 래퍼(<div className="stage">)
   const stageRef = useRef<HTMLDivElement | null>(null);
 
-  /**
-   * zoom-layer <div>가 실제 DOM으로 만들어지는 순간
-   * React가 setZoomLayerRef(domNode)를 불러주고
-   * 그 안에서 setContainerEl(domNode)를 호출해서
-   * containerEl에 DOM을 저장하고, 그걸 Box/Moveable로 내려보내는 구조
-   */
   // 실제로 scale/translate 되는 레이어 (좌표계 기준 컨테이너)
   const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
-  // OOB(경계 벗어남) 시 stage 배경 강조를 위한 상태
   const [isOOB, setIsOOB] = useState(false);
 
-  // 콜백으로 쓰기 위한 함수정의
-  // node(DOM 또는 null)를 받아서 setContainerEl(node)를 호출하는 함수
   const setZoomLayerRef = (node: HTMLDivElement | null) => setContainerEl(node);
 
   /* ========== 배경 격자 ========== */
@@ -104,6 +103,16 @@ export default function CanvasStage() {
     setSelectedIds,
   });
 
+  // InsertTool용 Rect 드로잉
+  const {
+    dragRect,
+    isDraggingRect,
+    onDragRectDown,
+    onDragRectMove,
+    onDragRectUp,
+    resetRect,
+  } = useDragRect({ stageRef, panX, panY, zoom });
+
   // 겹침 하이라이트(드래그/리사이즈 중), 종료 시 1px도 겹치지 않도록 해소
   const { overlaps, calcLive, resolveOnEnd, setOverlaps } =
     useOverlapResolver(sections);
@@ -126,19 +135,93 @@ export default function CanvasStage() {
 
   /* ========== Stage 이벤트 ========== */
   const onMouseDown = (e: React.MouseEvent) => {
-    if (isPanning) return; // 팬 중이면 마퀴 막기
+    if (isPanning) return; // 팬 중이면 마퀴/드로잉 막기
+
+    // InsertTool이 켜져 있으면 Rect 드로잉 시작
+    if (insertTool) {
+      onDragRectDown(e);
+      setSelectedIds([]);
+      e.preventDefault();
+      return;
+    }
+
+    // 기본: 마퀴 선택
     marqueeDown(e);
   };
 
   const onMouseMove = (e: React.MouseEvent) => {
     // 팬 중이면 여기서 처리 완료
     if (handlePanMouseMove(e)) return;
+
+    if (insertTool) {
+      onDragRectMove(e);
+      return;
+    }
+
     marqueeMove(e);
   };
 
   const onMouseUp = () => {
     panUp();
-    marqueeUp();
+
+    // ---- InsertTool 모드에서 드로잉 끝났을 때 섹션 생성 ----
+    // 드래그 Rect가 있고 (dragRect.on === true),
+    // 최소 크기 (4px) 이상일 때만 실제 섹션을 만든다.
+    // (오차로 생긴 아주 작은 드래그는 무시)
+    if (insertTool && dragRect.on && dragRect.w > 4 && dragRect.h > 4) {
+      // 값이 canvas 영역을 벗어나지 않도록 한 번 감싸는 유틸
+      const clamp = (v: number, min: number, max: number) =>
+        Math.max(min, Math.min(max, v));
+
+      const x = Math.round(clamp(dragRect.x, 0, canvasWidth));
+      const y = Math.round(clamp(dragRect.y, 0, canvasHeight));
+      const w = Math.round(clamp(dragRect.w, 0, canvasWidth - Math.max(0, x)));
+      const h = Math.round(clamp(dragRect.h, 0, canvasHeight - Math.max(0, y)));
+
+      let init: Partial<Section> = {
+        x,
+        y,
+        width: w,
+        height: h,
+      };
+
+      if (insertTool === "box") {
+        init = {
+          ...init,
+          title: "Box",
+        };
+      } else if (insertTool === "button") {
+        init = {
+          ...init,
+          title: "Button",
+          btnLabel: "Button",
+        };
+      } else if (insertTool === "tabs") {
+        init = {
+          ...init,
+          title: "Tabs",
+          tabs: [
+            { label: "Tab 1", content: "첫 번째" },
+            { label: "Tab 2", content: "두 번째" },
+          ],
+        };
+      }
+
+      const newId = addSection(insertTool, init);
+      setSelectedIds([newId]);
+      setCommitAfterTransform();
+    } else if (!insertTool) {
+      // InsertTool이 꺼져 있으면 원래대로 마퀴 업
+      marqueeUp();
+    }
+
+    onDragRectUp();
+    resetRect();
+
+    // 한 번 그린 뒤 Select 모드로 복귀
+    if (insertTool) {
+      setInsertTool(null);
+    }
   };
 
   // 컨테이너(zoom-layer) 경계 밖 여부 판단
@@ -179,7 +262,7 @@ export default function CanvasStage() {
           willChange: "transform",
           backgroundImage: showGrid ? gridBg : "none",
           backgroundSize: showGrid ? `${gridSize}px ${gridSize}px` : "auto",
-          backgroundColor: "#fff", // 캔버스(줌 레이어) 배경은 흰색 고정
+          backgroundColor: "#fff",
           cursor,
         }}
       >
@@ -212,7 +295,7 @@ export default function CanvasStage() {
                 elementGuidelines={guidelineEls}
                 /* ===== 실시간 겹침 하이라이트: 드래그 중 ===== */
                 onDrag={(e: any) => {
-                  if (isPanning) return; // 팬 중엔 무시
+                  if (isPanning) return;
                   const target = e.target as HTMLElement;
                   const cs = getComputedStyle(target);
 
@@ -240,7 +323,7 @@ export default function CanvasStage() {
                   setIsOOB(isOutOfBounds(cand));
                   calcLive(s.id, cand);
                 }}
-                /* ===== Drag End: 여기서만 겹침 해소 + 커밋 ===== */
+                /* ===== Drag End ===== */
                 onDragEnd={(e: any) => {
                   if (isPanning) return;
                   const el = e.target as HTMLElement;
@@ -259,7 +342,6 @@ export default function CanvasStage() {
                     w: s.width,
                     h: s.height,
                   };
-                  // 컨테이너 경계 밖이면 prev로 복귀, 아니면 겹침 규칙 적용
 
                   let fixed = proposal;
 
@@ -270,16 +352,14 @@ export default function CanvasStage() {
                     fixed = resolveOnEnd(s.id, proposal, prev);
                   }
 
-                  // DOM 보정
                   el.style.left = `${fixed.x}px`;
                   el.style.top = `${fixed.y}px`;
 
-                  // 상태 커밋
                   setUpdateFrame(s.id, { x: fixed.x, y: fixed.y });
                   setCommitAfterTransform();
                   setIsOOB(false);
                 }}
-                /* ===== Resize End: 여기서만 겹침 해소 + 커밋 ===== */
+                /* ===== Resize End ===== */
                 onResizeEnd={(e: any) => {
                   if (isPanning) return;
                   const el = e.target as HTMLElement;
@@ -311,13 +391,11 @@ export default function CanvasStage() {
                     fixed = resolveOnEnd(s.id, proposal, prev);
                   }
 
-                  // DOM 보정
                   el.style.left = `${fixed.x}px`;
                   el.style.top = `${fixed.y}px`;
                   el.style.width = `${fixed.w}px`;
                   el.style.height = `${fixed.h}px`;
 
-                  // 상태 커밋
                   setUpdateFrame(s.id, {
                     x: fixed.x,
                     y: fixed.y,
@@ -368,6 +446,25 @@ export default function CanvasStage() {
           </div>
         )}
 
+        {/* insertTool 드로잉 가이드 Rect */}
+        {insertTool && dragRect.on && (
+          <div
+            aria-hidden
+            style={{
+              position: "absolute",
+              left: dragRect.x,
+              top: dragRect.y,
+              width: dragRect.w,
+              height: dragRect.h,
+              border: "1px dashed #2563eb",
+              background: "rgba(37, 99, 235, 0.12)",
+              pointerEvents: "none",
+              borderRadius: 4,
+            }}
+          />
+        )}
+
+        {/* 마퀴 선택 */}
         {marquee.on && <MarqueeSelection rect={marquee} />}
       </div>
     </div>

@@ -18,6 +18,9 @@ export default function RightPanel() {
   const selectedIds = useLayoutStore(s => s.selectedIds);
   const sections = useLayoutStore(s => s.sections);
 
+  const insertTool = useLayoutStore(s => s.insertTool);
+  const setInsertTool = useLayoutStore(s => s.actions.setInsertTool);
+
   const patchSection = useLayoutStore(s => s.actions.setPatchSection);
   const deleteSelected = useLayoutStore(s => s.actions.setDeleteSelected);
   const duplicateSelected = useLayoutStore(s => s.actions.setDuplicateSelected);
@@ -25,11 +28,6 @@ export default function RightPanel() {
   const commitAfterTransform = useLayoutStore(
     s => s.actions.setCommitAfterTransform,
   );
-
-  // const sendToFront = useLayoutStore(s => s.actions.setSendToFront);
-  // const sendToBack = useLayoutStore(s => s.actions.setSendToBack);
-  // const bringForward = useLayoutStore(s => s.actions.setBringForward);
-  // const sendBackward = useLayoutStore(s => s.actions.setSendBackward);
 
   const applyColorToSelection = useLayoutStore(
     s => s.actions.setApplyColorToSelection,
@@ -160,7 +158,7 @@ export default function RightPanel() {
           ]}
         />
 
-        {/* ===== Add Components (오른쪽 패널에 배치) ===== */}
+        {/* ===== Add Components (클릭으로 바로 추가) ===== */}
         <AccordionCard
           title="Add Components"
           allowMultiple
@@ -216,7 +214,7 @@ export default function RightPanel() {
                           height: 200,
                           title: "Tabs",
                           tabs: [
-                            { label: "Tab 1", content: "첫 번째" }, // ← 'label'로 교정
+                            { label: "Tab 1", content: "첫 번째" },
                             { label: "Tab 2", content: "두 번째" },
                           ],
                         })
@@ -224,6 +222,72 @@ export default function RightPanel() {
                     >
                       + Tabs
                     </Button>
+                  </div>
+                </div>
+              ),
+            },
+          ]}
+        />
+
+        {/* ===== 드래그로 그리는 Insert Tool 선택 ===== */}
+        <AccordionCard
+          title="Draw Components"
+          allowMultiple
+          defaultOpenAll
+          hideControls
+          items={[
+            {
+              id: "draw",
+              title: "캔버스에서 드래그로 생성",
+              content: (
+                <div className="card-body">
+                  <div
+                    className="row"
+                    style={{
+                      display: "grid",
+                      gap: 8,
+                      gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                    }}
+                  >
+                    <Button
+                      variant={insertTool === "box" ? "contained" : "outlined"}
+                      size="xsmall"
+                      onClick={() =>
+                        setInsertTool(insertTool === "box" ? null : "box")
+                      }
+                    >
+                      Box
+                    </Button>
+                    <Button
+                      variant={
+                        insertTool === "button" ? "contained" : "outlined"
+                      }
+                      size="xsmall"
+                      onClick={() =>
+                        setInsertTool(insertTool === "button" ? null : "button")
+                      }
+                    >
+                      Button
+                    </Button>
+                    <Button
+                      variant={insertTool === "tabs" ? "contained" : "outlined"}
+                      size="xsmall"
+                      onClick={() =>
+                        setInsertTool(insertTool === "tabs" ? null : "tabs")
+                      }
+                    >
+                      Tabs
+                    </Button>
+                  </div>
+                  <div
+                    style={{
+                      marginTop: 8,
+                      fontSize: 11,
+                      color: "#6b7280",
+                    }}
+                  >
+                    툴을 선택한 뒤 캔버스에서 드래그하면 해당 컴포넌트가
+                    생성됩니다. (생성 후에는 자동으로 선택 모드로 돌아갑니다)
                   </div>
                 </div>
               ),
@@ -346,7 +410,6 @@ export default function RightPanel() {
                           style={{ display: "grid", gap: 8, marginTop: 10 }}
                         >
                           <Label>Align</Label>
-                          {/* NOTE: DS Select 컴포넌트가 있다면 여기로 교체 */}
                           <select
                             value={one.textAlign ?? "left"}
                             onChange={e =>
@@ -561,65 +624,6 @@ export default function RightPanel() {
                 },
               ]}
             />
-
-            {/* Z-Order */}
-            {/* <AccordionCard
-              title="Z-Order"
-              allowMultiple
-              defaultOpenAll
-              hideControls
-              items={[
-                {
-                  id: "zorder",
-                  title: "Reorder",
-                  content: (
-                    <div className="card-body">
-                      <div
-                        className="row"
-                        style={{
-                          display: "grid",
-                          gap: 8,
-                          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                        }}
-                      >
-                        <Button
-                          variant="outlined"
-                          size="xsmall"
-                          disabled={!hasSelection}
-                          onClick={() => sendToFront()}
-                        >
-                          To Front
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          size="xsmall"
-                          disabled={!hasSelection}
-                          onClick={() => bringForward()}
-                        >
-                          Forward
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          size="xsmall"
-                          disabled={!hasSelection}
-                          onClick={() => sendBackward()}
-                        >
-                          Backward
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          size="xsmall"
-                          disabled={!hasSelection}
-                          onClick={() => sendToBack()}
-                        >
-                          To Back
-                        </Button>
-                      </div>
-                    </div>
-                  ),
-                },
-              ]}
-            /> */}
           </>
         )}
 
