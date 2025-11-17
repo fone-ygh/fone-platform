@@ -3,7 +3,7 @@ import type { Section, SectionType } from "./types";
 
 /** Editor와 일치시키면 혼란이 줄어든다. */
 export const DEFAULT_CANVAS_WIDTH = 1920;
-export const DEFAULT_CANVAS_HEIGHT = 2000;
+export const DEFAULT_CANVAS_HEIGHT = 1080;
 
 /** SSR/CSR 공통에서 안전한 간단 UID */
 const uid = () =>
@@ -119,7 +119,7 @@ export const INITIAL_SECTIONS: Section[] = [
     x: 0,
     y: 140,
     width: 320,
-    height: 980,
+    height: 804,
     bg: "#f1f5f9", // slate-100
     color: "#0f172a",
     radius: 8,
@@ -132,7 +132,7 @@ export const INITIAL_SECTIONS: Section[] = [
     x: 340, // 사이드바(320) + 20px 여백
     y: 140,
     width: DEFAULT_CANVAS_WIDTH - 340, // 우측까지 꽉
-    height: 980,
+    height: 804,
     bg: "#ffffff",
     color: "#0f172a",
     radius: 8,
@@ -143,7 +143,7 @@ export const INITIAL_SECTIONS: Section[] = [
     title: "Footer",
     purpose: "footer",
     x: 0,
-    y: 1140, // header(120) + gap(20) + main block(1000)
+    y: 960,
     width: DEFAULT_CANVAS_WIDTH,
     height: 120,
     bg: "#f8fafc",

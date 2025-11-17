@@ -50,7 +50,6 @@ const CSS = `
   position: relative;
   display: grid;
   place-items: start center;   /* 중앙 정렬(위쪽 기준으로 살짝 여유) */
-  padding: 24px;               /* 캔버스 가장자리 여백 */
   box-sizing: border-box;
 }
 
@@ -66,13 +65,12 @@ const CSS = `
   color:#334155;
   background: rgba(255,255,255,.9);
   border: 1px solid rgba(0,0,0,.08);
-  border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0,0,0,.06);
   pointer-events: none;
 }
 
 @media (prefers-color-scheme: dark) {
-  .canvas-viewport { background: #0b1020; }
+  .canvas-viewport { background: #E5E7EB; }
   .zoom-indicator {
     color: #e2e8f0;
     background: rgba(15, 23, 42, .85);

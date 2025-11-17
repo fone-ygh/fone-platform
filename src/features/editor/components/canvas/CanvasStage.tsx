@@ -154,11 +154,11 @@ export default function CanvasStage() {
       onMouseUp={onMouseUp}
       style={{
         position: "relative",
-        border: "1px solid rgba(0,0,0,.12)",
-        borderRadius: 12,
         overflow: "hidden",
-        background: "#fff",
+        background: "#E5E7EB",
         userSelect: "none",
+        width: "100%",
+        height: "100%",
       }}
     >
       {/* 줌/팬 레이어 */}
@@ -174,6 +174,7 @@ export default function CanvasStage() {
           willChange: "transform",
           backgroundImage: showGrid ? gridBg : "none",
           backgroundSize: showGrid ? `${gridSize}px ${gridSize}px` : "auto",
+          backgroundColor: "#fff", // 캔버스(줌 레이어) 배경은 흰색 고정
           cursor,
         }}
       >
