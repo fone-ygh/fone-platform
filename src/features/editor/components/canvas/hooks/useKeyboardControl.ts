@@ -5,13 +5,19 @@ import { useLayoutStore } from "@/shared/store";
 export function useKeyboardControl() {
   const { selectedIds } = useLayoutStore();
 
-  const deleteSelected = useLayoutStore(s => s.actions.setDeleteSelected);
+  const setDeleteSelected = useLayoutStore(s => s.actions.setDeleteSelected);
+  const setSelectedIds = useLayoutStore(s => s.actions.setSelectedIds);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Delete") {
         e.preventDefault();
-        deleteSelected();
+        setDeleteSelected();
+      }
+
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setSelectedIds([]);
       }
     };
 
@@ -20,5 +26,5 @@ export function useKeyboardControl() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [deleteSelected, selectedIds]);
+  }, [setDeleteSelected, setSelectedIds, selectedIds]);
 }
