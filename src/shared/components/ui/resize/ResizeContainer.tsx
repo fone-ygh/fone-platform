@@ -124,6 +124,7 @@ export default function ResizeContainer({
   onRotateEnd,
 }: Props) {
   const targetRef = useRef<HTMLDivElement | null>(null);
+  const moveableRef = useRef<any>(null);
 
   // internal selection (uncontrolled fallback)
   const [internalActive, setInternalActive] = useState(defaultActive);
@@ -171,9 +172,50 @@ export default function ResizeContainer({
   const moveableTarget = isActive && !hasGroup ? targetRef : undefined;
   const moveableTargets = hasGroup ? targets : undefined;
 
+  // 키보드 이동: 선택(active) && draggable일 때 화살표로 이동
+  useEffect(() => {
+    if (!isActive || !draggable) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      const { key } = e;
+      if (
+        key !== "ArrowLeft" &&
+        key !== "ArrowRight" &&
+        key !== "ArrowUp" &&
+        key !== "ArrowDown"
+      )
+        return;
+
+      const step = 1;
+
+      let dx = 0;
+      let dy = 0;
+
+      if (key === "ArrowLeft") dx = -step;
+      if (key === "ArrowRight") dx = step;
+      if (key === "ArrowUp") dy = -step;
+      if (key === "ArrowDown") dy = step;
+
+      const mv = moveableRef.current;
+
+      if (!mv) return;
+
+      try {
+        const requester = mv.request("draggable");
+        requester.request({ deltaX: dx, deltaY: dy });
+        requester.requestEnd();
+        e.preventDefault();
+      } catch {}
+    };
+
+    window.addEventListener("keydown", onKeyDown, { passive: false });
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isActive, draggable]);
+
   return (
     <>
       <Moveable
+        ref={moveableRef}
         target={moveableTarget}
         targets={moveableTargets}
         draggable={!!draggable && isActive}

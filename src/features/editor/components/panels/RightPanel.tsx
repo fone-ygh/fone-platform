@@ -315,7 +315,6 @@ export default function RightPanel() {
                         <TextField2
                           value={one.title || ""}
                           onChange={e => onText("title")(e.target.value)}
-                          size="xs"
                         />
                       </div>
                     </div>
@@ -337,49 +336,42 @@ export default function RightPanel() {
                         <Label>X</Label>
                         <TextField2
                           type="number"
-                          size="xs"
                           value={one.x}
                           onChange={e => onNum("x")(e.target.value)}
                         />
                         <Label>Y</Label>
                         <TextField2
                           type="number"
-                          size="xs"
                           value={one.y}
                           onChange={e => onNum("y")(e.target.value)}
                         />
                         <Label>W</Label>
                         <TextField2
                           type="number"
-                          size="xs"
                           value={one.width}
                           onChange={e => onNum("width")(e.target.value)}
                         />
                         <Label>H</Label>
                         <TextField2
                           type="number"
-                          size="xs"
                           value={one.height}
                           onChange={e => onNum("height")(e.target.value)}
                         />
                         <Label>Rotate</Label>
                         <TextField2
                           type="number"
-                          size="xs"
                           value={one.rotate ?? 0}
                           onChange={e => onNum("rotate")(e.target.value)}
                         />
                         <Label>Radius</Label>
                         <TextField2
                           type="number"
-                          size="xs"
                           value={one.radius ?? 8}
                           onChange={e => onNum("radius")(e.target.value)}
                         />
                         <Label>Shadow</Label>
                         <TextField2
                           type="number"
-                          size="xs"
                           value={one.shadow ?? 0}
                           onChange={e => onNum("shadow")(e.target.value)}
                         />
@@ -411,7 +403,6 @@ export default function RightPanel() {
                           <TextField2
                             value={one.text || ""}
                             onChange={e => onText("text")(e.target.value)}
-                            size="xs"
                           />
                         </div>
                         <div
@@ -462,7 +453,6 @@ export default function RightPanel() {
                           <TextField2
                             value={one.imageUrl || ""}
                             onChange={e => onText("imageUrl")(e.target.value)}
-                            size="xs"
                           />
                         </div>
                         <div
@@ -513,7 +503,6 @@ export default function RightPanel() {
                           <TextField2
                             value={one.btnLabel || ""}
                             onChange={e => onText("btnLabel")(e.target.value)}
-                            size="xs"
                           />
                         </div>
                         <div
@@ -524,7 +513,6 @@ export default function RightPanel() {
                           <TextField2
                             value={one.btnHref || ""}
                             onChange={e => onText("btnHref")(e.target.value)}
-                            size="xs"
                           />
                         </div>
                         <div
