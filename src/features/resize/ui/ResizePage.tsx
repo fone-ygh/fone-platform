@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import styled from "@emotion/styled";
 
 import Box from "@/shared/components/ui/box/Box";
@@ -11,9 +12,16 @@ import useResizeStore from "@/shared/store/resize";
 
 export default function ResizePage() {
   const { resize } = useResizeStore();
-
+  const [activeId, setActiveId] = useState<string | null>(null);
   console.log(resize);
 
+  // 공통 바인딩 헬퍼
+  // const bindActive = (id: string) => ({
+  //   active: activeId === id,
+  //   onActiveChange: (next: boolean) => {
+  //     setActiveId(next ? id : activeId === id ? null : activeId);
+  //   },
+  // });
   return (
     <StyledResizePage>
       <Button
@@ -58,6 +66,7 @@ export default function ResizePage() {
         id="box1"
         resizable
         draggable
+        // {...bindActive("box1")}
         width={200}
         height={50}
         minWidth={200}
@@ -72,7 +81,7 @@ export default function ResizePage() {
           justifyContent: "center",
         }}
       >
-        Box
+        Box1
       </Box>
       <TreeView
         id="treeView"
@@ -112,6 +121,7 @@ export default function ResizePage() {
 }
 
 const StyledResizePage = styled.div`
+  position: relative;
   width: 100%;
   height: 100%;
 `;

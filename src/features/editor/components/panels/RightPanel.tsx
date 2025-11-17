@@ -18,21 +18,21 @@ export default function RightPanel() {
   const selectedIds = useLayoutStore(s => s.selectedIds);
   const sections = useLayoutStore(s => s.sections);
 
-  const patchSection = useLayoutStore(s => s.actions.patchSection);
-  const deleteSelected = useLayoutStore(s => s.actions.deleteSelected);
-  const duplicateSelected = useLayoutStore(s => s.actions.duplicateSelected);
-  const addSection = useLayoutStore(s => s.actions.addSection);
+  const patchSection = useLayoutStore(s => s.actions.setPatchSection);
+  const deleteSelected = useLayoutStore(s => s.actions.setDeleteSelected);
+  const duplicateSelected = useLayoutStore(s => s.actions.setDuplicateSelected);
+  const addSection = useLayoutStore(s => s.actions.setAddSection);
   const commitAfterTransform = useLayoutStore(
-    s => s.actions.commitAfterTransform,
+    s => s.actions.setCommitAfterTransform,
   );
 
-  const sendToFront = useLayoutStore(s => s.actions.sendToFront);
-  const sendToBack = useLayoutStore(s => s.actions.sendToBack);
-  const bringForward = useLayoutStore(s => s.actions.bringForward);
-  const sendBackward = useLayoutStore(s => s.actions.sendBackward);
+  // const sendToFront = useLayoutStore(s => s.actions.setSendToFront);
+  // const sendToBack = useLayoutStore(s => s.actions.setSendToBack);
+  // const bringForward = useLayoutStore(s => s.actions.setBringForward);
+  // const sendBackward = useLayoutStore(s => s.actions.setSendBackward);
 
   const applyColorToSelection = useLayoutStore(
-    s => s.actions.applyColorToSelection,
+    s => s.actions.setApplyColorToSelection,
   );
 
   const actionsAny = useLayoutStore(s => s.actions as any);
@@ -251,7 +251,6 @@ export default function RightPanel() {
                         <TextField2
                           value={one.title || ""}
                           onChange={e => onText("title")(e.target.value)}
-                          size="xs"
                         />
                       </div>
                     </div>
@@ -273,49 +272,42 @@ export default function RightPanel() {
                         <Label>X</Label>
                         <TextField2
                           type="number"
-                          size="xs"
                           value={one.x}
                           onChange={e => onNum("x")(e.target.value)}
                         />
                         <Label>Y</Label>
                         <TextField2
                           type="number"
-                          size="xs"
                           value={one.y}
                           onChange={e => onNum("y")(e.target.value)}
                         />
                         <Label>W</Label>
                         <TextField2
                           type="number"
-                          size="xs"
                           value={one.width}
                           onChange={e => onNum("width")(e.target.value)}
                         />
                         <Label>H</Label>
                         <TextField2
                           type="number"
-                          size="xs"
                           value={one.height}
                           onChange={e => onNum("height")(e.target.value)}
                         />
                         <Label>Rotate</Label>
                         <TextField2
                           type="number"
-                          size="xs"
                           value={one.rotate ?? 0}
                           onChange={e => onNum("rotate")(e.target.value)}
                         />
                         <Label>Radius</Label>
                         <TextField2
                           type="number"
-                          size="xs"
                           value={one.radius ?? 8}
                           onChange={e => onNum("radius")(e.target.value)}
                         />
                         <Label>Shadow</Label>
                         <TextField2
                           type="number"
-                          size="xs"
                           value={one.shadow ?? 0}
                           onChange={e => onNum("shadow")(e.target.value)}
                         />
@@ -347,7 +339,6 @@ export default function RightPanel() {
                           <TextField2
                             value={one.text || ""}
                             onChange={e => onText("text")(e.target.value)}
-                            size="xs"
                           />
                         </div>
                         <div
@@ -399,7 +390,6 @@ export default function RightPanel() {
                           <TextField2
                             value={one.imageUrl || ""}
                             onChange={e => onText("imageUrl")(e.target.value)}
-                            size="xs"
                           />
                         </div>
                         <div
@@ -450,7 +440,6 @@ export default function RightPanel() {
                           <TextField2
                             value={one.btnLabel || ""}
                             onChange={e => onText("btnLabel")(e.target.value)}
-                            size="xs"
                           />
                         </div>
                         <div
@@ -461,7 +450,6 @@ export default function RightPanel() {
                           <TextField2
                             value={one.btnHref || ""}
                             onChange={e => onText("btnHref")(e.target.value)}
-                            size="xs"
                           />
                         </div>
                         <div
@@ -575,7 +563,7 @@ export default function RightPanel() {
             />
 
             {/* Z-Order */}
-            <AccordionCard
+            {/* <AccordionCard
               title="Z-Order"
               allowMultiple
               defaultOpenAll
@@ -631,7 +619,7 @@ export default function RightPanel() {
                   ),
                 },
               ]}
-            />
+            /> */}
           </>
         )}
 

@@ -1,25 +1,42 @@
-import type { SectionItem } from "./types";
+// src/shared/store/layout/utils.ts
+import type { Section } from "./types";
 
-export function genId(prefix = "s") {
-  return `${prefix}-${Math.random().toString(36).slice(2, 9)}`;
+// z 값을 0..n-1로 정규화
+export function normalizeZ(sections: Section[]): Section[] {
+  const sorted = [...sections].sort((a, b) => (a.z ?? 0) - (b.z ?? 0));
+  return sorted.map((s, i) => ({ ...s, z: i }));
 }
 
-export function deepClone<T>(x: T): T {
-  return JSON.parse(JSON.stringify(x));
+export function maxZ(sections: Section[]): number {
+  return sections.reduce((m, s) => Math.max(m, s.z ?? 0), -1);
 }
 
-export const clamp = (n: number, min: number, max: number) =>
-  Math.max(min, Math.min(n, max));
+let __uid = 0;
+export function newId(prefix = "sec"): string {
+  __uid += 1;
+  return `${prefix}_${__uid.toString(36)}`;
+}
 
-export const rectsOverlap = (
-  a: { x: number; y: number; width: number; height: number },
-  b: { x: number; y: number; width: number; height: number },
-) =>
-  !(
-    a.x + a.width <= b.x ||
-    b.x + b.width <= a.x ||
-    a.y + a.height <= b.y ||
-    b.y + b.height <= a.y
+export function cloneSection(s: Section, z: number): Section {
+  const { id: _old, ...rest } = s;
+  return {
+    ...rest,
+    id: `${s.id}_copy_${z}`,
+    x: s.x + 16,
+    y: s.y + 16,
+    z,
+    title: s.title ? `${s.title} copy` : s.title,
+  } as Section;
+}
+
+export function applyZChange(
+  sections: Section[],
+  ids: string[],
+  fn: (z: number) => number,
+): Section[] {
+  const idSet = new Set(ids);
+  const moved = sections.map(s =>
+    idSet.has(s.id) ? { ...s, z: fn(s.z ?? 0) } : s,
   );
-
-export const isSolid = (s: SectionItem) => s.type === "box";
+  return normalizeZ(moved);
+}

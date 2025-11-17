@@ -47,27 +47,11 @@ export default function LeftPanel() {
   const canvasHeight = useLayoutStore(s => s.canvasHeight);
   const setCanvasSize = useLayoutStore(s => s.actions.setCanvasSize);
 
-  const columns = useLayoutStore(s => s.columns);
-  const setColumns = useLayoutStore(s => s.actions.setColumns!);
-
-  const gutter = useLayoutStore(s => s.gutter);
-  const setGutter = useLayoutStore(s => s.actions.setGutter!);
-
-  const containerPadding = useLayoutStore(s => s.containerPadding);
-  const setContainerPadding = useLayoutStore(
-    s => s.actions.setContainerPadding!,
-  );
-
-  const showColumns = useLayoutStore(s => s.showColumns);
-  const setShowColumns = useLayoutStore(s => s.actions.setShowColumns!);
-
   const onChangeCanvasW = (v: string) => {
-    const next = Math.max(300, Number(v || 0));
-    setCanvasSize(next, canvasHeight);
+    setCanvasSize(Number(v), canvasHeight);
   };
   const onChangeCanvasH = (v: string) => {
-    const next = Math.max(300, Number(v || 0));
-    setCanvasSize(canvasWidth, next);
+    setCanvasSize(canvasWidth, Number(v));
   };
 
   return (
@@ -116,7 +100,6 @@ export default function LeftPanel() {
                     <Label>Grid Size</Label>
                     <TextField2
                       type="number"
-                      size="xs"
                       value={gridSize}
                       onChange={e => setGridSize(Number(e.target.value || 1))}
                       inputProps={{
@@ -127,7 +110,6 @@ export default function LeftPanel() {
 
                     <Label>Grid Color</Label>
                     <TextField2
-                      size="xs"
                       value={gridColor}
                       onChange={e => setGridColor(e.target.value)}
                     />
@@ -183,7 +165,6 @@ export default function LeftPanel() {
                         setSnapTolerance(Number(e.target.value || 0))
                       }
                       inputProps={{ min: 0, max: 40 }}
-                      size="xs"
                     />
                   </div>
                 </div>
@@ -210,71 +191,12 @@ export default function LeftPanel() {
                       type="number"
                       value={canvasWidth}
                       onChange={e => onChangeCanvasW(e.target.value)}
-                      size="xs"
                     />
                     <Label className="inline">Height</Label>
                     <TextField2
                       type="number"
                       value={canvasHeight}
                       onChange={e => onChangeCanvasH(e.target.value)}
-                      size="xs"
-                    />
-                  </div>
-                </div>
-              ),
-            },
-          ]}
-        />
-
-        {/* ===== Columns Overlay ===== */}
-        <AccordionCard
-          title="Columns"
-          allowMultiple
-          defaultOpenAll
-          hideControls
-          items={[
-            {
-              id: "columns",
-              title: "Grid Columns",
-              content: (
-                <div className="card-body">
-                  <Checkbox
-                    checked={showColumns}
-                    onChange={e => setShowColumns(e.target.checked)}
-                    label="showColumns"
-                    size="small"
-                  />
-
-                  <div
-                    className="row"
-                    style={{ display: "grid", gap: 8, marginTop: 10 }}
-                  >
-                    <Label>Count</Label>
-                    <TextField2
-                      type="number"
-                      value={columns}
-                      onChange={e => setColumns(Number(e.target.value || 12))}
-                      inputProps={{ min: 1, max: 24 }}
-                      size="xs"
-                    />
-                    <Label>Gutter</Label>
-                    <TextField2
-                      type="number"
-                      value={gutter}
-                      onChange={e => setGutter(Number(e.target.value || 0))}
-                      inputProps={{ min: 0, max: 80 }}
-                      size="xs"
-                    />
-
-                    <Label>Padding</Label>
-                    <TextField2
-                      type="number"
-                      value={containerPadding}
-                      onChange={e =>
-                        setContainerPadding(Number(e.target.value || 0))
-                      }
-                      inputProps={{ min: 0, max: 200 }}
-                      size="xs"
                     />
                   </div>
                 </div>

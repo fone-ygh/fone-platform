@@ -71,10 +71,10 @@ export const useEDITORStore = create<EditorStore>()(
         canvasHeight: 2000,
 
         zoom: 0,
-        canvasZoom: 100,
+        canvasZoom: 60,
 
-        panX: 0,
-        panY: 0,
+        panX: 50,
+        panY: 100,
 
         showGrid: true,
         gridSize: 16,

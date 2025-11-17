@@ -3,10 +3,8 @@
 
 import React, { forwardRef } from "react";
 
-import { type SectionItem } from "@/shared/store/layout";
-
 /** purpose → 기본 배경/텍스트 색 매핑 */
-function pickAutoColors(purpose: SectionItem["purpose"]) {
+function pickAutoColors(purpose: string) {
   switch (purpose) {
     case "header":
       return { bg: "#f1f5ff", text: "#0f172a", border: "#c7d2fe" };
@@ -41,7 +39,7 @@ function pickAutoColors(purpose: SectionItem["purpose"]) {
 }
 
 type Props = {
-  item: SectionItem;
+  item: any;
   selected?: boolean;
   onRequestSelect?: (multi: boolean) => void;
 };
@@ -231,11 +229,29 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
           <div style={{ padding: 10, width: "100%" }}>
             <div style={{ fontWeight: 700, marginBottom: 6 }}>{item.title}</div>
             <ul style={{ margin: 0, paddingLeft: 18 }}>
-              {(item.listItems || ["항목 1", "항목 2"]).map((li, i) => (
-                <li key={i} style={{ lineHeight: 1.6 }}>
-                  {li}
-                </li>
-              ))}
+              {(item.listItems || ["항목 1", "항목 2"]).map(
+                (
+                  li:
+                    | string
+                    | number
+                    | bigint
+                    | boolean
+                    | React.ReactElement<
+                        any,
+                        string | React.JSXElementConstructor<any>
+                      >
+                    | Iterable<React.ReactNode>
+                    | React.ReactPortal
+                    | Promise<React.AwaitedReactNode>
+                    | null
+                    | undefined,
+                  i: React.Key | null | undefined,
+                ) => (
+                  <li key={i} style={{ lineHeight: 1.6 }}>
+                    {li}
+                  </li>
+                ),
+              )}
             </ul>
           </div>
         </div>
@@ -318,28 +334,48 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
         >
           <div style={{ padding: 8, width: "100%", height: "100%" }}>
             <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
-              {tabs.map((t, i) => {
-                const isActive = active === i;
-                return (
-                  <div
-                    key={i}
-                    style={{
-                      padding: "6px 10px",
-                      borderRadius: 8,
-                      border: `1px solid ${
-                        isActive ? "rgba(25,118,210,.95)" : "rgba(0,0,0,.2)"
-                      }`,
-                      background: isActive
-                        ? "rgba(25,118,210,.1)"
-                        : "transparent",
-                      fontWeight: isActive ? 800 : 600,
-                      userSelect: "none",
-                    }}
-                  >
-                    {t.label}
-                  </div>
-                );
-              })}
+              {tabs.map(
+                (
+                  t: {
+                    label:
+                      | string
+                      | number
+                      | bigint
+                      | boolean
+                      | React.ReactElement<
+                          any,
+                          string | React.JSXElementConstructor<any>
+                        >
+                      | Iterable<React.ReactNode>
+                      | React.ReactPortal
+                      | Promise<React.AwaitedReactNode>
+                      | null
+                      | undefined;
+                  },
+                  i: React.Key | null | undefined,
+                ) => {
+                  const isActive = active === i;
+                  return (
+                    <div
+                      key={i}
+                      style={{
+                        padding: "6px 10px",
+                        borderRadius: 8,
+                        border: `1px solid ${
+                          isActive ? "rgba(25,118,210,.95)" : "rgba(0,0,0,.2)"
+                        }`,
+                        background: isActive
+                          ? "rgba(25,118,210,.1)"
+                          : "transparent",
+                        fontWeight: isActive ? 800 : 600,
+                        userSelect: "none",
+                      }}
+                    >
+                      {t.label}
+                    </div>
+                  );
+                },
+              )}
             </div>
             <div style={{ color: "#6b7280", fontSize: 13 }}>
               {tabs[active]?.content ?? "내용"}
@@ -360,22 +396,56 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
           onMouseDown={handleMouseDown}
         >
           <div style={{ padding: 10, width: "100%" }}>
-            {(item.accordion || []).map((a, i) => (
-              <div
-                key={i}
-                style={{
-                  border: "1px solid rgba(0,0,0,.14)",
-                  borderRadius: 10,
-                  padding: 8,
-                  marginBottom: 8,
-                }}
-              >
-                <div style={{ fontWeight: 800, marginBottom: 6 }}>
-                  {a.label}
+            {(item.accordion || []).map(
+              (
+                a: {
+                  label:
+                    | string
+                    | number
+                    | bigint
+                    | boolean
+                    | React.ReactElement<
+                        any,
+                        string | React.JSXElementConstructor<any>
+                      >
+                    | Iterable<React.ReactNode>
+                    | React.ReactPortal
+                    | Promise<React.AwaitedReactNode>
+                    | null
+                    | undefined;
+                  content:
+                    | string
+                    | number
+                    | bigint
+                    | boolean
+                    | React.ReactElement<
+                        any,
+                        string | React.JSXElementConstructor<any>
+                      >
+                    | Iterable<React.ReactNode>
+                    | React.ReactPortal
+                    | Promise<React.AwaitedReactNode>
+                    | null
+                    | undefined;
+                },
+                i: React.Key | null | undefined,
+              ) => (
+                <div
+                  key={i}
+                  style={{
+                    border: "1px solid rgba(0,0,0,.14)",
+                    borderRadius: 10,
+                    padding: 8,
+                    marginBottom: 8,
+                  }}
+                >
+                  <div style={{ fontWeight: 800, marginBottom: 6 }}>
+                    {a.label}
+                  </div>
+                  <div style={{ color: "#6b7280" }}>{a.content}</div>
                 </div>
-                <div style={{ color: "#6b7280" }}>{a.content}</div>
-              </div>
-            ))}
+              ),
+            )}
           </div>
         </div>
       );
@@ -402,30 +472,68 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
               gap: 12,
             }}
           >
-            {plans.map((pr, i) => (
-              <div
-                key={i}
-                style={{
-                  border: "1px solid rgba(0,0,0,.14)",
-                  borderRadius: 12,
-                  padding: 12,
-                  boxShadow: pr.highlight
-                    ? "0 10px 28px rgba(0,0,0,.25)"
-                    : "none",
-                  background: pr.highlight
-                    ? "rgba(25,118,210,.08)"
-                    : "transparent",
-                }}
-              >
-                <div style={{ fontWeight: 900 }}>{pr.name}</div>
-                <div style={{ fontSize: 20, margin: "6px 0" }}>{pr.price}</div>
-                <ul style={{ margin: 0, paddingLeft: 18 }}>
-                  {pr.features.map((f, j) => (
-                    <li key={j}>{f}</li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+            {plans.map(
+              (
+                pr: {
+                  highlight: any;
+                  name:
+                    | string
+                    | number
+                    | bigint
+                    | boolean
+                    | React.ReactElement<
+                        any,
+                        string | React.JSXElementConstructor<any>
+                      >
+                    | Iterable<React.ReactNode>
+                    | React.ReactPortal
+                    | Promise<React.AwaitedReactNode>
+                    | null
+                    | undefined;
+                  price:
+                    | string
+                    | number
+                    | bigint
+                    | boolean
+                    | React.ReactElement<
+                        any,
+                        string | React.JSXElementConstructor<any>
+                      >
+                    | Iterable<React.ReactNode>
+                    | React.ReactPortal
+                    | Promise<React.AwaitedReactNode>
+                    | null
+                    | undefined;
+                  features: any[];
+                },
+                i: React.Key | null | undefined,
+              ) => (
+                <div
+                  key={i}
+                  style={{
+                    border: "1px solid rgba(0,0,0,.14)",
+                    borderRadius: 12,
+                    padding: 12,
+                    boxShadow: pr.highlight
+                      ? "0 10px 28px rgba(0,0,0,.25)"
+                      : "none",
+                    background: pr.highlight
+                      ? "rgba(25,118,210,.08)"
+                      : "transparent",
+                  }}
+                >
+                  <div style={{ fontWeight: 900 }}>{pr.name}</div>
+                  <div style={{ fontSize: 20, margin: "6px 0" }}>
+                    {pr.price}
+                  </div>
+                  <ul style={{ margin: 0, paddingLeft: 18 }}>
+                    {pr.features.map((f, j) => (
+                      <li key={j}>{f}</li>
+                    ))}
+                  </ul>
+                </div>
+              ),
+            )}
           </div>
         </div>
       );
