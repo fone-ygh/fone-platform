@@ -243,7 +243,7 @@ export default function CanvasStage() {
                     w: s.width,
                     h: s.height,
                   };
-
+                  console.log("sections : ", sections);
                   // 종료 시 "1px도 겹치지 않게" 확정
                   const fixed = resolveOnEnd(s.id, proposal, prev);
 
