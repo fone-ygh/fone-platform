@@ -10,6 +10,7 @@ import { useLayoutActions } from "@/shared/store/layout/store";
 
 import type { Rect } from "./hooks/collision";
 import { useDomHandles } from "./hooks/useDomHandles";
+import { useKeyboardControl } from "./hooks/useKeyboardControl";
 import { useMarqueeSelection } from "./hooks/useMarqueeSelection";
 import { useOverlapResolver } from "./hooks/useOverlapResolver";
 import { useSpaceDragPan } from "./hooks/useSpaceDragPan";
@@ -23,6 +24,8 @@ const Box = dynamic(() => import("@/shared/components/ui/box/Box"), {
 });
 
 export default function CanvasStage() {
+  useKeyboardControl();
+
   /* ========== Layout 상태 ========== */
   const { canvasWidth, canvasHeight, sections, selectedIds } = useLayoutStore();
   const { setSelectedIds, setUpdateFrame, setCommitAfterTransform } =
