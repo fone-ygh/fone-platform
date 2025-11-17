@@ -57,6 +57,8 @@ export default function CanvasStage() {
    */
   // 실제로 scale/translate 되는 레이어 (좌표계 기준 컨테이너)
   const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
+  // OOB(경계 벗어남) 시 stage 배경 강조를 위한 상태
+  const [isOOB, setIsOOB] = useState(false);
 
   // 콜백으로 쓰기 위한 함수정의
   // node(DOM 또는 null)를 받아서 setContainerEl(node)를 호출하는 함수
@@ -155,7 +157,7 @@ export default function CanvasStage() {
       style={{
         position: "relative",
         overflow: "hidden",
-        background: "#E5E7EB",
+        background: isOOB ? "rgba(220, 38, 38, 0.18)" : "#E5E7EB",
         userSelect: "none",
         width: "100%",
         height: "100%",
@@ -214,6 +216,7 @@ export default function CanvasStage() {
                   const w = parseFloat(cs.width || "") || s.width;
                   const h = parseFloat(cs.height || "") || s.height;
                   const cand: Rect = { x: e.left, y: e.top, w, h };
+                  setIsOOB(isOutOfBounds(cand));
                   calcLive(s.id, cand);
                 }}
                 /* ===== 실시간 겹침 하이라이트: 리사이즈 중 ===== */
@@ -231,6 +234,7 @@ export default function CanvasStage() {
                     parseFloat(target.style.height || "") ??
                     s.height;
                   const cand: Rect = { x: l, y: t, w, h };
+                  setIsOOB(isOutOfBounds(cand));
                   calcLive(s.id, cand);
                 }}
                 /* ===== Drag End: 여기서만 겹침 해소 + 커밋 ===== */
@@ -270,6 +274,7 @@ export default function CanvasStage() {
                   // 상태 커밋
                   setUpdateFrame(s.id, { x: fixed.x, y: fixed.y });
                   setCommitAfterTransform();
+                  setIsOOB(false);
                 }}
                 /* ===== Resize End: 여기서만 겹침 해소 + 커밋 ===== */
                 onResizeEnd={(e: any) => {
@@ -317,6 +322,7 @@ export default function CanvasStage() {
                     height: fixed.h,
                   });
                   setCommitAfterTransform();
+                  setIsOOB(false);
                 }}
               >
                 <SectionItemView
