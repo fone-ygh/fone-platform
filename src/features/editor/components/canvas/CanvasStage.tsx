@@ -57,6 +57,8 @@ export default function CanvasStage() {
    */
   // 실제로 scale/translate 되는 레이어 (좌표계 기준 컨테이너)
   const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
+  // OOB(경계 벗어남) 시 stage 배경 강조를 위한 상태
+  const [isOOB, setIsOOB] = useState(false);
 
   // 콜백으로 쓰기 위한 함수정의
   // node(DOM 또는 null)를 받아서 setContainerEl(node)를 호출하는 함수
@@ -100,7 +102,8 @@ export default function CanvasStage() {
   });
 
   // 겹침 하이라이트(드래그/리사이즈 중), 종료 시 1px도 겹치지 않도록 해소
-  const { overlaps, calcLive, resolveOnEnd } = useOverlapResolver(sections);
+  const { overlaps, calcLive, resolveOnEnd, setOverlaps } =
+    useOverlapResolver(sections);
 
   // DOM 핸들 수집(그룹/가이드라인)
   const { selectedEls, guidelineEls } = useDomHandles({
@@ -135,6 +138,13 @@ export default function CanvasStage() {
     marqueeUp();
   };
 
+  // 컨테이너(zoom-layer) 경계 밖 여부 판단
+  const isOutOfBounds = (r: Rect) => {
+    return (
+      r.x < 0 || r.y < 0 || r.x + r.w > canvasWidth || r.y + r.h > canvasHeight
+    );
+  };
+
   /* ========== 렌더링 ========== */
   return (
     <div
@@ -146,11 +156,11 @@ export default function CanvasStage() {
       onMouseUp={onMouseUp}
       style={{
         position: "relative",
-        border: "1px solid rgba(0,0,0,.12)",
-        borderRadius: 12,
         overflow: "hidden",
-        background: "#fff",
+        background: isOOB ? "rgba(220, 38, 38, 0.18)" : "#E5E7EB",
         userSelect: "none",
+        width: "100%",
+        height: "100%",
       }}
     >
       {/* 줌/팬 레이어 */}
@@ -166,6 +176,7 @@ export default function CanvasStage() {
           willChange: "transform",
           backgroundImage: showGrid ? gridBg : "none",
           backgroundSize: showGrid ? `${gridSize}px ${gridSize}px` : "auto",
+          backgroundColor: "#fff", // 캔버스(줌 레이어) 배경은 흰색 고정
           cursor,
         }}
       >
@@ -205,6 +216,7 @@ export default function CanvasStage() {
                   const w = parseFloat(cs.width || "") || s.width;
                   const h = parseFloat(cs.height || "") || s.height;
                   const cand: Rect = { x: e.left, y: e.top, w, h };
+                  setIsOOB(isOutOfBounds(cand));
                   calcLive(s.id, cand);
                 }}
                 /* ===== 실시간 겹침 하이라이트: 리사이즈 중 ===== */
@@ -222,6 +234,7 @@ export default function CanvasStage() {
                     parseFloat(target.style.height || "") ??
                     s.height;
                   const cand: Rect = { x: l, y: t, w, h };
+                  setIsOOB(isOutOfBounds(cand));
                   calcLive(s.id, cand);
                 }}
                 /* ===== Drag End: 여기서만 겹침 해소 + 커밋 ===== */
@@ -243,9 +256,16 @@ export default function CanvasStage() {
                     w: s.width,
                     h: s.height,
                   };
-                  console.log("sections : ", sections);
-                  // 종료 시 "1px도 겹치지 않게" 확정
-                  const fixed = resolveOnEnd(s.id, proposal, prev);
+                  // 컨테이너 경계 밖이면 prev로 복귀, 아니면 겹침 규칙 적용
+
+                  let fixed = proposal;
+
+                  if (isOutOfBounds(proposal)) {
+                    fixed = prev;
+                    setOverlaps([]);
+                  } else {
+                    fixed = resolveOnEnd(s.id, proposal, prev);
+                  }
 
                   // DOM 보정
                   el.style.left = `${fixed.x}px`;
@@ -254,6 +274,7 @@ export default function CanvasStage() {
                   // 상태 커밋
                   setUpdateFrame(s.id, { x: fixed.x, y: fixed.y });
                   setCommitAfterTransform();
+                  setIsOOB(false);
                 }}
                 /* ===== Resize End: 여기서만 겹침 해소 + 커밋 ===== */
                 onResizeEnd={(e: any) => {
@@ -277,8 +298,15 @@ export default function CanvasStage() {
                     w: s.width,
                     h: s.height,
                   };
-                  // 종료 시 겹치면 prev로 완전 되돌림, 아니면 proposal 확정
-                  const fixed = resolveOnEnd(s.id, proposal, prev);
+
+                  let fixed = proposal;
+
+                  if (isOutOfBounds(proposal)) {
+                    fixed = prev;
+                    setOverlaps([]);
+                  } else {
+                    fixed = resolveOnEnd(s.id, proposal, prev);
+                  }
 
                   // DOM 보정
                   el.style.left = `${fixed.x}px`;
@@ -294,6 +322,7 @@ export default function CanvasStage() {
                     height: fixed.h,
                   });
                   setCommitAfterTransform();
+                  setIsOOB(false);
                 }}
               >
                 <SectionItemView
