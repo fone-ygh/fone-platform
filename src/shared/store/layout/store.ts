@@ -12,7 +12,7 @@ import {
   DEFAULT_CANVAS_WIDTH,
   INITIAL_SECTIONS,
 } from "./defaults";
-import type { LayoutState, Section, SectionType } from "./types";
+import type { InsertTool, LayoutState, Section, SectionType } from "./types";
 import { applyZChange, cloneSection, maxZ, normalizeZ } from "./utils";
 
 export const useLayoutStore = create<LayoutState>()(
@@ -27,6 +27,7 @@ export const useLayoutStore = create<LayoutState>()(
         selectedIds: [],
         version: 0,
 
+        insertTool: null as InsertTool,
         actions: {
           /* ---------------- Canvas ---------------- */
           setCanvasSize: (w, h) =>
@@ -163,6 +164,11 @@ export const useLayoutStore = create<LayoutState>()(
           setCommitAfterTransform: () =>
             set(s => {
               s.version += 1;
+            }),
+
+          setInsertTool: (tool: InsertTool) =>
+            set(s => {
+              s.insertTool = tool;
             }),
         },
       }),
