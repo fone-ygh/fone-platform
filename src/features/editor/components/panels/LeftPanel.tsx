@@ -48,12 +48,10 @@ export default function LeftPanel() {
   const setCanvasSize = useLayoutStore(s => s.actions.setCanvasSize);
 
   const onChangeCanvasW = (v: string) => {
-    const next = Math.max(300, Number(v || 0));
-    setCanvasSize(next, canvasHeight);
+    setCanvasSize(Number(v), canvasHeight);
   };
   const onChangeCanvasH = (v: string) => {
-    const next = Math.max(300, Number(v || 0));
-    setCanvasSize(canvasWidth, next);
+    setCanvasSize(canvasWidth, Number(v));
   };
 
   return (
@@ -102,7 +100,6 @@ export default function LeftPanel() {
                     <Label>Grid Size</Label>
                     <TextField2
                       type="number"
-                      size="xs"
                       value={gridSize}
                       onChange={e => setGridSize(Number(e.target.value || 1))}
                       inputProps={{
@@ -113,7 +110,6 @@ export default function LeftPanel() {
 
                     <Label>Grid Color</Label>
                     <TextField2
-                      size="xs"
                       value={gridColor}
                       onChange={e => setGridColor(e.target.value)}
                     />
@@ -169,7 +165,6 @@ export default function LeftPanel() {
                         setSnapTolerance(Number(e.target.value || 0))
                       }
                       inputProps={{ min: 0, max: 40 }}
-                      size="xs"
                     />
                   </div>
                 </div>
@@ -196,14 +191,12 @@ export default function LeftPanel() {
                       type="number"
                       value={canvasWidth}
                       onChange={e => onChangeCanvasW(e.target.value)}
-                      size="xs"
                     />
                     <Label className="inline">Height</Label>
                     <TextField2
                       type="number"
                       value={canvasHeight}
                       onChange={e => onChangeCanvasH(e.target.value)}
-                      size="xs"
                     />
                   </div>
                 </div>
