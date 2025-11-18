@@ -169,40 +169,10 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
           onMouseDown={handleMouseDown}
           style={{ ...common }}
           variant="contained"
+          sx={{ minWidth: "unset", padding: "unset" }}
         >
           {item.btnLabel || "Button"}
         </Button>
-        // <div
-        //   ref={ref}
-        //   className="section-item"
-        //   data-type="button"
-        //   style={{ ...common, display: "grid", placeItems: "center" }}
-        //   onMouseDown={handleMouseDown}
-        // >
-        //   <a
-        //     href={item.btnHref || "#"}
-        //     style={{
-        //       display: "inline-flex",
-        //       alignItems: "center",
-        //       justifyContent: "center",
-        //       padding: "0 16px",
-        //       width: "100%",
-        //       height: "100%",
-        //       borderRadius: 8,
-        //       background: isGhost ? "transparent" : (bg ?? "#111"),
-        //       border: isGhost
-        //         ? "1px solid rgba(0,0,0,.2)"
-        //         : "1px solid transparent",
-        //       color: isGhost ? (textColor ?? "#111") : (textColor ?? "#fff"),
-        //       textDecoration: "none",
-        //       fontWeight: 700,
-        //       pointerEvents: "none", // 캔버스에서 클릭 통과 방지
-        //       userSelect: "none",
-        //     }}
-        //   >
-        //     {item.btnLabel || "Button"}
-        //   </a>
-        // </div>
       );
     }
 
