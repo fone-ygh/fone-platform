@@ -1,4 +1,4 @@
-import { Column, ColumnGroup } from "react-data-grid";
+import { CalculatedColumn, Column, ColumnGroup, RenderCellProps, RenderEditCellProps } from "react-data-grid";
 
 interface Row {
     id: number;
@@ -8,21 +8,48 @@ interface Row {
     value3: string;
     value4: string;
     value5: string;
-    dataType?: string;
 }
 
-type ColumnType = {
-    dataType?: "input" | "number" | "button" | "date" | "select" | "radio" | "checkbox";
-}
+export type CustomColumn<T> = Column<T, unknown> & {
+    type?: "input" | "number" | "button" | "date" | "select" | "radio" | "checkbox";
+};
 
 
-type ColumnOrColumnGroup<R, SR = unknown> = 
-    Column<R, SR> & ColumnType |
-    ColumnGroup<R, SR> & {children: ColumnOrColumnGroup<R, SR>[]};
+export type CustomColumnOrColumnGroup<R, SR = unknown> = CustomColumn<R> | ColumnGroup<R, SR> & {children: CustomColumnOrColumnGroup<R, SR>[]};
   
-interface TableProps {
-    rows: Row[];
-    columns: ColumnOrColumnGroup<Row, unknown>[];
+export interface TableProps <T>{
+    rows: T[];
+    columns: CustomColumnOrColumnGroup<T, unknown>[];
     headerHeight?: number;
 
+}
+
+export type CustomCalculatedColumn<TRow, TSummaryRow = unknown> = CalculatedColumn<TRow, TSummaryRow> & {
+    type?: "input" | "number" | "button" | "date" | "select" | "radio" | "checkbox";
+};
+
+export type CustomRenderCellProps<TRow, TSummaryRow = unknown> = 
+    Omit<RenderCellProps<TRow, TSummaryRow>, "column"> & {
+        column: CustomCalculatedColumn<TRow>;
+    };
+
+export type CustomRenderEditCellProps<TRow, TSummaryRow = unknown> = 
+    Omit<RenderEditCellProps<TRow, TSummaryRow>, "column"> & {
+        column: CustomCalculatedColumn<TRow, TSummaryRow>;
+    };
+
+
+export interface MergedRange {
+    id: string;
+    mergeCellId: string;
+    range: { startRow: number; endRow: number; startCol: number; endCol: number };
+    value?: string;
+    editMode?: boolean;
+}
+
+export interface MergeCellsStore {
+    mergedRanges: MergedRange[];
+    actions: {
+        setMergedRanges: (mergedRanges: MergedRange[]) => void;
+    }
 }

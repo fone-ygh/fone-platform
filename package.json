@@ -17,6 +17,7 @@
     "@mui/system": "^7.3.3",
     "@radix-ui/react-scroll-area": "^1.2.10",
     "@types/lodash-es": "^4.17.12",
+    "antd": "^5.29.0",
     "fone-design-system_v1": "^2.0.1",
     "immer": "^10.2.0",
     "lodash-es": "^4.17.21",
