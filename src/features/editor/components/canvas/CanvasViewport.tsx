@@ -19,8 +19,8 @@ export default function CanvasViewport({ children }: Props) {
         className="canvas-center"
         style={{
           // 여백 포함 최소 사이즈(너무 작을 때만 적용)
-          minWidth: Math.min(canvasWidth + 48, 1600),
-          minHeight: Math.min(canvasHeight + 48, 1200),
+          minWidth: Math.min(canvasWidth, 3600),
+          minHeight: Math.min(canvasHeight, 3200),
         }}
       >
         {children}

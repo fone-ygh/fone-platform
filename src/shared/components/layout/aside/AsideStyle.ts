@@ -23,31 +23,10 @@ export const AsideStyle = styled.aside`
     0 1px 0 rgba(15, 23, 42, 0.03) inset; /* top hairline */
 
   width: 100%;
+  overflow: hidden;
+
   /* max-width: clamp(260px, 18vw, 420px); */
   padding: var(--as-pad);
-
-  display: grid;
-  grid-auto-rows: min-content;
-  gap: var(--as-gap);
-  align-content: start;
-  overflow: auto;
-
-  scroll-padding-top: var(--as-pad);
-
-  /* 얇은 스크롤바 */
-  scrollbar-width: thin;
-  scrollbar-color: #c5d3e8 transparent;
-  &::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: #c5d3e8;
-    border-radius: 8px;
-  }
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
 
   /* 양쪽 에지에 hairline (영역 분리감 ↑) */
   &::before,
@@ -168,5 +147,25 @@ export const AsideStyle = styled.aside`
     ${(p: any) => (p["data-side"] === "left" ? "right: 0;" : "left: 0;")}
     width: 2px;
     background: var(--ds-ring, rgba(0, 132, 254, 0.25));
+  }
+`;
+
+export const AsideInnerStyle = styled.aside`
+  height: 100%;
+  overflow-y: auto;
+
+  /* 얇은 스크롤바 */
+  scrollbar-width: thin;
+  scrollbar-color: #c5d3e8 transparent;
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #c5d3e8;
+    border-radius: 8px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
   }
 `;
