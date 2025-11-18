@@ -1,109 +1,112 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import styled from "@emotion/styled";
-import Moveable, {
-  ElementGuidelineValueOption,
-  MoveableRefType,
-} from "react-moveable";
+import Moveable from "react-moveable";
 
-import { useOutsideClick } from "@/shared/hooks/useOutsideClick";
 import useResizeStore from "@/shared/store/resize";
 
-// Moveable 그룹 타겟 타입(일반 HTMLElement/SVGElement, CSS selector, 혹은 RefObject까지 허용)
+type TargetsType = (HTMLElement | SVGElement)[] | undefined;
 
 interface Props {
-  targets?: (HTMLElement | SVGElement)[];
+  /* Selection */
+  active?: boolean;
+  onActiveChange?: (active: boolean) => void;
+  defaultActive?: boolean;
 
-  /** 컴포넌트를 구분하는 ID */
+  /* Identity + features */
   id?: string;
-
-  /** 리사이즈 가능 여부 */
   resizable?: boolean;
-
-  /** 드래그 가능 여부 */
   draggable?: boolean;
-
-  /** 리사이즈, 드래그 최소 단위 */
+  rotatable?: boolean;
   throttleResize?: number;
 
-  /** 최소 너비 */
+  /* limits */
   minWidth?: number;
-
-  /** 최대 너비 */
   maxWidth?: number;
-
-  /** 최소 높이 */
   minHeight?: number;
-
-  /** 최대 높이 */
   maxHeight?: number;
 
-  /** 자식 요소 */
-  children: ReactNode;
+  /* layout */
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+  rotate?: number;
 
-  /** 초기 너비 */
-  width?: number;
+  /* coords */
+  zoom?: number;
+  containerEl?: HTMLElement | null;
 
-  /** 초기 높이 */
-  height?: number;
+  /* group + snap */
+  targets?: TargetsType;
+  snappable?: boolean | string[];
+  snapGridWidth?: number;
+  snapGridHeight?: number;
+  elementGuidelines?: any;
 
-  /** 초기 X 좌표 */
-  x?: number;
-
-  /** 초기 Y 좌표 */
-  y?: number;
-
-  /** 리사이즈 가능한 방향 */
-  renderDirections: string[];
-
+  /* events (single / group) */
   onResizeStart?: (e: any) => void;
   onResize?: (e: any) => void;
   onResizeEnd?: (e: any) => void;
+
   onResizeGroupStart?: (e: any) => void;
   onResizeGroup?: (e: any) => void;
   onResizeGroupEnd?: (e: any) => void;
+
   onDragStart?: (e: any) => void;
   onDrag?: (e: any) => void;
   onDragEnd?: (e: any) => void;
+
   onDragGroupStart?: (e: any) => void;
   onDragGroup?: (e: any) => void;
   onDragGroupEnd?: (e: any) => void;
 
-  /** 스냅 기능 on/off */
-  snappable?: boolean | (string[] & false) | (string[] & true);
+  onRotateStart?: (e: any) => void;
+  onRotate?: (e: any) => void;
+  onRotateEnd?: (e: any) => void;
 
-  /** 세로(수직) 방향 그리드 간격. 0보다 크면 x축 이동/리사이즈가 그리드 단위로 스냅 */
-  snapGridWidth?: number;
-
-  /** 가로(수평) 방향 그리드 간격. 0보다 크면 y축 이동/리사이즈가 그리드 단위로 스냅. */
-  snapGridHeight?: number;
-
-  snapDigit?: number;
-
-  elementGuidelines?:
-    | ((ElementGuidelineValueOption | MoveableRefType<Element>)[] &
-        (HTMLDivElement | null)[])
-    | HTMLElement
-    | MoveableRefType<Element>
-    | ElementGuidelineValueOption
-    | null
-    | any;
+  children: ReactNode;
 }
 
 export default function ResizeContainer({
   id = "",
   children,
+
+  // selection
+  active,
+  onActiveChange,
+  defaultActive = false,
+
+  // features
   resizable,
   draggable,
+  rotatable,
   throttleResize,
-  renderDirections,
+
+  // limits
   minWidth = 0,
   maxWidth = Infinity,
   minHeight = 0,
   maxHeight = Infinity,
+
+  // initial layout
   width: propWidth,
   height: propHeight,
   x: propX = 0,
   y: propY = 0,
+  rotate = 0,
+
+  // coords
+  zoom = 1,
+  containerEl,
+
+  // group/snap
+  targets,
+  snappable = true,
+  snapGridWidth = 16,
+  snapGridHeight = 16,
+  elementGuidelines,
+
+  // callbacks
   onResizeStart,
   onResize,
   onResizeEnd,
@@ -116,18 +119,19 @@ export default function ResizeContainer({
   onDragGroupStart,
   onDragGroup,
   onDragGroupEnd,
-  targets,
-  snappable = true,
-  snapGridWidth = 16,
-  snapGridHeight = 16,
-  elementGuidelines,
+  onRotateStart,
+  onRotate,
+  onRotateEnd,
 }: Props) {
-  const [active, setActive] = useState(false);
+  const targetRef = useRef<HTMLDivElement | null>(null);
+  const moveableRef = useRef<any>(null);
 
-  const moveableRef = useOutsideClick(() => setActive(false));
+  // internal selection (uncontrolled fallback)
+  const [internalActive, setInternalActive] = useState(defaultActive);
+  const isActive = active ?? internalActive;
 
-  const { resize, setResize, setId } = useResizeStore();
-
+  // layout cache (zustand)
+  const { resize, setResize } = useResizeStore();
   const width = resize[id]?.width ?? propWidth;
   const height = resize[id]?.height ?? propHeight;
   const x = resize[id]?.x ?? propX ?? 0;
@@ -140,10 +144,9 @@ export default function ResizeContainer({
       x: propX || 0,
       y: propY || 0,
     });
-    setId(id);
-  }, [id, propWidth, propHeight, propX, propY, setId, setResize]);
+  }, [id, propWidth, propHeight, propX, propY, setResize]);
 
-  // 리사이즈 시작 시 기준값 저장(좌측/상단 핸들에서 위로/왼쪽으로 늘릴 때 top/left 조정 필요)
+  // resize anchor state (for N/W handles)
   const resizeStartRef = useRef<{
     width: number;
     height: number;
@@ -153,134 +156,205 @@ export default function ResizeContainer({
     dirY: number;
   } | null>(null);
 
+  /** click → request select (bubble up) */
+  const handlePointerDownCapture = (e: React.PointerEvent) => {
+    if (e.button !== 0) return; // only left button
+    if (active !== undefined) {
+      if (!active) onActiveChange?.(true);
+    } else {
+      if (!internalActive) setInternalActive(true);
+      onActiveChange?.(true);
+    }
+  };
+
+  /** Moveable: single vs group target 선택 */
+  const hasGroup = isActive && targets && targets.length > 1;
+  const moveableTarget = isActive && !hasGroup ? targetRef : undefined;
+  const moveableTargets = hasGroup ? targets : undefined;
+
+  // 키보드 이동: 선택(active) && draggable일 때 화살표로 이동
+  useEffect(() => {
+    if (!isActive || !draggable) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      const { key } = e;
+      if (
+        key !== "ArrowLeft" &&
+        key !== "ArrowRight" &&
+        key !== "ArrowUp" &&
+        key !== "ArrowDown"
+      )
+        return;
+
+      const step = 1;
+
+      let dx = 0;
+      let dy = 0;
+
+      if (key === "ArrowLeft") dx = -step;
+      if (key === "ArrowRight") dx = step;
+      if (key === "ArrowUp") dy = -step;
+      if (key === "ArrowDown") dy = step;
+
+      const mv = moveableRef.current;
+
+      if (!mv) return;
+
+      try {
+        const requester = mv.request("draggable");
+        requester.request({ deltaX: dx, deltaY: dy });
+        requester.requestEnd();
+        e.preventDefault();
+      } catch {}
+    };
+
+    window.addEventListener("keydown", onKeyDown, { passive: false });
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isActive, draggable]);
+
   return (
     <>
-      {active && (
-        <Moveable
-          target={moveableRef}
-          targets={targets || undefined}
-          resizable={resizable}
-          draggable={draggable}
-          origin={false}
-          throttleResize={throttleResize}
-          renderDirections={renderDirections}
-          snappable={snappable}
-          snapGridWidth={snapGridWidth}
-          snapGridHeight={snapGridHeight}
-          elementGuidelines={elementGuidelines ?? []}
-          // elementSnapDirections={{
-          //   left: true,
-          //   top: true,
-          //   right: true,
-          //   bottom: true,
-          //   center: true,
-          //   middle: true,
-          // }}
-          // snapThreshold={8}
-          // snapDigit={0}
-          // horizontalGuidelines={[100, 200, 500]} // 선택: 고정 가이드
-          // verticalGuidelines={[120, 400]}
-          onResizeStart={e => {
-            const cs = getComputedStyle(e.target as HTMLElement);
-            const startWidth = parseFloat(cs.width) || 0;
-            const startHeight = parseFloat(cs.height) || 0;
-            const startLeft = parseFloat(cs.left) || 0;
-            const startTop = parseFloat(cs.top) || 0;
-            const [dirX, dirY] = (e.direction as number[]) || [0, 0];
-            resizeStartRef.current = {
-              width: startWidth,
-              height: startHeight,
-              left: startLeft,
-              top: startTop,
-              dirX,
-              dirY,
-            };
+      <Moveable
+        ref={moveableRef}
+        target={moveableTarget}
+        targets={moveableTargets}
+        draggable={!!draggable && isActive}
+        resizable={!!resizable && isActive}
+        rotatable={!!rotatable && isActive}
+        origin={false}
+        throttleResize={throttleResize}
+        container={containerEl ?? undefined}
+        rootContainer={containerEl ?? undefined}
+        zoom={zoom}
+        snappable={snappable}
+        snapGridWidth={snapGridWidth}
+        snapGridHeight={snapGridHeight}
+        elementGuidelines={elementGuidelines ?? []}
+        renderDirections={
+          isActive ? ["nw", "n", "ne", "w", "e", "sw", "s", "se"] : []
+        }
+        /* ----- Drag (single) ----- */
+        onDragStart={e => onDragStart?.(e)}
+        onDrag={e => {
+          const el = e.target as HTMLElement;
+          el.style.left = `${e.left}px`;
+          el.style.top = `${e.top}px`;
+          onDrag?.(e);
+        }}
+        onDragEnd={e => onDragEnd?.(e)}
+        /* ----- Drag (group) ----- */
+        onDragGroupStart={e => onDragGroupStart?.(e)}
+        onDragGroup={e => {
+          // 미리보기: 각각의 타겟에 반영
+          e.events.forEach((ev: any) => {
+            const el = ev.target as HTMLElement;
+            el.style.left = `${ev.left}px`;
+            el.style.top = `${ev.top}px`;
+          });
+          onDragGroup?.(e);
+        }}
+        onDragGroupEnd={e => onDragGroupEnd?.(e)}
+        /* ----- Resize (single) ----- */
+        onResizeStart={e => {
+          const cs = getComputedStyle(e.target as HTMLElement);
+          const startWidth = parseFloat(cs.width) || 0;
+          const startHeight = parseFloat(cs.height) || 0;
+          const startLeft = parseFloat(cs.left) || 0;
+          const startTop = parseFloat(cs.top) || 0;
+          const [dirX, dirY] = (e.direction as number[]) || [0, 0];
+          resizeStartRef.current = {
+            width: startWidth,
+            height: startHeight,
+            left: startLeft,
+            top: startTop,
+            dirX,
+            dirY,
+          };
+          onResizeStart?.(e);
+        }}
+        onResize={e => {
+          const newW = Math.max(minWidth, Math.min(e.width, maxWidth));
+          const newH = Math.max(minHeight, Math.min(e.height, maxHeight));
+          const target = e.target as HTMLElement;
+          target.style.width = `${newW}px`;
+          target.style.height = `${newH}px`;
 
-            onResizeStart?.(e);
-          }}
-          onResize={e => {
-            const newWidth = Math.max(minWidth, Math.min(e.width, maxWidth));
-            const newHeight = Math.max(
-              minHeight,
-              Math.min(e.height, maxHeight),
-            );
-            e.target.style.width = `${newWidth}px`;
-            e.target.style.height = `${newHeight}px`;
-
-            // 상/좌측 리사이즈 시, top/left를 보정하여 위/왼쪽으로 확장되도록 처리
-            if (draggable) {
-              const start = resizeStartRef.current;
-              if (start) {
-                // 방향: 좌(-1)/무(0)/우(1), 상(-1)/무(0)/하(1)
-                const { dirX, dirY } = start;
-                if (dirX === -1) {
-                  const newLeft = start.left + (start.width - newWidth);
-                  (e.target as HTMLElement).style.left = `${newLeft}px`;
-                }
-                if (dirY === -1) {
-                  const newTop = start.top + (start.height - newHeight);
-                  (e.target as HTMLElement).style.top = `${newTop}px`;
-                }
-              }
+          const start = resizeStartRef.current;
+          if (start) {
+            const { dirX, dirY } = start;
+            if (dirX === -1) {
+              const newLeft = start.left + (start.width - newW);
+              target.style.left = `${newLeft}px`;
             }
+            if (dirY === -1) {
+              const newTop = start.top + (start.height - newH);
+              target.style.top = `${newTop}px`;
+            }
+          }
+          onResize?.(e);
+        }}
+        onResizeEnd={e => {
+          const target = e.target as HTMLElement;
+          const cs = getComputedStyle(target);
 
-            onResize?.(e);
-          }}
-          onResizeEnd={e => {
-            // 최종 좌표를 커밋(상/좌 리사이즈 시 이동된 top/left 반영)
-            const cs = getComputedStyle(e.target as HTMLElement);
-            const finalLeft = parseFloat(cs.left) || x || 0;
-            const finalTop = parseFloat(cs.top) || y || 0;
-            setResize(id, {
-              width: e.lastEvent.width,
-              height: e.lastEvent.height,
-              x: draggable ? finalLeft : x,
-              y: draggable ? finalTop : y,
-            });
-            resizeStartRef.current = null;
+          const finalLeft = parseFloat(cs.left) || x || 0;
+          const finalTop = parseFloat(cs.top) || y || 0;
+          const finalW =
+            (e?.lastEvent?.width as number) ??
+            (parseFloat(cs.width) || width || 0);
+          const finalH =
+            (e?.lastEvent?.height as number) ??
+            (parseFloat(cs.height) || height || 0);
 
-            onResizeEnd?.(e);
-          }}
-          onDragStart={e => {
-            onDragStart?.(e);
-          }}
-          onDrag={e => {
-            e.target.style.left = `${e.left}px`;
-            e.target.style.top = `${e.top}px`;
+          setResize(id, {
+            width: finalW,
+            height: finalH,
+            x: draggable ? finalLeft : x,
+            y: draggable ? finalTop : y,
+          });
+          resizeStartRef.current = null;
+          onResizeEnd?.(e);
+        }}
+        /* ----- Resize (group) ----- */
+        onResizeGroupStart={e => onResizeGroupStart?.(e)}
+        onResizeGroup={e => {
+          // 미리보기: 각각의 타겟에 반영
+          e.events.forEach((ev: any) => {
+            const target = ev.target as HTMLElement;
+            const newW = Math.max(minWidth, Math.min(ev.width, maxWidth));
+            const newH = Math.max(minHeight, Math.min(ev.height, maxHeight));
 
-            onDrag?.(e);
-          }}
-          onDragEnd={e => {
-            setResize(id, {
-              width,
-              height,
-              x: e.lastEvent?.left ?? x,
-              y: e.lastEvent?.top ?? y,
-            });
+            target.style.width = `${newW}px`;
+            target.style.height = `${newH}px`;
 
-            onDragEnd?.(e);
-          }}
-          onResizeGroupStart={e => {
-            onResizeGroupStart?.(e);
-          }}
-          onResizeGroup={e => onResizeGroup?.(e)}
-          onResizeGroupEnd={e => onResizeGroupEnd?.(e)}
-          onDragGroupStart={e => {
-            onDragGroupStart?.(e);
-          }}
-          onDragGroup={e => onDragGroup?.(e)}
-          onDragGroupEnd={e => onDragGroupEnd?.(e)}
-        />
-      )}
+            // 좌/상 핸들 보정
+            const { direction, drag } = ev;
+            const [dirX, dirY] = (direction as number[]) || [0, 0];
+            if (dirX === -1) target.style.left = `${drag.left}px`;
+            if (dirY === -1) target.style.top = `${drag.top}px`;
+          });
+          onResizeGroup?.(e);
+        }}
+        onResizeGroupEnd={e => onResizeGroupEnd?.(e)}
+        /* ----- Rotate (optional) ----- */
+        onRotateStart={e => onRotateStart?.(e)}
+        onRotate={e => onRotate?.(e)}
+        onRotateEnd={e => onRotateEnd?.(e)}
+      />
+
       <StyledContainer
         id={id}
-        ref={moveableRef}
-        onClick={() => setActive(true)}
+        ref={targetRef}
+        onPointerDownCapture={handlePointerDownCapture}
         width={width || "auto"}
         height={height || "auto"}
         x={x}
         y={y}
         draggable={draggable}
+        style={{
+          transform: rotate ? `rotate(${rotate}deg)` : "none",
+          transformOrigin: "left top",
+        }}
       >
         {children}
       </StyledContainer>
@@ -297,10 +371,10 @@ interface StyledContainerProps {
 }
 
 const StyledContainer = styled.div<StyledContainerProps>`
+  position: ${({ draggable }) => (draggable ? "absolute" : "static")};
+  left: ${({ x }) => `${x ?? 0}px`};
+  top: ${({ y }) => `${y ?? 0}px`};
   width: ${({ width }) => (typeof width === "number" ? `${width}px` : width)};
   height: ${({ height }) =>
     typeof height === "number" ? `${height}px` : height};
-  position: ${({ draggable }) => (draggable ? "absolute" : "static")};
-  left: ${({ x }) => `${x}px`};
-  top: ${({ y }) => `${y}px`};
 `;

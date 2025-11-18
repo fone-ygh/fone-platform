@@ -1,58 +1,29 @@
-export type WidgetType =
-  | "box"
-  | "text"
-  | "image"
-  | "button"
-  | "list"
-  | "card"
-  | "gallery"
-  | "tabs"
-  | "accordion"
-  | "pricing";
+// src/shared/store/layout/types.ts
+export type SectionType = "box" | "text" | "image" | "button" | "tabs";
 
-export type Purpose =
-  | "neutral"
-  | "header"
-  | "sidebar"
-  | "main"
-  | "footer"
-  | "hero"
-  | "card"
-  | "gallery"
-  | "cta"
-  | "emphasis"
-  | "success"
-  | "warning"
-  | "danger"
-  | "info";
+export type InsertTool = SectionType | null;
 
-export type Frame = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  rotate?: number;
-};
-
-export type SectionItem = {
+export interface Section {
   id: string;
-  title: string;
-  type: WidgetType;
+  type: SectionType;
   x: number;
   y: number;
   width: number;
   height: number;
   rotate?: number;
-  bg?: string;
-  z?: number;
   radius?: number;
   shadow?: number;
-  locked?: boolean;
-  blockPointer?: boolean;
+  z: number;
+
+  title?: string;
+  purpose?: string; // 'header' | 'sidebar' | 'main' | 'footer' | ...
+
+  // colors
+  bg?: string;
+  color?: string;
 
   // text
   text?: string;
-  fontSize?: number;
   textAlign?: "left" | "center" | "right";
 
   // image
@@ -64,57 +35,47 @@ export type SectionItem = {
   btnHref?: string;
   btnVariant?: "solid" | "ghost";
 
-  // list
-  listItems?: string[];
-
   // tabs
-  tabs?: { label: string; content: string }[];
-  activeTabIndex?: number;
+  tabs?: { label: string; content?: string }[];
+}
 
-  // accordion
-  accordion?: { label: string; content: string; open?: boolean }[];
-
-  // pricing
-  pricing?: {
-    name: string;
-    price: string;
-    features: string[];
-    highlight?: boolean;
-  }[];
-
-  // purpose + colors
-  purpose?: Purpose;
-  autoColor?: boolean;
-  textColorOverride?: string;
-
-  // responsive frames
-  frames?: Record<string, Frame>;
-};
-
-export type Breakpoint = { id: string; label: string; width: number };
-
-export type LayoutState = {
-  version: number;
+export interface LayoutState {
   canvasWidth: number;
   canvasHeight: number;
-  sections: SectionItem[];
-  breakpoints?: Breakpoint[];
-  activeBp?: string;
-  responsive?: {
-    inheritScale?: boolean;
-    viewportWidth?: number;
+
+  sections: Section[];
+  selectedIds: string[];
+  version: number;
+
+  insertTool: InsertTool;
+
+  actions: {
+    setCanvasSize: (w: number, h: number) => void;
+
+    setSelectedIds: (ids: string[]) => void;
+
+    setSections: (next: Section[]) => void;
+    setClearSections: () => void;
+
+    setAddSection: (type: SectionType, init?: Partial<Section>) => string;
+    setPatchSection: (id: string, patch: Partial<Section>) => void;
+    setUpdateFrame: (
+      id: string,
+      patch: Partial<Pick<Section, "x" | "y" | "width" | "height" | "rotate">>,
+    ) => void;
+
+    setDeleteSelected: () => void;
+    setDuplicateSelected: () => void;
+
+    setSendToFront: () => void;
+    setSendToBack: () => void;
+    setBringForward: () => void;
+    setSendBackward: () => void;
+
+    setApplyColorToSelection: (color: string, target: "bg" | "text") => void;
+
+    setCommitAfterTransform: () => void;
+
+    setInsertTool: (tool: InsertTool) => void;
   };
-};
-
-export type Page = {
-  id: string;
-  name: string;
-  layout: LayoutState;
-};
-
-export type Theme = "light" | "dark";
-export type GuideTheme = "blue" | "green" | "magenta" | "amber";
-
-export type CommitResult =
-  | { ok: true }
-  | { ok: false; message: string; collidedIds: string[] };
+}

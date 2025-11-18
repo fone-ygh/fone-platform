@@ -1,19 +1,26 @@
+// src/shared/store/control.ts
 "use client";
 
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
-import { persist } from "@/shared/lib/store-util"; // ← 앞서 'typeof _persist' 버전 래퍼
+import { persist } from "@/shared/lib/store-util";
 
 const clampZoom = (z: number) => Math.min(200, Math.max(25, Math.round(z)));
 
-/* ============== Types ============== */
 export type EditorStore = {
   canvasWidth: number;
   canvasHeight: number;
 
+  /** (선택) 미사용 */
   zoom: number;
+
+  /** 캔버스 전용 줌(%) */
   canvasZoom: number;
+
+  /** 캔버스 전용 팬(px) — zoom-layer에 적용 */
+  panX: number;
+  panY: number;
 
   showGrid: boolean;
   gridSize: number;
@@ -37,6 +44,11 @@ export type EditorStore = {
     zoomOut: () => void;
     zoomReset: () => void;
 
+    /** 팬 제어 */
+    setPan: (x: number, y: number) => void;
+    panBy: (dx: number, dy: number) => void;
+    resetPan: () => void;
+
     setShowGrid: (show: boolean) => void;
     setGridSize: (size: number) => void;
     setGridColor: (color: string) => void;
@@ -51,12 +63,6 @@ export type EditorStore = {
   };
 };
 
-/* ============== Store ============== */
-/**
- * 핵심: immer( persist( initializer, options ) )
- * - persist를 안쪽에 두면, persist가 기대하는 StateCreator 형태와 일치
- * - create에는 <EditorStore> 하나만 준다(커리드 형식 유지)
- */
 export const useEDITORStore = create<EditorStore>()(
   immer(
     persist(
@@ -65,7 +71,10 @@ export const useEDITORStore = create<EditorStore>()(
         canvasHeight: 2000,
 
         zoom: 0,
-        canvasZoom: 100,
+        canvasZoom: 60,
+
+        panX: 50,
+        panY: 100,
 
         showGrid: true,
         gridSize: 16,
@@ -73,7 +82,7 @@ export const useEDITORStore = create<EditorStore>()(
 
         snapToGrid: true,
         snapToGuides: true,
-        snapToElements: false,
+        snapToElements: true,
         snapTolerance: 6,
 
         showRulers: false,
@@ -88,6 +97,7 @@ export const useEDITORStore = create<EditorStore>()(
             set(s => {
               s.canvasHeight = h;
             }),
+
           setZoom: next =>
             set(s => {
               const value = typeof next === "function" ? next(s.zoom) : next;
@@ -110,6 +120,24 @@ export const useEDITORStore = create<EditorStore>()(
           zoomReset: () =>
             set(s => {
               s.canvasZoom = 100;
+              s.panX = 0;
+              s.panY = 0;
+            }),
+
+          setPan: (x, y) =>
+            set(s => {
+              s.panX = Math.round(x);
+              s.panY = Math.round(y);
+            }),
+          panBy: (dx, dy) =>
+            set(s => {
+              s.panX = Math.round(s.panX + dx);
+              s.panY = Math.round(s.panY + dy);
+            }),
+          resetPan: () =>
+            set(s => {
+              s.panX = 0;
+              s.panY = 0;
             }),
 
           setShowGrid: show =>
@@ -154,14 +182,11 @@ export const useEDITORStore = create<EditorStore>()(
       }),
       {
         name: "EDITOR",
-        // 함수(actions) 직렬화 방지: 아무 것도 저장 안 함
+        // 함수(actions) 직렬화 이슈 회피: 현재는 스토리지에 아무 것도 저장 안 함
         partialize: () => ({}),
-        // 필요한 키만 저장하려면 ↓
-        // partialize: (s) => ({ canvasWidth: s.canvasWidth, canvasHeight: s.canvasHeight }),
       },
     ),
   ),
 );
 
-/* helper */
 export const useEDITORActions = () => useEDITORStore(s => s.actions);
