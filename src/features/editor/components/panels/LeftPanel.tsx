@@ -6,8 +6,8 @@ import { Checkbox, Label, TextField2 } from "fone-design-system_v1";
 
 import Aside from "@/shared/components/layout/aside/Aside";
 import { AccordionCard } from "@/shared/components/ui/cardAccordion/CardAccordion";
-import { useEDITORStore } from "@/shared/store/control";
-import { useLayoutStore } from "@/shared/store/layout";
+import { useEDITORActions, useEDITORStore } from "@/shared/store/control";
+import { useLayoutActions, useLayoutStore } from "@/shared/store/layout";
 
 /**
  * 왼쪽 패널
@@ -15,37 +15,32 @@ import { useLayoutStore } from "@/shared/store/layout";
  */
 export default function LeftPanel() {
   /* -------- editor(view/snap/zoom) -------- */
-  const showGrid = useEDITORStore(s => s.showGrid);
-  const setShowGrid = useEDITORStore(s => s.actions.setShowGrid);
-
-  const gridSize = useEDITORStore(s => s.gridSize);
-  const setGridSize = useEDITORStore(s => s.actions.setGridSize);
-
-  const gridColor = useEDITORStore(s => s.gridColor);
-  const setGridColor = useEDITORStore(s => s.actions.setGridColor);
-
-  const showGuides = useEDITORStore(s => s.showGuides);
-  const setShowGuides = useEDITORStore(s => s.actions.setShowGuides);
-
-  const showRulers = useEDITORStore(s => s.showRulers);
-  const setShowRulers = useEDITORStore(s => s.actions.setShowRulers);
-
-  const snapToGrid = useEDITORStore(s => s.snapToGrid);
-  const setSnapToGrid = useEDITORStore(s => s.actions.setSnapToGrid);
-
-  const snapToGuides = useEDITORStore(s => s.snapToGuides);
-  const setSnapToGuides = useEDITORStore(s => s.actions.setSnapToGuides);
-
-  const snapToElements = useEDITORStore(s => s.snapToElements);
-  const setSnapToElements = useEDITORStore(s => s.actions.setSnapToElements);
-
-  const snapTolerance = useEDITORStore(s => s.snapTolerance);
-  const setSnapTolerance = useEDITORStore(s => s.actions.setSnapTolerance);
+  const {
+    showGrid,
+    gridSize,
+    gridColor,
+    showGuides,
+    showRulers,
+    snapToGrid,
+    snapToGuides,
+    snapToElements,
+    snapTolerance,
+  } = useEDITORStore();
+  const {
+    setShowGrid,
+    setGridSize,
+    setGridColor,
+    setShowGuides,
+    setShowRulers,
+    setSnapToGrid,
+    setSnapToGuides,
+    setSnapToElements,
+    setSnapTolerance,
+  } = useEDITORActions();
 
   /* -------- layout(canvas/columns) -------- */
-  const canvasWidth = useLayoutStore(s => s.canvasWidth);
-  const canvasHeight = useLayoutStore(s => s.canvasHeight);
-  const setCanvasSize = useLayoutStore(s => s.actions.setCanvasSize);
+  const { canvasWidth, canvasHeight } = useLayoutStore();
+  const { setCanvasSize } = useLayoutActions();
 
   const onChangeCanvasW = (v: string) => {
     setCanvasSize(Number(v), canvasHeight);
@@ -56,7 +51,7 @@ export default function LeftPanel() {
 
   return (
     <Aside position="left" defaultWidth={320} minWidth={240} maxWidth={560}>
-      <div className="panel-body" style={{ display: "grid", gap: 12 }}>
+      <div className="panel-body">
         {/* ===== View ===== */}
         <AccordionCard
           title="View"

@@ -2,6 +2,7 @@
 "use client";
 
 import React, { forwardRef } from "react";
+import { Box, Button } from "fone-design-system_v1";
 
 /** purpose → 기본 배경/텍스트 색 매핑 */
 function pickAutoColors(purpose: string) {
@@ -64,14 +65,16 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
       cursor: "move",
       border: item.type === "box" ? "1px solid rgba(0,0,0,.14)" : undefined,
       outline: selected ? "2px solid rgba(25,118,210,.4)" : "none",
-      background:
-        item.bg ??
-        (item.type === "text" || item.type === "button"
-          ? "transparent"
-          : "#fff"),
+      // background:
+      //   item.bg ??
+      //   (item.type === "text"
+      //     ? "transparent"
+      //     : item.type !== "button"
+      //       ? "#fff"
+      //       : "none"),
       display: "flex",
       alignItems: "center",
-      justifyContent: item.type === "button" ? "center" : "flex-start",
+      justifyContent: "center",
     } as const;
 
     const handleMouseDown = (e: React.MouseEvent) => {
@@ -84,38 +87,15 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
     // 1) BOX
     if (item.type === "box") {
       return (
-        <div
+        <Box
           ref={ref}
-          className="section-item" // ✅ 마퀴 차단용 클래스 유지
+          className="section-item"
+          style={{ ...common, backgroundColor: "#fff" }}
           data-type="box"
-          style={common}
           onMouseDown={handleMouseDown}
         >
-          <div style={{ width: "100%", height: "100%" }}>
-            {/* 상단 라벨 바 - 필요시 복구 */}
-            {/* ... */}
-
-            {/* 내용 영역 (플레이스홀더 패턴) */}
-            <div
-              style={{
-                position: "relative",
-                padding: 10,
-                width: "100%",
-                height: "100%",
-                background:
-                  item.autoColor !== false && item.purpose === "main"
-                    ? "repeating-linear-gradient(45deg, rgba(0,0,0,0.02) 0 8px, transparent 8px 16px)"
-                    : "transparent",
-              }}
-            >
-              <div
-                style={{ fontSize: 12, color: "#94a3b8", userSelect: "none" }}
-              >
-                {item.title || "Box"}
-              </div>
-            </div>
-          </div>
-        </div>
+          {item.title || "Box"}
+        </Box>
       );
     }
 
@@ -152,7 +132,7 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
           ref={ref}
           className="section-item"
           data-type="image"
-          style={common}
+          style={{ ...common, backgroundColor: "#fff" }}
           onMouseDown={handleMouseDown}
         >
           {item.imageUrl ? (
@@ -182,37 +162,47 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
     if (item.type === "button") {
       const isGhost = item.btnVariant === "ghost";
       return (
-        <div
-          ref={ref}
+        <Button
+          // ref={ref}
           className="section-item"
           data-type="button"
-          style={{ ...common, display: "grid", placeItems: "center" }}
           onMouseDown={handleMouseDown}
+          style={{ ...common }}
+          variant="contained"
         >
-          <a
-            href={item.btnHref || "#"}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "0 16px",
-              width: "100%",
-              height: "100%",
-              borderRadius: 8,
-              background: isGhost ? "transparent" : (bg ?? "#111"),
-              border: isGhost
-                ? "1px solid rgba(0,0,0,.2)"
-                : "1px solid transparent",
-              color: isGhost ? (textColor ?? "#111") : (textColor ?? "#fff"),
-              textDecoration: "none",
-              fontWeight: 700,
-              pointerEvents: "none", // 캔버스에서 클릭 통과 방지
-              userSelect: "none",
-            }}
-          >
-            {item.btnLabel || "Button"}
-          </a>
-        </div>
+          {item.btnLabel || "Button"}
+        </Button>
+        // <div
+        //   ref={ref}
+        //   className="section-item"
+        //   data-type="button"
+        //   style={{ ...common, display: "grid", placeItems: "center" }}
+        //   onMouseDown={handleMouseDown}
+        // >
+        //   <a
+        //     href={item.btnHref || "#"}
+        //     style={{
+        //       display: "inline-flex",
+        //       alignItems: "center",
+        //       justifyContent: "center",
+        //       padding: "0 16px",
+        //       width: "100%",
+        //       height: "100%",
+        //       borderRadius: 8,
+        //       background: isGhost ? "transparent" : (bg ?? "#111"),
+        //       border: isGhost
+        //         ? "1px solid rgba(0,0,0,.2)"
+        //         : "1px solid transparent",
+        //       color: isGhost ? (textColor ?? "#111") : (textColor ?? "#fff"),
+        //       textDecoration: "none",
+        //       fontWeight: 700,
+        //       pointerEvents: "none", // 캔버스에서 클릭 통과 방지
+        //       userSelect: "none",
+        //     }}
+        //   >
+        //     {item.btnLabel || "Button"}
+        //   </a>
+        // </div>
       );
     }
 
@@ -223,7 +213,7 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
           ref={ref}
           className="section-item"
           data-type="list"
-          style={common}
+          style={{ ...common, backgroundColor: "#fff" }}
           onMouseDown={handleMouseDown}
         >
           <div style={{ padding: 10, width: "100%" }}>
@@ -265,7 +255,7 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
           ref={ref}
           className="section-item"
           data-type="card"
-          style={common}
+          style={{ ...common, backgroundColor: "#fff" }}
           onMouseDown={handleMouseDown}
         >
           <div style={{ padding: 10, width: "100%" }}>
@@ -285,7 +275,7 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
           ref={ref}
           className="section-item"
           data-type="gallery"
-          style={common}
+          style={{ ...common, backgroundColor: "#fff" }}
           onMouseDown={handleMouseDown}
         >
           <div style={{ padding: 10, width: "100%" }}>
@@ -329,7 +319,7 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
           ref={ref}
           className="section-item"
           data-type="tabs"
-          style={common}
+          style={{ ...common, backgroundColor: "#fff" }}
           onMouseDown={handleMouseDown}
         >
           <div style={{ padding: 8, width: "100%", height: "100%" }}>

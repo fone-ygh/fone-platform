@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-import { AsideStyle } from "./AsideStyle";
+import { AsideInnerStyle, AsideStyle } from "./AsideStyle";
 
 type Side = "left" | "right";
 
@@ -18,6 +18,8 @@ interface AsideProps {
   /** 제어 모드 콜백 */
   onWidthChange?: (w: number) => void;
   children?: React.ReactNode;
+
+  fade?: boolean;
 }
 
 export default function Aside({
@@ -28,6 +30,7 @@ export default function Aside({
   maxWidth = 640,
   onWidthChange,
   children,
+  fade = false,
 }: AsideProps) {
   // 실제 DOM을 가리키는 ref (사이드바 전체)
   const ref = React.useRef<HTMLDivElement | null>(null);
@@ -115,11 +118,13 @@ export default function Aside({
       ref={ref}
       data-side={position}
       data-dragging={dragging ? "true" : "false"}
+      data-fade={fade}
       style={{ width: `${w}px`, overflowX: "hidden" }}
     >
-      {/* 콘텐츠 */}
-      {children}
-
+      <AsideInnerStyle>
+        {/* 콘텐츠 */}
+        {children}
+      </AsideInnerStyle>
       {/* 리사이즈 핸들: hover 시 나타나는 세로선 + 드래그 영역 */}
       <div
         className="resize-handle"
