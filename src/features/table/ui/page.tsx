@@ -569,7 +569,7 @@ const clearMerges = () => {
 					cellTypeOverrides={cellTypeOverrides}
 				/> */}
 			</div>
-            <div>
+            {/* <div>
 				<Button onClick={mergeSelection}>셀병합</Button>
 				<Button onClick={cancelRow}>병합해제</Button>
 				<Button onClick={clearMerges}>초기화</Button>
@@ -626,7 +626,7 @@ const clearMerges = () => {
 				<span>예시 : type: &quot;button&quot;, onClick </span><br/>
 				<span>예시 : type: &quot;select&quot;, options: [&quot;option1&quot;, &quot;option2&quot;, &quot;option3&quot;]</span><br/>
 				<span>예시 : type: &quot;date&quot;, format: &quot;YYYY-MM-DD&quot;</span>
-			</div>
+			</div> */}
         </TableContainer>
     );
 };

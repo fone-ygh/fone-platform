@@ -3,6 +3,7 @@ import { Button, ConfigProvider, Table } from 'antd'
 import { ColumnsType, ColumnType } from 'antd/es/table';
 import styled from '@emotion/styled';
 import { Button as DSButton, Select as DSSelect, Checkbox as DSCheckbox, DatePicker as DSDatePicker } from 'fone-design-system_v1';
+import dayjs from 'dayjs';
 
 // Cell 스타일 컴포넌트
 const StyledCell = styled.div<{ background: string }>`
@@ -152,6 +153,10 @@ const AntdTable = () => {
 	const handleMouseDownCell = (row: number, col: number, e: React.MouseEvent) => {
 		// Ctrl/Shift가 눌리면 드래그 시작하지 않고 클릭 로직에게 위임
 		if (e.ctrlKey || e.metaKey || e.shiftKey) {
+			return;
+		}
+		// 편집 중인 동일 셀에서는 드래그 시작하지 않음(위젯 상호작용 허용)
+		if (editingCell && editingCell.row === row && editingCell.col === col) {
 			return;
 		}
 		// 다른 셀로 이동 시 편집 input을 강제로 blur
@@ -320,8 +325,8 @@ const AntdTable = () => {
 						handleMouseEnterCell(rowIdx, colIdx);
 					}}
 					onClick={e => {
-						const target = e.target as HTMLElement;
-						if (target.closest('[data-interactive="true"]')) return;
+						// const target = e.target as HTMLElement;
+						// if (target.closest('[data-interactive="true"]')) return;
 						// 드래그 직후 발생하는 클릭은 무시
 						if (didDragRef.current) {
 							didDragRef.current = false;
@@ -337,59 +342,107 @@ const AntdTable = () => {
 					}}
 					onDoubleClick={(e) => {
 						e.stopPropagation();
-                        if(widgetType) return;
+                        if(widgetType && widgetType !== 'select' && widgetType !== 'date') return;
 						setEditingCell({ row: rowIdx, col: colIdx });
 					}}
 				>
 						{isEditable ? (
-							<input
-								type="text"
-                                style={{ width: '100%', height: '100%', boxSizing: 'border-box' }}
-								ref={editingInputRef}
-								defaultValue={text}
-								autoFocus
-								onBlur={(e) => {
-									setEditingCell(null);
-									const nextValue = e.currentTarget.value;
-									setDataSource(prev => {
-										const next = [...prev];
-										if (rowIdx >= 0 && rowIdx < next.length) {
-											next[rowIdx] = {
-												...next[rowIdx],
-												[col.dataIndex]: nextValue,
-											};
+							(widgetType === 'select' && anchor.row === rowIdx && anchor.col === colIdx) ? (
+								<div style={{ padding: 8 }}>
+									<DSSelect
+										MenuItems={[
+											{ label: 'Option 1', value: '1' },
+											{ label: 'Option 2', value: '2' },
+											{ label: 'Option 3', value: '3' },
+										]}
+										value={String(text ?? '')}
+										fullWidth
+										onChange={(e: any) => {
+											const nextValue = e?.target?.value ?? '';
+											setDataSource(prev => {
+												const next = [...prev];
+												if (rowIdx >= 0 && rowIdx < next.length) {
+													next[rowIdx] = {
+														...next[rowIdx],
+														[col.dataIndex]: nextValue,
+													};
+												}
+												return next;
+											});
+											setEditingCell(null);
+										}}
+									/>
+								</div>
+							) : (widgetType === 'date' && anchor.row === rowIdx && anchor.col === colIdx) ? (
+								<div style={{ padding: 8 }}>
+									<DSDatePicker
+										// value={dayjs()}
+										onChange={(_d, dateString) => {
+											// const nextValue = Array.isArray(dateString) ? dateString[0] : dateString;
+											// setDataSource(prev => {
+											// 	const next = [...prev];
+											// 	if (rowIdx >= 0 && rowIdx < next.length) {
+											// 		next[rowIdx] = {
+											// 			...next[rowIdx],
+											// 			[col.dataIndex]: nextValue,
+											// 		};
+											// 	}
+											// 	return next;
+											// });
+											// setEditingCell(null);
+										}}
+                                        defaultValue={dayjs()}
+										onOpenChange={(open) => {
+											// if (!open) setEditingCell(null);
+										}}
+									/>
+								</div>
+							) : (
+								<input
+									type="text"
+                                    style={{ width: '100%', height: '100%', boxSizing: 'border-box' }}
+									ref={editingInputRef}
+									defaultValue={text}
+									autoFocus
+									onBlur={(e) => {
+										setEditingCell(null);
+										const nextValue = e.currentTarget.value;
+										setDataSource(prev => {
+											const next = [...prev];
+											if (rowIdx >= 0 && rowIdx < next.length) {
+												next[rowIdx] = {
+													...next[rowIdx],
+													[col.dataIndex]: nextValue,
+												};
+											}
+											return next;
+										});
+									}}
+									onKeyDown={(e) => {
+										if (e.key === 'Enter') {
+											(e.target as HTMLInputElement).blur();
 										}
-										return next;
-									});
-								}}
-								onKeyDown={(e) => {
-									if (e.key === 'Enter') {
-										(e.target as HTMLInputElement).blur();
-									}
-								}}
-							/>
+									}}
+								/>
+							)
 						) : (widgetType && anchor.row === rowIdx && anchor.col === colIdx) ? (
-							<div style={{ padding: 8 }} data-interactive="true" onMouseDownCapture={e => e.stopPropagation()} onClickCapture={e => e.stopPropagation()}>
+							<div
+								style={{ padding: 8 }}
+								data-interactive={widgetType !== 'select' && widgetType !== 'date' ? 'true' : undefined}
+								onMouseDownCapture={widgetType !== 'select' && widgetType !== 'date' ? (e) => e.stopPropagation() : undefined}
+								onClickCapture={widgetType !== 'select' && widgetType !== 'date' ? (e) => e.stopPropagation() : undefined}
+							>
 								{widgetType === 'button' && (
 									<DSButton size="sm">{String(text ?? 'Button')}</DSButton>
 								)}
 								{widgetType === 'select' && (
-										<DSSelect
-											MenuItems={[
-												{ label: 'Option 1', value: '1' },
-												{ label: 'Option 2', value: '2' },
-												{ label: 'Option 3', value: '3' },
-											]}
-											fullWidth
-										/>
+									<div>{String(text ?? '')}</div>
 								)}
 								{widgetType === 'checkbox' && (
 									<DSCheckbox label={String(text ?? 'Checkbox')} />
 								)}
 								{widgetType === 'date' && (
-									<div style={{ width: '100%' }}>
-										<DSDatePicker />
-									</div>
+									<div>{String(text ?? '')}</div>
 								)}
 							</div>
 						) : (
