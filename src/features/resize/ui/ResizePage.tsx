@@ -11,19 +11,17 @@ import TreeView from "@/shared/components/ui/treeView/TreeView";
 import useResizeStore from "@/shared/store/resize";
 
 export default function ResizePage() {
-  const { resize } = useResizeStore();
   const [activeId, setActiveId] = useState<string | null>(null);
-  console.log(resize);
+  const { resize } = useResizeStore();
 
-  // 공통 바인딩 헬퍼
-  // const bindActive = (id: string) => ({
-  //   active: activeId === id,
-  //   onActiveChange: (next: boolean) => {
-  //     setActiveId(next ? id : activeId === id ? null : activeId);
-  //   },
-  // });
+  const clearActive = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      setActiveId(null);
+    }
+  };
+
   return (
-    <StyledResizePage>
+    <StyledResizePage onMouseDown={clearActive}>
       <Button
         id="button"
         resizable
@@ -36,6 +34,12 @@ export default function ResizePage() {
         y={100}
         size="small"
         variant="contained"
+        active={activeId === "button"}
+        onActiveChange={next => {
+          setActiveId(
+            next ? "button" : activeId === "button" ? null : activeId,
+          );
+        }}
       >
         Button 1
       </Button>
@@ -49,6 +53,12 @@ export default function ResizePage() {
         maxWidth={400}
         x={400}
         y={100}
+        active={activeId === "select"}
+        onActiveChange={next => {
+          setActiveId(
+            next ? "select" : activeId === "select" ? null : activeId,
+          );
+        }}
       />
       <TextField
         id="textField"
@@ -61,12 +71,17 @@ export default function ResizePage() {
         x={700}
         y={100}
         placeholder="Input"
+        active={activeId === "textField"}
+        onActiveChange={next => {
+          setActiveId(
+            next ? "textField" : activeId === "textField" ? null : activeId,
+          );
+        }}
       />
       <Box
         id="box1"
         resizable
         draggable
-        // {...bindActive("box1")}
         width={200}
         height={50}
         minWidth={200}
@@ -79,6 +94,10 @@ export default function ResizePage() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+        }}
+        active={activeId === "box1"}
+        onActiveChange={next => {
+          setActiveId(next ? "box1" : activeId === "box1" ? null : activeId);
         }}
       >
         Box1
@@ -95,6 +114,12 @@ export default function ResizePage() {
         y={200}
         title="TreeView"
         defaultExpanded
+        active={activeId === "treeView"}
+        onActiveChange={next => {
+          setActiveId(
+            next ? "treeView" : activeId === "treeView" ? null : activeId,
+          );
+        }}
       />
       <Box
         id="box2"
@@ -112,6 +137,10 @@ export default function ResizePage() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+        }}
+        active={activeId === "box2"}
+        onActiveChange={next => {
+          setActiveId(next ? "box2" : activeId === "box2" ? null : activeId);
         }}
       >
         Box
