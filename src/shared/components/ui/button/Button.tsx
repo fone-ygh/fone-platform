@@ -7,6 +7,9 @@ import ResizeContainer from "../resize/ResizeContainer";
 
 interface ResizeButtonProps extends Omit<DsButtonProps, "ref"> {
   id?: string;
+  /** Selection */
+  active?: boolean;
+  onActiveChange?: (active: boolean) => void;
   resizable?: boolean;
   draggable?: boolean;
   throttleResize?: number;
@@ -22,6 +25,8 @@ interface ResizeButtonProps extends Omit<DsButtonProps, "ref"> {
 
 export default function Button({
   id,
+  active,
+  onActiveChange,
   resizable,
   draggable,
   throttleResize,
@@ -39,6 +44,8 @@ export default function Button({
   return (
     <ResizeContainer
       id={id}
+      active={!!active}
+      onActiveChange={onActiveChange}
       resizable={resizable}
       draggable={draggable}
       throttleResize={throttleResize}
@@ -50,7 +57,7 @@ export default function Button({
       height={height}
       x={x}
       y={y}
-      //renderDirections={["e", "w"]} // ["nw", "n", "ne", "w", "e", "sw", "s", "se"]
+      renderDirections={["e", "w"]} // ["nw", "n", "ne", "w", "e", "sw", "s", "se"]
     >
       <div
         // 투명 오버레이로 Select 상호작용을 차단 (버블링은 허용하여 컨테이너 활성화/드래그 영향 최소화)

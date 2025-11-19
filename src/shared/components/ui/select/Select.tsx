@@ -7,6 +7,9 @@ import ResizeContainer from "../resize/ResizeContainer";
 
 interface ResizeSelectProps extends Omit<DsSelectProps, "ref"> {
   id?: string;
+  /** Selection */
+  active?: boolean;
+  onActiveChange?: (active: boolean) => void;
   resizable?: boolean;
   draggable?: boolean;
   throttleResize?: number;
@@ -23,6 +26,8 @@ interface ResizeSelectProps extends Omit<DsSelectProps, "ref"> {
 
 export default function Select({
   id,
+  active,
+  onActiveChange,
   resizable,
   draggable,
   throttleResize,
@@ -40,6 +45,8 @@ export default function Select({
   return (
     <ResizeContainer
       id={id}
+      active={!!active}
+      onActiveChange={onActiveChange}
       resizable={resizable}
       draggable={draggable}
       throttleResize={throttleResize}
@@ -51,7 +58,7 @@ export default function Select({
       height={height}
       x={x}
       y={y}
-      //renderDirections={["e", "w"]} // ["nw", "n", "ne", "w", "e", "sw", "s", "se"]
+      renderDirections={["e", "w"]} // ["nw", "n", "ne", "w", "e", "sw", "s", "se"]
     >
       <div
         style={{

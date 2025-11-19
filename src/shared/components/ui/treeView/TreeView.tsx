@@ -8,6 +8,9 @@ import ResizeContainer from "../resize/ResizeContainer";
 // 'items'를 선택적으로 받아도 되도록 강제: DS 원본에선 필수지만, 래퍼에서 기본값을 공급한다.
 interface ResizeTreeView2Props extends Omit<DsTreeView2Props, "ref" | "items"> {
   id?: string;
+  /** Selection */
+  active?: boolean;
+  onActiveChange?: (active: boolean) => void;
   resizable?: boolean;
   draggable?: boolean;
   throttleResize?: number;
@@ -24,6 +27,8 @@ interface ResizeTreeView2Props extends Omit<DsTreeView2Props, "ref" | "items"> {
 
 export default function TreeView({
   id,
+  active,
+  onActiveChange,
   resizable,
   draggable,
   throttleResize,
@@ -113,6 +118,8 @@ export default function TreeView({
   return (
     <ResizeContainer
       id={id}
+      active={!!active}
+      onActiveChange={onActiveChange}
       resizable={resizable}
       draggable={draggable}
       throttleResize={throttleResize}
@@ -124,7 +131,6 @@ export default function TreeView({
       height={height}
       x={x}
       y={y}
-      // renderDirections={["nw", "n", "ne", "w", "e", "sw", "s", "se"]} // ["nw", "n", "ne", "w", "e", "sw", "s", "se"]
     >
       <div
         // 투명 오버레이로 Select 상호작용을 차단 (버블링은 허용하여 컨테이너 활성화/드래그 영향 최소화)

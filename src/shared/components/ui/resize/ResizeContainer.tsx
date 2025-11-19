@@ -11,6 +11,7 @@ interface Props {
   active?: boolean;
   onActiveChange?: (active: boolean) => void;
   defaultActive?: boolean;
+  renderDirections?: string[];
 
   /* Identity + features */
   id?: string;
@@ -75,6 +76,7 @@ export default function ResizeContainer({
   active,
   onActiveChange,
   defaultActive = false,
+  renderDirections,
 
   // features
   resizable,
@@ -231,7 +233,9 @@ export default function ResizeContainer({
         snapGridHeight={snapGridHeight}
         elementGuidelines={elementGuidelines ?? []}
         renderDirections={
-          isActive ? ["nw", "n", "ne", "w", "e", "sw", "s", "se"] : []
+          isActive
+            ? (renderDirections ?? ["nw", "n", "ne", "w", "e", "sw", "s", "se"])
+            : []
         }
         /* ----- Drag (single) ----- */
         onDragStart={e => onDragStart?.(e)}
