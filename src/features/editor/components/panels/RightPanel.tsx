@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { Button, Flex, Label, TextField2 } from "fone-design-system_v1";
+import { Button, Flex, Label, Select, TextField2 } from "fone-design-system_v1";
 
 import Aside from "@/shared/components/layout/aside/Aside";
 import { AccordionCard } from "@/shared/components/ui/cardAccordion/CardAccordion";
@@ -603,18 +603,18 @@ export default function RightPanel() {
                         style={{ display: "grid", gap: 8, marginTop: 10 }}
                       >
                         <Label>Variant</Label>
-                        <select
-                          value={one.btnVariant ?? "solid"}
+
+                        <Select
+                          value={one.btnVariant ?? "contained"}
                           onChange={e => onSelect("btnVariant")(e.target.value)}
-                          style={{
-                            height: 28,
-                            fontSize: 12,
-                            padding: "2px 6px",
-                          }}
-                        >
-                          <option value="solid">solid</option>
-                          <option value="ghost">ghost</option>
-                        </select>
+                          MenuItems={[
+                            { label: "text", value: "text" },
+                            { label: "contained", value: "contained" },
+                            { label: "outlined", value: "outlined" },
+                          ]}
+                          select={true}
+                          all={false}
+                        />
                       </div>
                     </div>
                   ),
@@ -624,7 +624,7 @@ export default function RightPanel() {
           )}
 
           {/* Appearance */}
-          <AccordionCard
+          {/* <AccordionCard
             title="Appearance"
             allowMultiple
             defaultOpenAll
@@ -634,77 +634,41 @@ export default function RightPanel() {
                 id: "appearance-purpose",
                 title: "Purpose / Colors",
                 content: (
-                  <div className="card-body">
-                    <div className="row" style={{ display: "grid", gap: 8 }}>
-                      <Label>Purpose</Label>
-                      <select
-                        value={one.purpose ?? "neutral"}
-                        onChange={e => onSelect("purpose")(e.target.value)}
-                        style={{
-                          height: 28,
-                          fontSize: 12,
-                          padding: "2px 6px",
-                        }}
-                      >
-                        {[
-                          "neutral",
-                          "header",
-                          "sidebar",
-                          "main",
-                          "footer",
-                          "hero",
-                          "card",
-                          "gallery",
-                          "cta",
-                          "emphasis",
-                          "success",
-                          "warning",
-                          "danger",
-                          "info",
-                        ].map(p => (
-                          <option key={p} value={p}>
-                            {p}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div
-                      className="row"
-                      style={{ display: "grid", gap: 8, marginTop: 10 }}
-                    >
-                      <Label>Set BG</Label>
-                      <input
-                        type="color"
-                        onChange={e =>
-                          setApplyColorToSelection(e.target.value, "bg")
-                        }
-                        style={{
-                          width: 32,
-                          height: 28,
-                          padding: 0,
-                          border: 0,
-                        }}
-                      />
-                      <Label>Set Text</Label>
-                      <input
-                        type="color"
-                        onChange={e =>
-                          setApplyColorToSelection(e.target.value, "text")
-                        }
-                        style={{
-                          width: 32,
-                          height: 28,
-                          padding: 0,
-                          border: 0,
-                        }}
-                      />
-                    </div>
+                  <div
+                    className="row"
+                    style={{ display: "grid", gap: 8, marginTop: 10 }}
+                  >
+                    <Label>Set BG</Label>
+                    <input
+                      type="color"
+                      onChange={e =>
+                        setApplyColorToSelection(e.target.value, "bg")
+                      }
+                      style={{
+                        width: 32,
+                        height: 28,
+                        padding: 0,
+                        border: 0,
+                      }}
+                    />
+                    <Label>Set Text</Label>
+                    <input
+                      type="color"
+                      onChange={e =>
+                        setApplyColorToSelection(e.target.value, "text")
+                      }
+                      style={{
+                        width: 32,
+                        height: 28,
+                        padding: 0,
+                        border: 0,
+                      }}
+                    />
                   </div>
                 ),
               },
             ]}
-          />
+          /> */}
         </>
       )}
 
