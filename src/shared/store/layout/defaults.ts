@@ -62,7 +62,7 @@ export function createSection(
       base.width = 160;
       base.height = 48;
       base.btnLabel = "Button";
-      base.btnVariant = "solid";
+      base.btnVariant = "contained";
       base.title = "Button";
       break;
 
@@ -98,58 +98,58 @@ export function createSection(
  * - 배치 간단히: 상단 헤더, 좌측 사이드, 본문, 하단 푸터
  */
 export const INITIAL_SECTIONS: Section[] = [
-  // Header
-  createSection("box", 1, {
-    id: `header_${uid()}`,
-    title: "Header",
-    purpose: "header",
-    x: 0,
-    y: 0,
-    width: DEFAULT_CANVAS_WIDTH,
-    height: 120,
-    bg: "#f8fafc", // slate-50
-    color: "#0f172a",
-    radius: 0,
-  }),
-  // Aside
-  createSection("box", 2, {
-    id: `aside_${uid()}`,
-    title: "Aside",
-    purpose: "sidebar",
-    x: 0,
-    y: 140,
-    width: 320,
-    height: 804,
-    bg: "#f1f5f9", // slate-100
-    color: "#0f172a",
-    radius: 0,
-  }),
-  // Main
-  createSection("box", 3, {
-    id: `main_${uid()}`,
-    title: "Main",
-    purpose: "main",
-    x: 340, // 사이드바(320) + 20px 여백
-    y: 140,
-    width: DEFAULT_CANVAS_WIDTH - 340, // 우측까지 꽉
-    height: 804,
-    bg: "#ffffff",
-    color: "#0f172a",
-    radius: 0,
-  }),
-  // Footer
-  createSection("box", 4, {
-    id: `footer_${uid()}`,
-    title: "Footer",
-    purpose: "footer",
-    x: 0,
-    y: 960,
-    width: DEFAULT_CANVAS_WIDTH,
-    height: 120,
-    bg: "#f8fafc",
-    color: "#0f172a",
-    radius: 0,
-  }),
+  // // Header
+  // createSection("box", 1, {
+  //   id: `header_${uid()}`,
+  //   title: "Header",
+  //   purpose: "header",
+  //   x: 0,
+  //   y: 0,
+  //   width: DEFAULT_CANVAS_WIDTH,
+  //   height: 120,
+  //   bg: "#f8fafc", // slate-50
+  //   color: "#0f172a",
+  //   radius: 0,
+  // }),
+  // // Aside
+  // createSection("box", 2, {
+  //   id: `aside_${uid()}`,
+  //   title: "Aside",
+  //   purpose: "sidebar",
+  //   x: 0,
+  //   y: 140,
+  //   width: 320,
+  //   height: 804,
+  //   bg: "#f1f5f9", // slate-100
+  //   color: "#0f172a",
+  //   radius: 0,
+  // }),
+  // // Main
+  // createSection("box", 3, {
+  //   id: `main_${uid()}`,
+  //   title: "Main",
+  //   purpose: "main",
+  //   x: 340, // 사이드바(320) + 20px 여백
+  //   y: 140,
+  //   width: DEFAULT_CANVAS_WIDTH - 340, // 우측까지 꽉
+  //   height: 804,
+  //   bg: "#ffffff",
+  //   color: "#0f172a",
+  //   radius: 0,
+  // }),
+  // // Footer
+  // createSection("box", 4, {
+  //   id: `footer_${uid()}`,
+  //   title: "Footer",
+  //   purpose: "footer",
+  //   x: 0,
+  //   y: 960,
+  //   width: DEFAULT_CANVAS_WIDTH,
+  //   height: 120,
+  //   bg: "#f8fafc",
+  //   color: "#0f172a",
+  //   radius: 0,
+  // }),
 ];
 
 /* ------------------ utils (local) ------------------ */
