@@ -7,6 +7,9 @@ import ResizeContainer from "../resize/ResizeContainer";
 
 interface ResizeTextField2Props extends Omit<DsTextField2Props, "ref"> {
   id?: string;
+  /** Selection */
+  active?: boolean;
+  onActiveChange?: (active: boolean) => void;
   resizable?: boolean;
   draggable?: boolean;
   throttleResize?: number;
@@ -22,6 +25,8 @@ interface ResizeTextField2Props extends Omit<DsTextField2Props, "ref"> {
 
 export default function TextField({
   id,
+  active,
+  onActiveChange,
   resizable,
   draggable,
   throttleResize,
@@ -38,6 +43,8 @@ export default function TextField({
   return (
     <ResizeContainer
       id={id}
+      active={!!active}
+      onActiveChange={onActiveChange}
       resizable={resizable}
       draggable={draggable}
       throttleResize={throttleResize}
@@ -49,7 +56,7 @@ export default function TextField({
       height={height}
       x={x}
       y={y}
-      // renderDirections={["e", "w"]} // ["nw", "n", "ne", "w", "e", "sw", "s", "se"]
+      renderDirections={["e", "w"]} // ["nw", "n", "ne", "w", "e", "sw", "s", "se"]
     >
       <div
         // 투명 오버레이로 Select 상호작용을 차단 (버블링은 허용하여 컨테이너 활성화/드래그 영향 최소화)

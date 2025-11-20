@@ -29,6 +29,7 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <meta name="emotion-insertion-point" content="" />
+        <link href="https://fonts.googleapis.com/css?family=Material+Icons" rel="stylesheet" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable}`}
