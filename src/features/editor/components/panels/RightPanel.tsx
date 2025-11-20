@@ -25,6 +25,7 @@ export default function RightPanel() {
     setCommitAfterTransform,
     setApplyColorToSelection,
     setSelectedIds,
+    setSections,
   } = useLayoutActions();
 
   const actionsAny = useLayoutStore(s => s.actions as any);
@@ -196,6 +197,44 @@ export default function RightPanel() {
     }
   }, [sections]);
 
+  // ===== 파일로부터 Import =====
+  const onImportFile = React.useCallback(() => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "application/json,.json";
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const text = String(reader.result || "");
+          const parsed = JSON.parse(text);
+          const sections = parsed.sections;
+
+          setSections(sections);
+
+          setJsonValue(JSON.stringify({ sections: sections }, null, 2));
+          setSelectedIds([]);
+        } catch (err: any) {
+          if (typeof window !== "undefined") {
+            window.alert(
+              "JSON 파일 파싱에 실패했습니다. 형식을 확인해주세요.\n\n" +
+                (err?.message || String(err)),
+            );
+          }
+        }
+      };
+      reader.onerror = () => {
+        if (typeof window !== "undefined") {
+          window.alert("파일을 읽는 중 오류가 발생했습니다.");
+        }
+      };
+      reader.readAsText(file, "utf-8");
+    };
+    input.click();
+  }, [setSections, setSelectedIds]);
+
   return (
     <Aside position="right" defaultWidth={340} minWidth={260} maxWidth={560}>
       {/* ===== Selection Summary & Actions ===== */}
@@ -326,16 +365,26 @@ export default function RightPanel() {
                 <div style={{ fontSize: 11, color: "#6b7280" }}>
                   레이아웃을 JSON으로 내보내거나 가져옵니다.
                 </div>
-                <Button
-                  variant="outlined"
-                  size="xsmall"
-                  onClick={() => {
-                    onExportJson();
-                    setIsJsonModalOpen(true);
-                  }}
-                >
-                  JSON Export / Import 열기
-                </Button>
+                <div style={{ display: "flex", width: "100%", gap: 8 }}>
+                  <Button
+                    variant="outlined"
+                    size="xsmall"
+                    style={{ flex: 1 }}
+                    onClick={onImportFile}
+                  >
+                    Import
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    size="xsmall"
+                    style={{ flex: 1 }}
+                    onClick={() => {
+                      onDownloadJsonFile();
+                    }}
+                  >
+                    Export
+                  </Button>
+                </div>
               </Flex>
             ),
           },
