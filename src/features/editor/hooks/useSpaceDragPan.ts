@@ -25,11 +25,19 @@ export function useSpaceDragPan(opts: {
 }) {
   const { zoom, panX, panY, setPan, compensateZoom = true } = opts;
 
+  // Space 키가 눌려서 "패닝 모드"인지 여부 (렌더링용 상태)
   const [isSpace, setIsSpace] = useState(false);
+
+  // window 이벤트 리스너에서 쓰기 위한 ref 버전 (state 대신 ref를 쓰는 이유: 최신 값 즉시 접근)
   const isSpaceRef = useRef(false);
+
+  // 실제 마우스로 드래그하여 패닝 중인지 여부
   const [isPanning, setIsPanning] = useState(false);
 
+  // 드래그 시작 시점의 pan 좌표 저장
   const panStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  // 드래그 시작 시점의 마우스 위치 저장
   const mouseStartRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
