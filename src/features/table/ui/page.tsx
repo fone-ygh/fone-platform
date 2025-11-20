@@ -11,6 +11,7 @@ import { SelectCellsStore, useSelectCellsActions, useSelectCellsStore } from "..
 import { useMergeCellsActions, useMergeCellsStore } from "../store/mergeCellsStore";
 import { MergedRange } from "../interface/type";
 import AntdTable from "./AntdTable";
+import JspreadSheet from "./JspreadSheet";
 
 
 type Row = Record<string, unknown>;
@@ -559,7 +560,8 @@ const clearMerges = () => {
 			</div> */}
 
 			<div style={{ position: 'relative',  }}>
-				<AntdTable />
+				{/* <AntdTable /> */}
+				<JspreadSheet />
 				{/* <TableComponent
 					setColumns={setColumns}
 					columns={columns}
