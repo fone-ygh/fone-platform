@@ -33,7 +33,7 @@ export interface Section {
   // button
   btnLabel?: string;
   btnHref?: string;
-  btnVariant?: "solid" | "ghost";
+  btnVariant?: "text" | "contained" | "outlined";
 
   // tabs
   tabs?: { label: string; content?: string }[];

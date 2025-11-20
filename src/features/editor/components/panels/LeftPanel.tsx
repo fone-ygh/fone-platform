@@ -126,7 +126,7 @@ export default function LeftPanel() {
             content: (
               <div className="card-body">
                 <div className="row" style={{ display: "grid", gap: 8 }}>
-                  <Checkbox
+                  {/* <Checkbox
                     checked={snapToGrid}
                     onChange={e => setSnapToGrid(e.target.checked)}
                     label="Snap to Grid"
@@ -138,7 +138,7 @@ export default function LeftPanel() {
                     onChange={e => setSnapToGuides(e.target.checked)}
                     label="Snap to Guides"
                     size="small"
-                  />
+                  /> */}
                   <Checkbox
                     checked={snapToElements}
                     onChange={e => setSnapToElements(e.target.checked)}
