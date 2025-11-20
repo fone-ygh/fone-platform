@@ -1,6 +1,6 @@
 import React from 'react'
 import { Button, ConfigProvider, Table } from 'antd'
-import { ColumnsType, ColumnType } from 'antd/es/table';
+import { ColumnsType } from 'antd/es/table';
 import styled from '@emotion/styled';
 import { Button as DSButton, Select as DSSelect, Checkbox as DSCheckbox, DatePicker as DSDatePicker } from 'fone-design-system_v1';
 import dayjs from 'dayjs';
@@ -33,31 +33,14 @@ type MergedRange = {
 
 type CellWidgetType = 'button' | 'select' | 'checkbox' | 'date';
 
-// 데이터 및 컬럼 정의
-const rows = [
-	{key:"1", id: "1", name: "John", age: 20, address: "New York"}, 
-	{key:"2", id: "2", name: "Jane", age: 21, address: "Los Angeles"}, 
-	{key:"3", id: "3", name: "Jim", age: 22, address: "Chicago"},
-	{key:"4", id: "4", name: "Jill", age: 23, address: "San Francisco"},
-	{key:"5", id: "5", name: "Jack", age: 24, address: "Boston"},
-	{key:"6", id: "6", name: "Jill", age: 25, address: "Seattle"},
-	{key:"7", id: "7", name: "Jack", age: 26, address: "Miami"},
-	{key:"8", id: "8", name: "Jill", age: 27, address: "Austin"},
-	{key:"9", id: "9", name: "Jack", age: 28, address: "Denver"},
-];
-
-// 컬럼 정의 (key 순서 index가 col번호)
-const columnsInfo: Array<{ dataIndex: string; key: string; title: string }> = [
-	{ title: 'Name', dataIndex: 'name', key: 'name' },
-	{ title: 'Age', dataIndex: 'age', key: 'age' },
-	{ title: 'Address', dataIndex: 'address', key: 'address' },
-];
-
 const AntdTable = () => {
+
+    const [columns, setColumns] = React.useState<{ dataIndex: string; key: string; title: string }[]>([]);
+	const [dataSource, setDataSource] = React.useState<any[]>([]);
+
 	const [selectedCells, setSelectedCells] = React.useState<CellPosition[]>([]);
 	const [mergedRanges, setMergedRanges] = React.useState<MergedRange[]>([]);
 	const [editingCell, setEditingCell] = React.useState<CellPosition | null>(null);
-	const [dataSource, setDataSource] = React.useState(rows);
 	const editingInputRef = React.useRef<HTMLInputElement | null>(null);
 	const [cellWidgets, setCellWidgets] = React.useState<Record<string, CellWidgetType>>({});
 	// 드래그 선택 관련 ref
@@ -207,7 +190,7 @@ const AntdTable = () => {
 	}, []);
 
 	// 셀 병합 상태에 따라 rowSpan, colSpan 반환
-	function computeSpan(rowIdx: number, colIdx: number) {
+	const computeSpan = (rowIdx: number, colIdx: number) => {
 		for (const range of mergedRanges) {
 			const { startRow, endRow, startCol, endCol } = range;
 			// 병합 영역의 첫 셀인가?
@@ -231,7 +214,7 @@ const AntdTable = () => {
 	}
 
 	// 주어진 셀이 병합 영역 내에 있으면 앵커 좌표를 반환, 아니면 자기 자신
-	function getAnchorCell(rowIdx: number, colIdx: number): CellPosition {
+	const getAnchorCell = (rowIdx: number, colIdx: number): CellPosition => {
 		for (const range of mergedRanges) {
 			const { startRow, endRow, startCol, endCol } = range;
 			if (
@@ -244,7 +227,7 @@ const AntdTable = () => {
 		return { row: rowIdx, col: colIdx };
 	}
 
-	function positionKey(pos: CellPosition) {
+	const positionKey = (pos: CellPosition) => {
 		return `${pos.row}:${pos.col}`;
 	}
 
@@ -282,7 +265,7 @@ const AntdTable = () => {
 	};
 
 	// antd columns 변환 (rowSpan/colSpan 병합 반영)
-	const andtColumns: ColumnsType<any> = columnsInfo.map((col, colIdx) => ({
+	const andtColumns: ColumnsType<any> = columns.map((col, colIdx) => ({
 		title: col.title,
 		dataIndex: col.dataIndex,
 		key: col.key,
@@ -298,7 +281,7 @@ const AntdTable = () => {
 		render: (text: string, record: any, _index?: number) => {
 			// antd의 render의 3번째 arg는 실제로 index일 수도 있고 아닐 수도 있음
 			// 실제 row의 index를 구하는 방법이 필요함.
-			let rowIdx = dataSource.findIndex(r => r.key === record.key);
+			let rowIdx = dataSource.findIndex((r: any) => r.key === record.key);
 			// 만약 못 찾으면 index 사용 (그래도 fallback)
 			if (rowIdx === -1 && typeof _index === "number") rowIdx = _index;
 
@@ -375,6 +358,8 @@ const AntdTable = () => {
 								</div>
 							) : (widgetType === 'date' && anchor.row === rowIdx && anchor.col === colIdx) ? (
 								<div style={{ padding: 8 }}>
+                                    {/* 현재 design-system의 react 버전이 18.3.1 이므로, DatePicker를 사용할 수 없음 */}
+                                    {/* 추후 design-system의 react 버전을 18.2 로 다운드레이드 해야 함 */}
 									<DSDatePicker
 										// value={dayjs()}
 										onChange={(_d, dateString) => {
@@ -468,21 +453,132 @@ const AntdTable = () => {
 					},
 				}}
 			>
-				<Button onClick={() => applyWidgetToSelection('button')}>버튼</Button>
-				<Button onClick={() => applyWidgetToSelection('select')}>셀렉트</Button>
-				<Button onClick={() => applyWidgetToSelection('checkbox')}>체크박스</Button>
-				<Button onClick={() => applyWidgetToSelection('date')}>날짜</Button>
-				<Button onClick={clearWidgetFromSelection}>위젯 제거</Button>
-				<Button
-					onClick={handleMergeCells}
-				>
-					셀 병합
-				</Button>
-				<Button
-					onClick={handleUnmergeCells}
-				>
-					병합 해제
-				</Button>
+                <div>
+                    <Button onClick={() => applyWidgetToSelection('button')}>버튼</Button>
+                    <Button onClick={() => applyWidgetToSelection('select')}>셀렉트</Button>
+                    <Button onClick={() => applyWidgetToSelection('checkbox')}>체크박스</Button>
+                    <Button onClick={() => applyWidgetToSelection('date')}>날짜</Button>
+                    <Button onClick={clearWidgetFromSelection}>위젯 제거</Button>
+                    <Button
+                        onClick={handleMergeCells}
+                    >
+                        셀 병합
+                    </Button>
+                    <Button
+                        onClick={handleUnmergeCells}
+                    >
+                        병합 해제
+                    </Button>
+                </div>
+                <div>
+                    <Button
+                        onClick={() => {
+                            // 행 추가: 빈 row 추가 (key는 유니크하게)
+                            // columns은 useState 값을 사용할거임
+                            // andtColumns는 setState를 해주기 위한 변수일 뿐
+                            // 추후 직접 들어가는 columns는 state columns를 사용할거임
+                            // selectedCells[0] 기준으로 행을 추가하고 selectedCells가 없다면 마지막에 추가
+                            const newRow = { key: Date.now().toString(), id: Date.now().toString(), name: '', age: 0, address: '' };
+                            if (selectedCells.length > 0) {
+                                const insertIndex = selectedCells[0].row + 1;
+                                setDataSource(prev => {
+                                    const next = [...prev];
+                                    next.splice(insertIndex, 0, newRow);
+                                    return next;
+                                });
+                            } else {
+                                setDataSource(prev => [...prev, newRow]);
+                            }
+                        }}
+                    >
+                        행 추가
+                    </Button>
+                    <Button
+                        onClick={() => {
+                            if (selectedCells.length > 0) {
+                                // 선택된 셀들의 row 인덱스를 모두 모으고, 중복 없이, 내림차순 정렬
+                                const rowsToDelete = Array.from(new Set(selectedCells.map(cell => cell.row))).sort((a, b) => b - a);
+                                setDataSource(prev => {
+                                    let next = [...prev];
+                                    for (const rowIdx of rowsToDelete) {
+                                        next.splice(rowIdx, 1);
+                                    }
+                                    return next;
+                                });
+                            } else {
+                                setDataSource(prev => prev.slice(0, -1));
+                            }
+                            setSelectedCells([]);
+                        }}
+                    >
+                        행 삭제
+                    </Button>
+                    <Button
+                        onClick={() => {
+                            // 열 추가: 선택된 셀이 있으면 그 셀들의 col 기준으로 가장 오른쪽에 추가, 없으면 맨 오른쪽에 추가
+                            const colKey = `col_${Date.now()}`;
+                            let insertIndex = columns.length; // 기본은 맨 오른쪽
+
+                            if (selectedCells.length > 0) {
+                                // 선택된 셀들의 col(열) 인덱스를 기준으로 가장 오른쪽 col+1 위치에 추가
+                                const maxCol = Math.max(...selectedCells.map(cell => cell.col));
+                                insertIndex = maxCol + 1;
+                                if (insertIndex > columns.length) insertIndex = columns.length;
+                            }
+
+                            const newCol = {
+                                title: `열${columns.length + 1}`,
+                                dataIndex: colKey,
+                                key: colKey,
+                                width: 120,
+                            };
+
+                            setColumns(prev => {
+                                const next = [...prev];
+                                next.splice(insertIndex, 0, newCol);
+                                return next;
+                            });
+
+                        }}
+                    >
+                        열 추가
+                    </Button>
+                    <Button
+                        onClick={() => {
+                            // 선택된 셀의 col(열) 인덱스를 기준으로 여러 열 삭제
+                            if (columns.length <= 1) return;
+                            let colsToDelete: number[] = [];
+                            if (selectedCells.length > 0) {
+                                colsToDelete = Array.from(new Set(selectedCells.map(cell => cell.col))).sort((a, b) => b - a);
+                            } else {
+                                colsToDelete = [columns.length - 1]; // 아무 것도 선택 안 했을 때 마지막 열 삭제
+                            }
+                            setColumns(prev => {
+                                let next = [...prev];
+                                for (const colIdx of colsToDelete) {
+                                    if (colIdx >= 0 && colIdx < next.length) {
+                                        next.splice(colIdx, 1);
+                                    }
+                                }
+                                return next;
+                            });
+                            setDataSource(prev =>
+                                prev.map(row => {
+                                    const newRow = { ...row };
+                                    for (const colIdx of colsToDelete) {
+                                        const col = columns[colIdx];
+                                        if (col) {
+                                            delete (newRow as any)[col.dataIndex || col.key];
+                                        }
+                                    }
+                                    return newRow;
+                                })
+                            );
+                        }}
+                    >            
+                        열 삭제
+                    </Button>
+                </div>
 				<Table
 					dataSource={dataSource}
 					columns={andtColumns}
@@ -491,6 +587,32 @@ const AntdTable = () => {
                     bordered
                     tableLayout="fixed"
 				/>
+                <div>
+                    <div>
+                        <p>Selected Cell : {selectedCells[0]?.col} , {selectedCells[0]?.row}</p>
+                        <div style={{display:"flex", justifyContent:"space-between", width: "300px"}}>
+                            <div style={{width:"100px"}}>key</div> : <input value={selectedCells[0]?.col} />
+                        </div>
+                        <div style={{display:"flex", justifyContent:"space-between", width: "300px"}}>
+                            <div style={{width:"100px"}}>title</div> : <input />
+                        </div>
+                        <div style={{display:"flex", justifyContent:"space-between", width: "300px"}}>
+                            <div style={{width:"100px"}}>type</div> : <input />
+                        </div>
+                        <div style={{display:"flex", justifyContent:"space-between", width: "300px"}}>
+                            <div style={{width:"100px"}}>width</div> : <input />
+                        </div>
+                        <div style={{display:"flex", justifyContent:"space-between", width: "300px"}}>
+                            <div style={{width:"100px"}}>height</div> : <input />
+                        </div>
+                        <div style={{display:"flex", justifyContent:"space-between", width: "300px"}}>
+                            <div style={{width:"100px"}}>resizable</div> : <input />
+                        </div>
+                        <div style={{display:"flex", justifyContent:"space-between", width: "300px"}}>
+                            <div style={{width:"100px"}}>draggable</div> : <input />
+                        </div>
+                    </div>
+                </div>
 			</ConfigProvider>
 		</div>
 	);
