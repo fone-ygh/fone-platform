@@ -2,6 +2,7 @@
 
 import React, { useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import { Button } from "fone-design-system_v1";
 
 import { useEDITORActions, useEDITORStore } from "@/shared/store/control";
 import { useLayoutStore } from "@/shared/store/layout";
@@ -16,6 +17,7 @@ import { useMarqueeSelection } from "../../hooks/useMarqueeSelection";
 import { useOverlapResolver } from "../../hooks/useOverlapResolver";
 import { useSpaceDragPan } from "../../hooks/useSpaceDragPan";
 import { useZoomWheel } from "../../hooks/useZoomWheel";
+import InsertPreview from "../overlays/InsertPreview";
 import MarqueeSelection from "./MarqueeSelection";
 import SectionItemView from "./SectionItemView";
 
@@ -430,16 +432,14 @@ export default function CanvasStage() {
               <div
                 key={`ov-${i}-${r.x}-${r.y}-${r.w}-${r.h}`}
                 style={{
+                  // zIndex: 999,
                   position: "absolute",
                   left: r.x,
                   top: r.y,
                   width: r.w,
                   height: r.h,
-                  background: "rgba(220, 38, 38, 0.18)",
-                  border: "1px solid rgba(220, 38, 38, 0.65)",
+                  background: "rgb(248, 177, 177)",
                   pointerEvents: "none",
-                  mixBlendMode: "multiply",
-                  borderRadius: 2,
                 }}
               />
             ))}
@@ -448,20 +448,7 @@ export default function CanvasStage() {
 
         {/* insertTool 드로잉 가이드 Rect */}
         {insertTool && dragRect.on && (
-          <div
-            aria-hidden
-            style={{
-              position: "absolute",
-              left: dragRect.x,
-              top: dragRect.y,
-              width: dragRect.w,
-              height: dragRect.h,
-              border: "1px dashed #2563eb",
-              background: "rgba(37, 99, 235, 0.12)",
-              pointerEvents: "none",
-              borderRadius: 4,
-            }}
-          />
+          <InsertPreview tool={insertTool} rect={dragRect} />
         )}
 
         {/* 마퀴 선택 */}
