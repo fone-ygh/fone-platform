@@ -188,6 +188,15 @@ export default function CanvasStage() {
           w: dragRect.w,
           h: dragRect.h,
         } as Rect);
+        // 드로잉 중 바깥 영역 여부 실시간 표시 (배경 빨간색 처리)
+        setIsOOB(
+          isOutOfBounds({
+            x: dragRect.x,
+            y: dragRect.y,
+            w: dragRect.w,
+            h: dragRect.h,
+          }),
+        );
       }
       return;
     }
@@ -199,7 +208,30 @@ export default function CanvasStage() {
     panUp();
 
     // ---- InsertTool 모드에서 드로잉 끝났을 때 처리 ----
+    if (insertTool && !dragRect.on) {
+      setInsertTool(null);
+      onDragRectUp();
+      resetRect();
+      return;
+    }
+
     if (insertTool && dragRect.on && dragRect.w > 4 && dragRect.h > 4) {
+      // 먼저 원본 dragRect가 경계를 벗어났는지 검사 (경계 밖이면 생성 불가)
+      const originalCand: Rect = {
+        x: dragRect.x,
+        y: dragRect.y,
+        w: dragRect.w,
+        h: dragRect.h,
+      };
+      if (isOutOfBounds(originalCand)) {
+        // OOB이면 생성 취소 + 상태 정리 (InsertTool 유지)
+        onDragRectUp();
+        resetRect();
+        setOverlaps([]);
+        setIsOOB(false);
+        return;
+      }
+
       // 값이 canvas 영역을 벗어나지 않도록 한 번 감싸는 유틸
       const clamp = (v: number, min: number, max: number) =>
         Math.max(min, Math.min(max, v));
@@ -219,6 +251,7 @@ export default function CanvasStage() {
         onDragRectUp();
         resetRect();
         setOverlaps([]); // 하이라이트 클리어
+        setIsOOB(false); // 배경 복구
         // 실패했을 땐 InsertTool 유지해서 다시 그릴 수 있게 둠
         return;
       }
@@ -264,6 +297,7 @@ export default function CanvasStage() {
 
       // 성공 시에는 기존 UX 유지: 한 번 그리면 Select로 복귀
       setInsertTool(null);
+      setIsOOB(false); // 성공 후 배경 복구
       return;
     }
 
@@ -321,7 +355,11 @@ export default function CanvasStage() {
                 id={s.id}
                 active={isActive}
                 onActiveChange={act => {
-                  if (act) setSelectedIds([s.id]);
+                  if (act) {
+                    setSelectedIds([s.id]);
+                    // InsertTool 활성 상태에서 기존 컴포넌트를 선택하면 툴 해제
+                    if (insertTool) setInsertTool(null);
+                  }
                 }}
                 width={s.width}
                 height={s.height}
@@ -451,15 +489,17 @@ export default function CanvasStage() {
                 <SectionItemView
                   item={s}
                   selected={isSelected}
-                  onRequestSelect={multi =>
+                  onRequestSelect={multi => {
                     setSelectedIds(
                       multi
                         ? isSelected
                           ? selectedIds.filter(id => id !== s.id)
                           : [...selectedIds, s.id]
                         : [s.id],
-                    )
-                  }
+                    );
+                    // 다른 컴포넌트 선택 시 드래그 생성 모드 해제
+                    if (insertTool) setInsertTool(null);
+                  }}
                 />
               </Box>
             );
