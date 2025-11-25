@@ -2,11 +2,11 @@
 "use client";
 
 import * as React from "react";
-import { Button, Flex, Label, TextField2 } from "fone-design-system_v1";
+import { Button, Flex, Label, Select, TextField2 } from "fone-design-system_v1";
 
 import Aside from "@/shared/components/layout/aside/Aside";
 import { AccordionCard } from "@/shared/components/ui/cardAccordion/CardAccordion";
-import { useLayoutStore } from "@/shared/store/layout";
+import { useLayoutActions, useLayoutStore } from "@/shared/store/layout";
 
 /**
  * 오른쪽 패널 (Inspector)
@@ -15,26 +15,24 @@ import { useLayoutStore } from "@/shared/store/layout";
  * - selector는 전부 단일 호출
  */
 export default function RightPanel() {
-  const selectedIds = useLayoutStore(s => s.selectedIds);
-  const sections = useLayoutStore(s => s.sections);
-
-  const insertTool = useLayoutStore(s => s.insertTool);
-  const setInsertTool = useLayoutStore(s => s.actions.setInsertTool);
-
-  const patchSection = useLayoutStore(s => s.actions.setPatchSection);
-  const deleteSelected = useLayoutStore(s => s.actions.setDeleteSelected);
-  const duplicateSelected = useLayoutStore(s => s.actions.setDuplicateSelected);
-  const addSection = useLayoutStore(s => s.actions.setAddSection);
-  const commitAfterTransform = useLayoutStore(
-    s => s.actions.setCommitAfterTransform,
-  );
-
-  const applyColorToSelection = useLayoutStore(
-    s => s.actions.setApplyColorToSelection,
-  );
+  const { selectedIds, sections, insertTool } = useLayoutStore();
+  const {
+    setInsertTool,
+    setPatchSection,
+    setDeleteSelected,
+    setDuplicateSelected,
+    setAddSection,
+    setCommitAfterTransform,
+    setApplyColorToSelection,
+    setSelectedIds,
+    setSections,
+  } = useLayoutActions();
 
   const actionsAny = useLayoutStore(s => s.actions as any);
-  const setSelectedIds = useLayoutStore(s => s.actions.setSelectedIds);
+
+  // JSON Export / Import
+  const [jsonValue, setJsonValue] = React.useState("");
+  const [isJsonModalOpen, setIsJsonModalOpen] = React.useState(false);
 
   const one =
     selectedIds.length === 1
@@ -46,21 +44,21 @@ export default function RightPanel() {
     (v: string) => {
       if (!one) return;
       const num = Math.round(Number(v || 0));
-      patchSection(one.id, { [key]: num } as any);
+      setPatchSection(one.id, { [key]: num } as any);
     };
 
   const onText =
     (key: "title" | "text" | "btnLabel" | "btnHref" | "imageUrl") =>
     (v: string) => {
       if (!one) return;
-      patchSection(one.id, { [key]: v });
+      setPatchSection(one.id, { [key]: v });
     };
 
   const onSelect =
     (key: "textAlign" | "btnVariant" | "objectFit" | "purpose") =>
     (v: string) => {
       if (!one) return;
-      patchSection(one.id, { [key]: v as any });
+      setPatchSection(one.id, { [key]: v as any });
     };
 
   // 전체 삭제
@@ -78,17 +76,17 @@ export default function RightPanel() {
       actionsAny.setSections([]);
     } else {
       setSelectedIds(sections.map(s => s.id));
-      deleteSelected();
+      setDeleteSelected();
     }
 
     setSelectedIds([]);
-    commitAfterTransform?.();
+    setCommitAfterTransform?.();
   }, [
     sections,
     actionsAny,
     setSelectedIds,
-    deleteSelected,
-    commitAfterTransform,
+    setDeleteSelected,
+    setCommitAfterTransform,
   ]);
 
   // 선택 삭제
@@ -99,12 +97,143 @@ export default function RightPanel() {
       !window.confirm(`선택된 ${selectedIds.length}개 항목을 삭제할까요?`)
     )
       return;
-    deleteSelected();
+    setDeleteSelected();
     setSelectedIds([]);
-    commitAfterTransform?.();
-  }, [selectedIds, deleteSelected, setSelectedIds, commitAfterTransform]);
+    setCommitAfterTransform?.();
+  }, [selectedIds, setDeleteSelected, setSelectedIds, setCommitAfterTransform]);
 
   const hasSelection = selectedIds.length > 0;
+
+  // ===== JSON Export / Import =====
+  const onExportJson = React.useCallback(() => {
+    const payload = { sections };
+    setJsonValue(JSON.stringify(payload, null, 2));
+  }, [sections]);
+
+  const onImportJson = React.useCallback(() => {
+    if (!jsonValue.trim()) return;
+
+    try {
+      const parsed = JSON.parse(jsonValue);
+      const nextSections = Array.isArray(parsed) ? parsed : parsed.sections;
+
+      if (!Array.isArray(nextSections)) {
+        throw new Error("sections 배열 형식이 아닙니다.");
+      }
+
+      if (
+        typeof window !== "undefined" &&
+        !window.confirm("현재 레이아웃을 JSON 데이터로 교체할까요?")
+      ) {
+        return;
+      }
+
+      if (typeof actionsAny.setSections === "function") {
+        actionsAny.setSections(nextSections);
+      } else {
+        if (typeof window !== "undefined") {
+          window.alert(
+            "layout store에 actions.setSections가 없어 JSON import를 사용할 수 없습니다.",
+          );
+        }
+        return;
+      }
+
+      setSelectedIds([]);
+      setCommitAfterTransform?.();
+    } catch (err: any) {
+      if (typeof window !== "undefined") {
+        window.alert(
+          "JSON 파싱에 실패했습니다. 형식을 확인해주세요.\n\n" +
+            (err?.message || String(err)),
+        );
+      }
+    }
+  }, [jsonValue, actionsAny, setSelectedIds, setCommitAfterTransform]);
+
+  const onCopyJson = React.useCallback(() => {
+    if (!jsonValue) return;
+
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard
+        .writeText(jsonValue)
+        .then(() => {
+          if (typeof window !== "undefined") {
+            window.alert("복사되었습니다.");
+          }
+          setIsJsonModalOpen(false);
+        })
+        .catch(() => {
+          if (typeof window !== "undefined") {
+            window.alert(
+              "클립보드 복사에 실패했습니다. 수동으로 복사해주세요.",
+            );
+          }
+        });
+    } else if (typeof window !== "undefined") {
+      window.alert("클립보드를 사용할 수 없습니다. 수동으로 복사해주세요.");
+    }
+  }, [jsonValue]);
+
+  const onDownloadJsonFile = React.useCallback(() => {
+    try {
+      const payload = { sections };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {
+        type: "application/json",
+      });
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "layout.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      if (typeof window !== "undefined") {
+        window.alert("파일 다운로드 생성에 실패했습니다.");
+      }
+    }
+  }, [sections]);
+
+  // ===== 파일로부터 Import =====
+  const onImportFile = React.useCallback(() => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "application/json,.json";
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const text = String(reader.result || "");
+          const parsed = JSON.parse(text);
+          const sections = parsed.sections;
+
+          setSections(sections);
+
+          setJsonValue(JSON.stringify({ sections: sections }, null, 2));
+          setSelectedIds([]);
+        } catch (err: any) {
+          if (typeof window !== "undefined") {
+            window.alert(
+              "JSON 파일 파싱에 실패했습니다. 형식을 확인해주세요.\n\n" +
+                (err?.message || String(err)),
+            );
+          }
+        }
+      };
+      reader.onerror = () => {
+        if (typeof window !== "undefined") {
+          window.alert("파일을 읽는 중 오류가 발생했습니다.");
+        }
+      };
+      reader.readAsText(file, "utf-8");
+    };
+    input.click();
+  }, [setSections, setSelectedIds]);
 
   return (
     <Aside position="right" defaultWidth={340} minWidth={260} maxWidth={560}>
@@ -126,7 +255,7 @@ export default function RightPanel() {
                     <Button
                       variant="outlined"
                       size="xsmall"
-                      onClick={() => duplicateSelected()}
+                      onClick={() => setDuplicateSelected()}
                       disabled={!hasSelection}
                     >
                       복사하기
@@ -151,77 +280,6 @@ export default function RightPanel() {
                     </Button>
                   </Flex>
                 </Flex>
-              </div>
-            ),
-          },
-        ]}
-      />
-
-      {/* ===== Add Components (클릭으로 바로 추가) ===== */}
-      <AccordionCard
-        title="Add Components"
-        allowMultiple
-        defaultOpenAll
-        hideControls
-        items={[
-          {
-            id: "add",
-            title: "Quick add",
-            content: (
-              <div className="card-body">
-                <div
-                  className="row"
-                  style={{
-                    display: "grid",
-                    gap: 8,
-                    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-                  }}
-                >
-                  <Button
-                    variant="outlined"
-                    size="xsmall"
-                    onClick={() =>
-                      addSection("box", {
-                        width: 320,
-                        height: 200,
-                        title: "Box",
-                      })
-                    }
-                  >
-                    + Box
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    size="xsmall"
-                    onClick={() =>
-                      addSection("button", {
-                        width: 160,
-                        height: 48,
-                        btnLabel: "Button",
-                        title: "Button",
-                      })
-                    }
-                  >
-                    + Button
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    size="xsmall"
-                    onClick={() =>
-                      addSection("tabs", {
-                        width: 360,
-                        height: 200,
-                        title: "Tabs",
-                        tabs: [
-                          { label: "Tab 1", content: "첫 번째" },
-                          { label: "Tab 2", content: "두 번째" },
-                        ],
-                      })
-                    }
-                  >
-                    + Tabs
-                  </Button>
-                </div>
               </div>
             ),
           },
@@ -287,6 +345,47 @@ export default function RightPanel() {
                   생성됩니다. (생성 후에는 자동으로 선택 모드로 돌아갑니다)
                 </div>
               </div>
+            ),
+          },
+        ]}
+      />
+
+      {/* ===== JSON Export / Import 버튼 (모달 오픈) ===== */}
+      <AccordionCard
+        title="JSON"
+        allowMultiple
+        defaultOpenAll
+        hideControls
+        items={[
+          {
+            id: "json",
+            title: "Export / Import",
+            content: (
+              <Flex flexDirection="column" gap={1}>
+                <div style={{ fontSize: 11, color: "#6b7280" }}>
+                  레이아웃을 JSON으로 내보내거나 가져옵니다.
+                </div>
+                <div style={{ display: "flex", width: "100%", gap: 8 }}>
+                  <Button
+                    variant="outlined"
+                    size="xsmall"
+                    style={{ flex: 1 }}
+                    onClick={onImportFile}
+                  >
+                    Import
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    size="xsmall"
+                    style={{ flex: 1 }}
+                    onClick={() => {
+                      onDownloadJsonFile();
+                    }}
+                  >
+                    Export
+                  </Button>
+                </div>
+              </Flex>
             ),
           },
         ]}
@@ -504,18 +603,18 @@ export default function RightPanel() {
                         style={{ display: "grid", gap: 8, marginTop: 10 }}
                       >
                         <Label>Variant</Label>
-                        <select
-                          value={one.btnVariant ?? "solid"}
+
+                        <Select
+                          value={one.btnVariant ?? "contained"}
                           onChange={e => onSelect("btnVariant")(e.target.value)}
-                          style={{
-                            height: 28,
-                            fontSize: 12,
-                            padding: "2px 6px",
-                          }}
-                        >
-                          <option value="solid">solid</option>
-                          <option value="ghost">ghost</option>
-                        </select>
+                          MenuItems={[
+                            { label: "text", value: "text" },
+                            { label: "contained", value: "contained" },
+                            { label: "outlined", value: "outlined" },
+                          ]}
+                          select={true}
+                          all={false}
+                        />
                       </div>
                     </div>
                   ),
@@ -525,7 +624,7 @@ export default function RightPanel() {
           )}
 
           {/* Appearance */}
-          <AccordionCard
+          {/* <AccordionCard
             title="Appearance"
             allowMultiple
             defaultOpenAll
@@ -535,77 +634,41 @@ export default function RightPanel() {
                 id: "appearance-purpose",
                 title: "Purpose / Colors",
                 content: (
-                  <div className="card-body">
-                    <div className="row" style={{ display: "grid", gap: 8 }}>
-                      <Label>Purpose</Label>
-                      <select
-                        value={one.purpose ?? "neutral"}
-                        onChange={e => onSelect("purpose")(e.target.value)}
-                        style={{
-                          height: 28,
-                          fontSize: 12,
-                          padding: "2px 6px",
-                        }}
-                      >
-                        {[
-                          "neutral",
-                          "header",
-                          "sidebar",
-                          "main",
-                          "footer",
-                          "hero",
-                          "card",
-                          "gallery",
-                          "cta",
-                          "emphasis",
-                          "success",
-                          "warning",
-                          "danger",
-                          "info",
-                        ].map(p => (
-                          <option key={p} value={p}>
-                            {p}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div
-                      className="row"
-                      style={{ display: "grid", gap: 8, marginTop: 10 }}
-                    >
-                      <Label>Set BG</Label>
-                      <input
-                        type="color"
-                        onChange={e =>
-                          applyColorToSelection(e.target.value, "bg")
-                        }
-                        style={{
-                          width: 32,
-                          height: 28,
-                          padding: 0,
-                          border: 0,
-                        }}
-                      />
-                      <Label>Set Text</Label>
-                      <input
-                        type="color"
-                        onChange={e =>
-                          applyColorToSelection(e.target.value, "text")
-                        }
-                        style={{
-                          width: 32,
-                          height: 28,
-                          padding: 0,
-                          border: 0,
-                        }}
-                      />
-                    </div>
+                  <div
+                    className="row"
+                    style={{ display: "grid", gap: 8, marginTop: 10 }}
+                  >
+                    <Label>Set BG</Label>
+                    <input
+                      type="color"
+                      onChange={e =>
+                        setApplyColorToSelection(e.target.value, "bg")
+                      }
+                      style={{
+                        width: 32,
+                        height: 28,
+                        padding: 0,
+                        border: 0,
+                      }}
+                    />
+                    <Label>Set Text</Label>
+                    <input
+                      type="color"
+                      onChange={e =>
+                        setApplyColorToSelection(e.target.value, "text")
+                      }
+                      style={{
+                        width: 32,
+                        height: 28,
+                        padding: 0,
+                        border: 0,
+                      }}
+                    />
                   </div>
                 ),
               },
             ]}
-          />
+          /> */}
         </>
       )}
 
@@ -627,6 +690,164 @@ export default function RightPanel() {
             },
           ]}
         />
+      )}
+
+      {/* ===== JSON 모달 ===== */}
+      {isJsonModalOpen && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(0,0,0,0.35)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "#ffffff",
+              borderRadius: 8,
+              padding: 16,
+              width: "min(640px, 90vw)",
+              maxHeight: "80vh",
+              boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 8,
+              }}
+            >
+              <div style={{ fontWeight: 600, fontSize: 13 }}>
+                JSON Export / Import
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsJsonModalOpen(false)}
+                aria-label="닫기"
+                style={{
+                  border: "none",
+                  background: "transparent",
+                  cursor: "pointer",
+                  fontSize: 18,
+                  lineHeight: 1,
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <Flex flexDirection="column" gap={1} style={{ fontSize: 12 }}>
+              <Flex spacing={1} style={{ marginBottom: 4, flexWrap: "wrap" }}>
+                <Button
+                  variant="outlined"
+                  size="xsmall"
+                  onClick={onExportJson}
+                  disabled={!sections.length}
+                >
+                  Export
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="xsmall"
+                  onClick={onCopyJson}
+                  disabled={!jsonValue}
+                >
+                  Copy
+                </Button>
+                <Button
+                  variant="contained"
+                  size="xsmall"
+                  onClick={onImportJson}
+                  disabled={!jsonValue}
+                >
+                  Import
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="xsmall"
+                  onClick={onDownloadJsonFile}
+                  disabled={!sections.length}
+                >
+                  파일로 내보내기
+                </Button>
+              </Flex>
+
+              {/* VSCode 스타일 에디터 래퍼 */}
+              <div
+                style={{
+                  borderRadius: 6,
+                  overflow: "hidden",
+                  border: "1px solid #1f2937", // slate-800 느낌
+                  backgroundColor: "#1e1e1e",
+                  display: "flex",
+                  flexDirection: "column",
+                  flex: 1,
+                  minHeight: 200,
+                }}
+              >
+                {/* 에디터 상단 탭 바 */}
+                <div
+                  style={{
+                    height: 26,
+                    backgroundColor: "#252526",
+                    borderBottom: "1px solid #1f2937",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "0 8px",
+                    fontSize: 11,
+                    color: "#9ca3af",
+                  }}
+                >
+                  <span>layout.json</span>
+                  <span style={{ opacity: 0.7 }}>JSON</span>
+                </div>
+
+                {/* 코드 영역 */}
+                <textarea
+                  value={jsonValue}
+                  onChange={e => setJsonValue(e.target.value)}
+                  rows={42}
+                  style={{
+                    flex: 1,
+                    width: "100%",
+                    boxSizing: "border-box",
+                    border: "none",
+                    outline: "none",
+                    backgroundColor: "#1e1e1e",
+                    color: "#d4d4d4",
+                    fontFamily:
+                      'SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                    fontSize: 12,
+                    padding: "8px 10px",
+                    resize: "vertical",
+                  }}
+                  placeholder='Export를 누르면 { "sections": [...] } 형태의 JSON이 여기에 들어옵니다.'
+                />
+              </div>
+
+              <div
+                style={{
+                  fontSize: 11,
+                  color: "#6b7280",
+                  marginTop: 4,
+                }}
+              >
+                - Export: 현재 레이아웃을 JSON으로 생성합니다. <br />- Import:
+                textarea에 붙여넣은 JSON으로 레이아웃을 교체합니다. (배열 또는{" "}
+                {"{ sections: [...] }"} 형식 지원)
+              </div>
+            </Flex>
+          </div>
+        </div>
       )}
     </Aside>
   );

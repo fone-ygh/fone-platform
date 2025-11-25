@@ -1,7 +1,9 @@
+// src/features/editor/components/canvas/CanvasStage.tsx
 "use client";
 
 import React, { useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import { Button } from "fone-design-system_v1";
 
 import { useEDITORActions, useEDITORStore } from "@/shared/store/control";
 import { useLayoutStore } from "@/shared/store/layout";
@@ -16,6 +18,7 @@ import { useMarqueeSelection } from "../../hooks/useMarqueeSelection";
 import { useOverlapResolver } from "../../hooks/useOverlapResolver";
 import { useSpaceDragPan } from "../../hooks/useSpaceDragPan";
 import { useZoomWheel } from "../../hooks/useZoomWheel";
+import InsertPreview from "../overlays/InsertPreview";
 import MarqueeSelection from "./MarqueeSelection";
 import SectionItemView from "./SectionItemView";
 
@@ -82,7 +85,7 @@ export default function CanvasStage() {
   // Space+Drag 팬(줌과 무관하게 화면 px 기준으로 이동)
   const {
     isPanning,
-    cursor,
+    cursor: panCursor,
     onMouseDownCapture,
     handlePanMouseMove,
     onMouseUp: panUp,
@@ -133,6 +136,27 @@ export default function CanvasStage() {
     ? selectedIds[selectedIds.length - 1]
     : "";
 
+  /* ========== 유틸: 겹침 검사(사전 검사용) ========== */
+  const rectsIntersect = (a: Rect, b: Rect) =>
+    !(
+      a.x + a.w <= b.x ||
+      b.x + b.w <= a.x ||
+      a.y + a.h <= b.y ||
+      b.y + b.h <= a.y
+    );
+
+  const candOverlapsAny = (cand: Rect) =>
+    sections.some(s =>
+      rectsIntersect(cand, { x: s.x, y: s.y, w: s.width, h: s.height }),
+    );
+
+  // 컨테이너(zoom-layer) 경계 밖 여부 판단
+  const isOutOfBounds = (r: Rect) => {
+    return (
+      r.x < 0 || r.y < 0 || r.x + r.w > canvasWidth || r.y + r.h > canvasHeight
+    );
+  };
+
   /* ========== Stage 이벤트 ========== */
   const onMouseDown = (e: React.MouseEvent) => {
     if (isPanning) return; // 팬 중이면 마퀴/드로잉 막기
@@ -155,6 +179,25 @@ export default function CanvasStage() {
 
     if (insertTool) {
       onDragRectMove(e);
+      // 인서트 가이드 사각형으로도 라이브 겹침 하이라이트
+      // (임의 id를 넘겨도 동작하도록 구현되어 있다면 그대로 사용)
+      if (dragRect.on) {
+        calcLive("__insert_preview__", {
+          x: dragRect.x,
+          y: dragRect.y,
+          w: dragRect.w,
+          h: dragRect.h,
+        } as Rect);
+        // 드로잉 중 바깥 영역 여부 실시간 표시 (배경 빨간색 처리)
+        setIsOOB(
+          isOutOfBounds({
+            x: dragRect.x,
+            y: dragRect.y,
+            w: dragRect.w,
+            h: dragRect.h,
+          }),
+        );
+      }
       return;
     }
 
@@ -164,11 +207,31 @@ export default function CanvasStage() {
   const onMouseUp = () => {
     panUp();
 
-    // ---- InsertTool 모드에서 드로잉 끝났을 때 섹션 생성 ----
-    // 드래그 Rect가 있고 (dragRect.on === true),
-    // 최소 크기 (4px) 이상일 때만 실제 섹션을 만든다.
-    // (오차로 생긴 아주 작은 드래그는 무시)
+    // ---- InsertTool 모드에서 드로잉 끝났을 때 처리 ----
+    if (insertTool && !dragRect.on) {
+      setInsertTool(null);
+      onDragRectUp();
+      resetRect();
+      return;
+    }
+
     if (insertTool && dragRect.on && dragRect.w > 4 && dragRect.h > 4) {
+      // 먼저 원본 dragRect가 경계를 벗어났는지 검사 (경계 밖이면 생성 불가)
+      const originalCand: Rect = {
+        x: dragRect.x,
+        y: dragRect.y,
+        w: dragRect.w,
+        h: dragRect.h,
+      };
+      if (isOutOfBounds(originalCand)) {
+        // OOB이면 생성 취소 + 상태 정리 (InsertTool 유지)
+        onDragRectUp();
+        resetRect();
+        setOverlaps([]);
+        setIsOOB(false);
+        return;
+      }
+
       // 값이 canvas 영역을 벗어나지 않도록 한 번 감싸는 유틸
       const clamp = (v: number, min: number, max: number) =>
         Math.max(min, Math.min(max, v));
@@ -178,6 +241,22 @@ export default function CanvasStage() {
       const w = Math.round(clamp(dragRect.w, 0, canvasWidth - Math.max(0, x)));
       const h = Math.round(clamp(dragRect.h, 0, canvasHeight - Math.max(0, y)));
 
+      const cand: Rect = { x, y, w, h };
+
+      // 1) 먼저 겹침 검사
+      const hasOverlap = candOverlapsAny(cand);
+
+      if (hasOverlap) {
+        // 겹치면 "버림": 생성하지 않고 상태만 정리
+        onDragRectUp();
+        resetRect();
+        setOverlaps([]); // 하이라이트 클리어
+        setIsOOB(false); // 배경 복구
+        // 실패했을 땐 InsertTool 유지해서 다시 그릴 수 있게 둠
+        return;
+      }
+
+      // 2) 안 겹치면 실제 섹션 생성
       let init: Partial<Section> = {
         x,
         y,
@@ -210,25 +289,22 @@ export default function CanvasStage() {
       const newId = addSection(insertTool, init);
       setSelectedIds([newId]);
       setCommitAfterTransform();
-    } else if (!insertTool) {
-      // InsertTool이 꺼져 있으면 원래대로 마퀴 업
+
+      // 가이드 정리 + 하이라이트 제거
+      onDragRectUp();
+      resetRect();
+      setOverlaps([]);
+
+      // 성공 시에는 기존 UX 유지: 한 번 그리면 Select로 복귀
+      setInsertTool(null);
+      setIsOOB(false); // 성공 후 배경 복구
+      return;
+    }
+
+    // InsertTool이 아니면 원래대로 마퀴 업
+    if (!insertTool) {
       marqueeUp();
     }
-
-    onDragRectUp();
-    resetRect();
-
-    // 한 번 그린 뒤 Select 모드로 복귀
-    if (insertTool) {
-      setInsertTool(null);
-    }
-  };
-
-  // 컨테이너(zoom-layer) 경계 밖 여부 판단
-  const isOutOfBounds = (r: Rect) => {
-    return (
-      r.x < 0 || r.y < 0 || r.x + r.w > canvasWidth || r.y + r.h > canvasHeight
-    );
   };
 
   /* ========== 렌더링 ========== */
@@ -263,7 +339,7 @@ export default function CanvasStage() {
           backgroundImage: showGrid ? gridBg : "none",
           backgroundSize: showGrid ? `${gridSize}px ${gridSize}px` : "auto",
           backgroundColor: "#fff",
-          cursor,
+          cursor: insertTool ? "crosshair" : panCursor ? panCursor : "default",
         }}
       >
         {sections
@@ -279,7 +355,11 @@ export default function CanvasStage() {
                 id={s.id}
                 active={isActive}
                 onActiveChange={act => {
-                  if (act) setSelectedIds([s.id]);
+                  if (act) {
+                    setSelectedIds([s.id]);
+                    // InsertTool 활성 상태에서 기존 컴포넌트를 선택하면 툴 해제
+                    if (insertTool) setInsertTool(null);
+                  }
                 }}
                 width={s.width}
                 height={s.height}
@@ -409,15 +489,17 @@ export default function CanvasStage() {
                 <SectionItemView
                   item={s}
                   selected={isSelected}
-                  onRequestSelect={multi =>
+                  onRequestSelect={multi => {
                     setSelectedIds(
                       multi
                         ? isSelected
                           ? selectedIds.filter(id => id !== s.id)
                           : [...selectedIds, s.id]
                         : [s.id],
-                    )
-                  }
+                    );
+                    // 다른 컴포넌트 선택 시 드래그 생성 모드 해제
+                    if (insertTool) setInsertTool(null);
+                  }}
                 />
               </Box>
             );
@@ -430,16 +512,14 @@ export default function CanvasStage() {
               <div
                 key={`ov-${i}-${r.x}-${r.y}-${r.w}-${r.h}`}
                 style={{
+                  zIndex: 999,
                   position: "absolute",
                   left: r.x,
                   top: r.y,
                   width: r.w,
                   height: r.h,
-                  background: "rgba(220, 38, 38, 0.18)",
-                  border: "1px solid rgba(220, 38, 38, 0.65)",
+                  background: "rgb(248, 177, 177)",
                   pointerEvents: "none",
-                  mixBlendMode: "multiply",
-                  borderRadius: 2,
                 }}
               />
             ))}
@@ -448,20 +528,7 @@ export default function CanvasStage() {
 
         {/* insertTool 드로잉 가이드 Rect */}
         {insertTool && dragRect.on && (
-          <div
-            aria-hidden
-            style={{
-              position: "absolute",
-              left: dragRect.x,
-              top: dragRect.y,
-              width: dragRect.w,
-              height: dragRect.h,
-              border: "1px dashed #2563eb",
-              background: "rgba(37, 99, 235, 0.12)",
-              pointerEvents: "none",
-              borderRadius: 4,
-            }}
-          />
+          <InsertPreview tool={insertTool} rect={dragRect} />
         )}
 
         {/* 마퀴 선택 */}
