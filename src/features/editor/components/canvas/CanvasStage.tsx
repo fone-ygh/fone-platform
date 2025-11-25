@@ -3,8 +3,8 @@
 
 import React, { useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { Button } from "fone-design-system_v1";
 
+import ResizeContainer from "@/shared/components/ui/resize/ResizeContainer";
 import { useEDITORActions, useEDITORStore } from "@/shared/store/control";
 import { useLayoutStore } from "@/shared/store/layout";
 import { useLayoutActions } from "@/shared/store/layout/store";
@@ -39,9 +39,10 @@ export default function CanvasStage() {
     setUpdateFrame,
     setCommitAfterTransform,
     setInsertTool,
+    setAddSection,
   } = useLayoutActions() as any;
 
-  const addSection = useLayoutStore(s => s.actions.setAddSection);
+  // const addSection = useLayoutStore(s => s.actions.setAddSection);
 
   /* ========== Editor 전역 상태(줌/팬/그리드/스냅) ========== */
   const {
@@ -286,7 +287,7 @@ export default function CanvasStage() {
         };
       }
 
-      const newId = addSection(insertTool, init);
+      const newId = setAddSection(insertTool, init);
       setSelectedIds([newId]);
       setCommitAfterTransform();
 
@@ -350,7 +351,7 @@ export default function CanvasStage() {
             const isActive = activeId === s.id;
 
             return (
-              <Box
+              <ResizeContainer
                 key={s.id}
                 id={s.id}
                 active={isActive}
@@ -501,7 +502,7 @@ export default function CanvasStage() {
                     if (insertTool) setInsertTool(null);
                   }}
                 />
-              </Box>
+              </ResizeContainer>
             );
           })}
 
