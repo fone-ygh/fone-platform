@@ -2,57 +2,27 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Spreadsheet, Worksheet } from "@jspreadsheet-ce/react";
 import "jsuites/dist/jsuites.css";
 import "jspreadsheet-ce/dist/jspreadsheet.css";
-import { Box, Table2 } from "fone-design-system_v1";
-import jspreadsheet from "jspreadsheet-ce";
+import { Box, Button, Dialog, Table2 } from "fone-design-system_v1";
+import TableSettingArea from "../components/TableSettingArea";
+import { useTableSettingActions, useTableSettingStore } from "../store/tableSettingStore";
+import { HeaderCellProps, HeaderCellConfig } from "../interface/type";
+import CellSettingArea from "../components/CellSettingArea";
 
-type MergeMap = Record<string, [number, number]>; // [colspan, rowspan]
 type ColumnNode = { accessorKey?: string; key: string; header?: string; name?: string, type?: "input" | "number" | "button" | "date" | "select" | "radio" | "checkbox"; children?: ColumnNode[], editable?: boolean; width?: number | string; draggable?: boolean; resizable?: boolean; align?: "left" | "center" | "right"; required?: boolean; selectItems?: any[]; columns?: ColumnNode[], role?: "group" | "leaf", disabled?: boolean; readonly?: boolean };
 
-type HeaderCellProps = {
-    accessorKey?: string;
-    header?: string;
-    type?: "input" | "number" | "button" | "date" | "select" | "radio" | "checkbox";
-    editable?: boolean;
-    width?: number | string;
-    draggable?: boolean;
-    resizable?: boolean;
-    align?: "left" | "center" | "right";
-    required?: boolean;
-    selectItems?: any[];
-};
-
-type HeaderCellConfig = {
-    address: string; // e.g. A1
-    col: number;
-    row: number;
-    props: Partial<HeaderCellProps>;
-};
-
 export default function JspreadSheet() {
+
     // Spreadsheet array of worksheets
     const spreadsheet = useRef<Spreadsheet>(null);
 
-    const ref = useRef<HTMLDivElement>(null);
+    // Table Setting 값을 담는 store
+    const { checkbox, noDisplay, paginationDisplay, totalDisplay, plusButtonDisplay, headerCellPropsList, title } = useTableSettingStore();
+    const { setSelectedCellAddress, setFormData, setSelectedPos } = useTableSettingActions();
 
-    // 사용자가 입력한 헤더 셀 속성 배열 및 선택 상태
-    const [headerCellPropsList, setHeaderCellPropsList] = useState<HeaderCellConfig[]>([]);
-    const [selectedPos, setSelectedPos] = useState<{ col: number; row: number } | null>(null);
-    const [selectedAddress, setSelectedAddress] = useState<string>("");
-    const [form, setForm] = useState<Partial<HeaderCellProps>>({
-        accessorKey: "",
-        header: "",
-        type: "input",
-        editable: true,
-        width: "",
-        draggable: false,
-        resizable: true,
-        align: "left",
-        required: false,
-        selectItems: [],
-    });
 
     const [table2Headers, setTable2Headers] = useState<ColumnNode[]>([]);
 
+    const [demoTableOpen, setDemoTableOpen] = useState(false);
     type MergeMap = Record<string, [number, number]>; // [colspan, rowspan]
 
     function detectHeaderDepth(rowDatas: any[][], mergeData?: MergeMap): number {
@@ -69,18 +39,18 @@ export default function JspreadSheet() {
       }
 
     
-    function getMergeSpan(mergeData: MergeMap | undefined, headers: string[], col: number, level: number) {
-        const key = `${headers[col]}${level + 1}`;
+    function getMergeSpan(mergeData: MergeMap | undefined, headers: { header: string; width?: number | string }[], col: number, level: number) {
+        const key = `${headers[col].header}${level + 1}`;
         const [colspan, rowspan] = mergeData?.[key] ?? [1, 1];
         return { colspan, rowspan };
     }
   
-    function findNameFallback(rowDatas: any[][], col: number, upToLevel: number, headers: string[]) {
+    function findNameFallback(rowDatas: any[][], col: number, upToLevel: number, headers: { header: string; width?: number | string }[]) {
         for (let l = upToLevel; l >= 0; l--) {
         const v = rowDatas[l]?.[col];
         if (v !== null && v !== undefined && String(v).trim() !== "") return String(v);
         }
-        return headers[col] ?? `col_${col}`;
+        return headers[col].header ?? `col_${col}`;
     }
   
     function inferType(rowDatas: any[][], headerDepth: number, col: number): ColumnNode["type"] {
@@ -106,13 +76,13 @@ export default function JspreadSheet() {
         return map;
     }
 
-    function getPropsForCell(cellPropsMap: Record<string, Partial<HeaderCellProps>> | undefined, headers: string[], col: number, level: number) {
-        const addr = `${headers[col]}${level + 1}`;
+    function getPropsForCell(cellPropsMap: Record<string, Partial<HeaderCellProps>> | undefined, headers: { header: string; width?: number | string }[], col: number, level: number) {
+        const addr = `${headers[col].header}${level + 1}`;
         return cellPropsMap?.[addr];
     }
 
     function buildLevel(
-        headers: string[],
+        headers: { header: string; width?: number | string }[],
         rowDatas: any[][],
         mergeData: MergeMap | undefined,
         startCol: number,
@@ -138,11 +108,14 @@ export default function JspreadSheet() {
           if (level < headerDepth - 1) {
             // 그룹 노드
             const children = buildLevel(headers, rowDatas, mergeData, col, col + spanCols, level + 1, headerDepth, cellPropsMap);
+            console.log("children : ", children);
+            const parentWidth = children.reduce((acc, child) => acc + (Number(child.width) ?? 0), 0);
             nodes.push({
-              key: overrideProps?.accessorKey || `group_${headers[col]}_${headers[col + spanCols - 1]}`,
+              key: overrideProps?.accessorKey || `group_${headers[col].header}_${headers[col + spanCols - 1].header}`,
               header: safeName,
               columns:children,
               role: "group",
+              width: parentWidth,
             });
             col += spanCols;
           } else {
@@ -155,17 +128,17 @@ export default function JspreadSheet() {
                     ? String(rowDatas[level][c])
                     : findNameFallback(rowDatas, c, level, headers));
               nodes.push({
-                key: (leafOverride?.accessorKey && String(leafOverride.accessorKey).trim() !== "") ? String(leafOverride.accessorKey) : headers[c],
-                accessorKey: (leafOverride?.accessorKey && String(leafOverride.accessorKey).trim() !== "") ? String(leafOverride.accessorKey) : headers[c],
+                key: (leafOverride?.accessorKey && String(leafOverride.accessorKey).trim() !== "") ? String(leafOverride.accessorKey) : headers[c].header,
+                accessorKey: (leafOverride?.accessorKey && String(leafOverride.accessorKey).trim() !== "") ? String(leafOverride.accessorKey) : headers[c].header,
                 header: leafName,
                 type: (leafOverride?.type as ColumnNode["type"]) || inferType(rowDatas, headerDepth, c),
                 editable: leafOverride?.editable ?? true,
-                // width: leafOverride?.width ?? "",
+                width: headers[c].width ?? 100,
                 // draggable: leafOverride?.draggable ?? false,
-                // resizable: leafOverride?.resizable ?? true,
-                // align: (leafOverride?.align as any) ?? "left",
-                // required: leafOverride?.required ?? false,
-                // selectItems: leafOverride?.selectItems ?? [],
+                resizable: leafOverride?.resizable ?? true,
+                align: (leafOverride?.align as any) ?? "left",
+                required: leafOverride?.required ?? false,
+                selectItems: leafOverride?.selectItems ?? [],
                 // disabled: leafOverride?.disabled ?? false,
                 // readonly: leafOverride?.readonly ?? false,
               });
@@ -178,7 +151,7 @@ export default function JspreadSheet() {
       }
 
       function buildColumnsFromJSS(
-        headers: string[],
+        headers: { header: string; width?: number | string }[],
         rowDatas: any[][],
         mergeData?: MergeMap,
         headerDepth?: number,
@@ -189,26 +162,55 @@ export default function JspreadSheet() {
       }
 
     const headerCellPropsListRef = useRef(headerCellPropsList);
-    useEffect(() => {
-        headerCellPropsListRef.current = headerCellPropsList;
-    }, [headerCellPropsList]);
+
 
     const handleEvent = useCallback((eventName: string, worksheet: Worksheet) => {
-        if(eventName === "onselection") {
+        // blur 시 선택 셀 초기화 막는 이벤트
+        if(eventName === "onblur") {
             const selectedCell = spreadsheet!.current![0].selectedContainer;
-            const headers = spreadsheet!.current![0].getHeaders().split(",");
+            worksheet.updateSelectionFromCoords(selectedCell[0], selectedCell[1]);
+            return false;
+        }
+        
+        if(eventName === "onresizecolumn") {
+            console.log("eventName : ", eventName);
+            console.log("onresizecolumn : ", worksheet.options.columns);
+            const selectedCell = spreadsheet!.current![0].selectedContainer;
             const col = Number(selectedCell[0]);
             const row = Number(selectedCell[1]);
+            const headers = spreadsheet!.current![0].getHeaders().split(",");
             setSelectedPos({ col, row });
             const address = `${headers[col]}${row + 1}`;
-            setSelectedAddress(address);
+
+            const headerList = headerCellPropsListRef.current;
+            const existing = headerList.find((x) => x.address === address);
+            if (existing) {
+                console.log("existing : ", existing);
+                // setFormData({
+                //     accessorKey: existing.props.accessorKey ?? "",
+                //     header: existing.props.header ?? "",
+                //     type: existing.props.type ?? "input",
+                //     editable: existing.props.editable ?? true,
+                //     width: existing.props.width ?? "",
+                // });
+            }
+        }
+        
+        if(eventName === "onselection") {
+            const selectedCell = spreadsheet!.current![0].selectedContainer;
+            const col = Number(selectedCell[0]);
+            const row = Number(selectedCell[1]);
+            const headers = spreadsheet!.current![0].getHeaders().split(",");
+            setSelectedPos({ col, row });
+            const address = `${headers[col]}${row + 1}`;
+            setSelectedCellAddress(address);
 
             // headerCellPropsList 대신 ref 사용
             const headerList = headerCellPropsListRef.current;
             const existing = headerList.find((x) => x.address === address);
             console.log("existing : ", existing, headerList);
             if (existing) {
-                setForm({
+                setFormData({
                     accessorKey: existing.props.accessorKey ?? "",
                     header: existing.props.header ?? "",
                     type: existing.props.type ?? "input",
@@ -218,9 +220,10 @@ export default function JspreadSheet() {
                     resizable: existing.props.resizable ?? true,
                     align: (existing.props.align as any) ?? "left",
                     required: existing.props.required ?? false,
+                    isParent: existing.props.isParent ?? false,
                 });
             } else {
-                setForm({
+                setFormData({
                     accessorKey: "",
                     header: "",
                     type: "input",
@@ -230,182 +233,125 @@ export default function JspreadSheet() {
                     resizable: true,
                     align: "left",
                     required: false,
+                    isParent: false,
                 });
             }
         }
     }, []);
-
-
-    const resetCell = (worksheet: Worksheet, address: string, header?: string) => {
-        worksheet.setValue(address, header ?? "");
-    }
-    
       
-    // Render component
+
+    useEffect(() => {
+        headerCellPropsListRef.current = headerCellPropsList;
+    }, [headerCellPropsList]);
+
+
     return (
-        <>
+        <div style={{display:"flex", flexDirection:"column", gap:"10px"}}>
             <div>
-                <button><span className="material-icons" onClick={() => {
-                    spreadsheet!.current![0]?.insertRow();
-                }}>add</span></button>
-                <button><span className="material-icons" onClick={() => {
-                    spreadsheet!.current![0]?.deleteRow();
-                }}>remove</span></button>
-                <button><span className="material-icons" onClick={() => {
-                    spreadsheet!.current![0]?.insertColumn();
-                }}>add</span></button>
-                <button><span className="material-icons" onClick={() => {
-                    spreadsheet!.current![0]?.deleteColumn();
-                }}>remove</span></button>
-            </div>
+                <div style={{width:"400px", }}>
+                    <Button onClick={() => {
+                        const rawData = spreadsheet!.current![0].getData();
 
-            <Spreadsheet ref={spreadsheet} toolbar={true} onevent={handleEvent}>
-                <Worksheet 
-                    minDimensions={[6,6]} 
-                />
-            </Spreadsheet>
-            <button onClick={() => {
-                const rawData = spreadsheet!.current![0].getData();
+                        // 0번째 배열은 header, 1부터는 children들을 의미
+                        const rowDatas = rawData;
+                        const headers = spreadsheet!.current![0].getHeaders().split(",").map((header:string, index:number) => {
+                            return {
+                                header,
+                                width: spreadsheet!.current![0].options.columns[index]?.width ?? undefined,
+                            }
 
-                // 0번째 배열은 header, 1부터는 children들을 의미
-                const rowDatas = rawData;
-                const headers = spreadsheet!.current![0].getHeaders().split(",");
-                const mergeData = spreadsheet!.current![0].getMerge();
-
-                const cellPropsMap = toCellPropsMap(headers, headerCellPropsList);
-                const resultHeaders = buildColumnsFromJSS(headers, rowDatas, mergeData, undefined, cellPropsMap);
-
-                setTable2Headers(resultHeaders as ColumnNode[]);
-            }}>
-                Grid Table 예시 적용
-            </button>
-            <button onClick={() => {
-                const selectedCell = spreadsheet!.current![0].selectedContainer;
-                const headers = spreadsheet!.current![0].getHeaders().split(",");
-                if (Array.isArray(selectedCell)) {
-                    const col = Number(selectedCell[0]);
-                    const row = Number(selectedCell[1]);
-
-                    setSelectedPos({ col, row });
-                    const address = `${headers[col]}${row + 1}`;
-                    setSelectedAddress(address);
-                    const existing = headerCellPropsList.find((x) => x.address === address);
-                    if (existing) {
-                        setForm({
-                            accessorKey: existing.props.accessorKey ?? "",
-                            header: existing.props.header ?? "",
-                            type: existing.props.type ?? "input",
-                            editable: existing.props.editable ?? true,
-                            width: existing.props.width ?? "",
-                            draggable: existing.props.draggable ?? false,
-                            resizable: existing.props.resizable ?? true,
-                            align: (existing.props.align as any) ?? "left",
-                            required: existing.props.required ?? false,
                         });
-                    } else {
-                        setForm({
-                            accessorKey: "",
-                            header: "",
-                            type: "input",
-                            editable: true,
-                            width: "",
-                            draggable: false,
-                            resizable: true,
-                            align: "left",
-                            required: false,
-                        });
-                    }
-                }
-            }}>
-                Select Cell Data
-            </button>
+                        const mergeData = spreadsheet!.current![0].getMerge();
 
-            {/* 해당 부분 컴포넌트로 따로 빼서 관리해야함 */}
-            <div>
-                선택 셀 설정 값
-                <div>
-                    <Box display="flex" flexDirection="column" gap="10px">
-                        <p>Selected Cell : {selectedAddress || "-"}</p>
-                        <div style={{display:"flex", justifyContent:"space-between", width: "300px"}}>
-                            <div style={{width:"100px"}}>accessorKey</div> : <input type="text" value={form.accessorKey as any} onChange={(e) => setForm((f) => ({ ...f, accessorKey: e.target.value }))} />
-                        </div>
-                        <div style={{display:"flex", justifyContent:"space-between", width: "300px"}}>
-                            <div style={{width:"100px"}}>header</div> : <input type="text" value={form.header as any} onChange={(e) => setForm((f) => ({ ...f, header: e.target.value }))} />
-                        </div>
-                        <div style={{display:"flex", justifyContent:"space-between", width: "300px"}}>
-                            <div style={{width:"100px"}}>editable</div> : <input type="checkbox" checked={!!form.editable} onChange={(e) => setForm((f) => ({ ...f, editable: e.target.checked }))} />
-                        </div>
-                        <div style={{display:"flex", justifyContent:"space-between", width: "300px"}}>
-                            <div style={{width:"100px"}}>type</div> : <select value={form.type as any} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as any }))}>
-                                <option value="input">input</option>
-                                <option value="button">button</option>
-                                <option value="select">select</option>
-                                <option value="checkbox">checkbox</option>
-                                <option value="datePicker">date</option>
-                            </select>
-                        </div>
-                        <div style={{display:"flex", justifyContent:"space-between", width: "300px"}}>
-                            <div style={{width:"100px"}}>width</div> : <input type="text" placeholder="e.g. 120 or 10%" value={String(form.width ?? "")}
-                                onChange={(e) => {
-                                    const v = e.target.value;
-                                    const num = Number(v);
-                                    setForm((f) => ({ ...f, width: isNaN(num) ? v : num }));
-                                }}
-                            />
-                        </div>
-                        <div style={{display:"flex", justifyContent:"space-between", width: "300px"}}>
-                            <div style={{width:"100px"}}>align</div> : 
-                            <select value={form.align as any} onChange={(e) => setForm((f) => ({ ...f, align: e.target.value as any }))}>
-                                <option value="left">left</option>
-                                <option value="center">center</option>
-                                <option value="right">right</option>
-                            </select>
-                        </div>
-                        <div style={{display:"flex", justifyContent:"space-between", width: "300px"}}>
-                            <div style={{width:"100px"}}>draggable</div> : <input type="checkbox" checked={!!form.draggable} onChange={(e) => setForm((f) => ({ ...f, draggable: e.target.checked }))} />
-                        </div>
-                        <div style={{display:"flex", justifyContent:"space-between", width: "300px"}}>
-                            <div style={{width:"100px"}}>resizable</div> : <input type="checkbox" checked={!!form.resizable} onChange={(e) => setForm((f) => ({ ...f, resizable: e.target.checked }))} />
-                        </div>
-                        <div style={{display:"flex", justifyContent:"space-between", width: "300px"}}>
-                            <div style={{width:"100px"}}>required</div> : <input type="checkbox" checked={!!form.required} onChange={(e) => setForm((f) => ({ ...f, required: e.target.checked }))} />
-                        </div>
-                        {/* selectItems 설정 */}
-                        <div>
-                            <div style={{width:"100px"}}>selectItems</div> : <input type="text" onChange={(e) => setForm((f) => ({ ...f, selectItems: e.target.value as any }))} />
-                        </div>
-                        <div style={{ display: "flex", gap: "10px" }}>
-                            <button onClick={() => {
-                                if (!spreadsheet.current) return;
-                                const headers = spreadsheet.current[0].getHeaders().split(",");
-                                if (!selectedPos) return;
-                                const address = `${headers[selectedPos.col]}${selectedPos.row + 1}`;
-                                const next: HeaderCellConfig = {
-                                    address,
-                                    col: selectedPos.col,
-                                    row: selectedPos.row,
-                                    props: { ...form },
-                                };
-                                setHeaderCellPropsList((prev) => {
-                                    const idx = prev.findIndex((x) => x.address === address);
-                                    if (idx >= 0) {
-                                        const copy = prev.slice();
-                                        copy[idx] = next;
-                                        return copy;
-                                    }
-                                    return [...prev, next];
+                        console.log("spreadsheet!.current![0] : ", spreadsheet!.current![0]);
+                        console.log("options : ", spreadsheet!.current![0].options);
+
+                        // options에 있는 width 값 가져오기
+                        const width = spreadsheet!.current![0].options.columns[0].width;
+                        console.log("width : ", width, headers);
+
+                        // options에 있는 data도 가져올 수 있지 않을까?
+
+
+
+                        const cellPropsMap = toCellPropsMap(headers, headerCellPropsList);
+                        const resultHeaders = buildColumnsFromJSS(headers, rowDatas, mergeData, undefined, cellPropsMap);
+
+                        console.log("resultHeaders : ", resultHeaders);
+
+                        setTable2Headers(resultHeaders as ColumnNode[]);
+                    }}>
+                        Grid Table 예시 적용
+                    </Button>
+                    <Button onClick={() => {
+                        const selectedCell = spreadsheet!.current![0].selectedContainer;
+                        const headers = spreadsheet!.current![0].getHeaders().split(",");
+                        if (Array.isArray(selectedCell)) {
+                            const col = Number(selectedCell[0]);
+                            const row = Number(selectedCell[1]);
+
+                            setSelectedPos({ col, row });
+                            const address = `${headers[col]}${row + 1}`;
+                            setSelectedCellAddress(address);
+                            const existing = headerCellPropsList.find((x) => x.address === address);
+                            if (existing) {
+                                setFormData({
+                                    accessorKey: existing.props.accessorKey ?? "",
+                                    header: existing.props.header ?? "",
+                                    type: existing.props.type ?? "input",
+                                    editable: existing.props.editable ?? true,
+                                    width: existing.props.width ?? "",
+                                    draggable: existing.props.draggable ?? false,
+                                    resizable: existing.props.resizable ?? true,
+                                    align: (existing.props.align as any) ?? "left",
+                                    required: existing.props.required ?? false,
                                 });
-                                resetCell(spreadsheet.current![0] as Worksheet, address, form.header as string);
-                            }}>저장</button>
-                            <button onClick={() => {
-                                if (!selectedAddress) return;
-                                setHeaderCellPropsList((prev) => prev.filter((x) => x.address !== selectedAddress));
-                            }}>삭제</button>
-                        </div>
-                    </Box>
+                            } else {
+                                setFormData({
+                                    accessorKey: "",
+                                    header: "",
+                                    type: "input",
+                                    editable: true,
+                                    width: "",
+                                    draggable: false,
+                                    resizable: true,
+                                    align: "left",
+                                    required: false,
+                                });
+                            }
+                        }
+                    }}>
+                        Select Cell Data
+                    </Button>
+                </div>
+                <div style={{width:"70%", height:"100%", display:"flex", alignItems:"start", gap:"40px" }}>
+                    <div style={{display:"flex", flexDirection:"column", gap:"40px" }}>
+                        <Spreadsheet ref={spreadsheet} toolbar={true} onevent={handleEvent}>
+                            <Worksheet minDimensions={[6,6]} />
+                        </Spreadsheet>
+
+                        {/* 테이블 설정 영역 */}
+                        <TableSettingArea />
+                        <Button variant="contained" size="small" sx={{width:"200px"}} onClick={() => { setDemoTableOpen(true); }}>Demo Table 보기</Button>
+                    </div>
+                    {/* 셀 설정 영역 */}
+                    <CellSettingArea spreadsheet={spreadsheet} />
                 </div>
             </div>
-            <Table2 columns={table2Headers as any} data={[{11:"1",22:"2",33:"3",44:"4",55:"5",66:"6"}]} />
-        </>
+
+            
+            <Dialog open={demoTableOpen} size="xl" onClose={() => { setDemoTableOpen(false); }} 
+                title="예시 테이블"
+                dialogContent={
+                    <Box sx={{width:"100%", height:"400px", padding: "20px 5px"}}>
+                        <Table2 title={title} columns={table2Headers as any} data={[]} checkbox={checkbox} No={noDisplay} isTotal={totalDisplay} 
+                            isPlusButton={plusButtonDisplay}
+                            pagination={paginationDisplay ? { page: 1, size: 10, totalElements: 100, totalPages: 10, onPageChange: (page) => { console.log(page); } } : undefined}
+                        />
+                    </Box>
+                }
+            />
+            {/* 해당 부분 컴포넌트로 따로 빼서 관리해야함 */}
+        </div>
     );
 }
