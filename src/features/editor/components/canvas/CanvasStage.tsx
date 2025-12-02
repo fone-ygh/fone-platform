@@ -265,18 +265,18 @@ export default function CanvasStage() {
         height: h,
       };
 
-      if (insertTool === "box") {
+      if (insertTool === "search") {
         init = {
           ...init,
-          title: "Box",
+          title: "search",
         };
-      } else if (insertTool === "button") {
+      } else if (insertTool === "single") {
         init = {
           ...init,
           title: "Button",
           btnLabel: "Button",
         };
-      } else if (insertTool === "tabs") {
+      } else if (insertTool === "tab") {
         init = {
           ...init,
           title: "Tabs",

@@ -3,7 +3,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 import React, { forwardRef, useMemo } from "react";
-import { Box, Button } from "fone-design-system_v1";
+import { Box, Button, Tabs } from "fone-design-system_v1";
 
 import type { Section } from "@/shared/store"; // ← 네 환경에 맞춰 경로 유지
 
@@ -61,10 +61,10 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
         backgroundColor: bg,
         color: textColor,
         // box 타입만 기본 보더 (원하면 다른 타입에도 적용 가능)
-        border: item.type === "box" ? `1px solid ${auto.border}` : undefined,
+        // border: item.type === "box" ? `1px solid ${auto.border}` : undefined,
         userSelect: "none",
       }),
-      [item.radius, item.type, selected, preview, bg, textColor, auto.border],
+      [item.radius, item.type, selected, preview, bg, textColor],
     );
 
     const handleMouseDown = (e: React.MouseEvent) => {
@@ -77,7 +77,7 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
     let content: React.ReactNode = null;
 
     switch (item.type) {
-      case "box": {
+      case "search": {
         content = (
           <Box
             style={{
@@ -93,7 +93,7 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
         break;
       }
 
-      case "text": {
+      case "single": {
         content = (
           <div
             style={{
@@ -109,7 +109,7 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
         break;
       }
 
-      case "image": {
+      case "grid": {
         content = item.imageUrl ? (
           <img
             src={item.imageUrl}
@@ -130,25 +130,7 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
         break;
       }
 
-      case "button": {
-        // 내부 버튼이 포인터 이벤트를 먹지 않도록 pointerEvents: "none"
-        content = (
-          <Button
-            variant={item.btnVariant}
-            sx={{
-              width: "100%",
-              height: "100%",
-              borderRadius: item.radius,
-            }}
-            style={{ pointerEvents: "none" }}
-          >
-            {item?.title || item.btnLabel || "Button"}
-          </Button>
-        );
-        break;
-      }
-
-      case "tabs": {
+      case "tab": {
         const tabs = item.tabs?.length
           ? item.tabs
           : [
