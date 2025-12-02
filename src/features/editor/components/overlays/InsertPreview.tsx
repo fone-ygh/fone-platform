@@ -31,13 +31,13 @@ export default function InsertPreview({
     } as const;
 
     switch (tool) {
-      case "button":
+      case "single":
         return {
           ...base,
           btnLabel: "Button",
           btnVariant: "contained",
         } as Section;
-      case "tabs":
+      case "tab":
         return {
           ...base,
           tabs: [
@@ -45,7 +45,7 @@ export default function InsertPreview({
             { label: "Tab 2", content: "두 번째" },
           ],
         } as Section;
-      case "box":
+      case "search":
       default:
         return { ...base } as Section;
     }
