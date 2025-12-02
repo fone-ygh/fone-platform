@@ -1,55 +1,48 @@
-import { CalculatedColumn, Column, ColumnGroup, RenderCellProps, RenderEditCellProps } from "react-data-grid";
-
-interface Row {
-    id: number;
-    name: string;
-    value: string;
-    value2: string;
-    value3: string;
-    value4: string;
-    value5: string;
+export interface TableSettingStore {
+    checkbox: boolean;
+    noDisplay: boolean;
+    paginationDisplay: boolean;
+    totalDisplay: boolean;
+    plusButtonDisplay: boolean;
+    selectedCellAddress?: string;
+    formData: FormData;
+    headerCellPropsList: HeaderCellConfig[];
+    selectedPos: { col: number; row: number } | null;
+    title?: string;
 }
 
-export type CustomColumn<T> = Column<T, unknown> & {
-    type?: "input" | "number" | "button" | "date" | "select" | "radio" | "checkbox";
+export type FormData = {
+    accessorKey: string;
+    header: string;
+    type: "input" | "number" | "button" | "date" | "select" | "radio" | "checkbox";
+    editable: boolean;
+    width: number | string;
+    draggable: boolean;
+    resizable: boolean;
+    required: boolean;
+    selectItems?: any[];
+    align: "left" | "center" | "right";
+    isParent?: boolean; // 부모 셀인지 여부 (true: 부모 셀, false: 자식 셀)
 };
 
-
-export type CustomColumnOrColumnGroup<R, SR = unknown> = CustomColumn<R> | ColumnGroup<R, SR> & {children: CustomColumnOrColumnGroup<R, SR>[]};
-  
-export interface TableProps <T>{
-    rows: T[];
-    columns: CustomColumnOrColumnGroup<T, unknown>[];
-    headerHeight?: number;
-
-}
-
-export type CustomCalculatedColumn<TRow, TSummaryRow = unknown> = CalculatedColumn<TRow, TSummaryRow> & {
+export type HeaderCellProps = {
+    accessorKey?: string;
+    header?: string;
     type?: "input" | "number" | "button" | "date" | "select" | "radio" | "checkbox";
+    editable?: boolean;
+    width?: number | string;
+    draggable?: boolean;
+    resizable?: boolean;
+    align?: "left" | "center" | "right";
+    required?: boolean;
+    selectItems?: {label:string, value:string}[];
+    isParent?: boolean; // 부모 셀인지 여부 (true: 부모 셀, false: 자식 셀)
 };
 
-export type CustomRenderCellProps<TRow, TSummaryRow = unknown> = 
-    Omit<RenderCellProps<TRow, TSummaryRow>, "column"> & {
-        column: CustomCalculatedColumn<TRow>;
-    };
+export type HeaderCellConfig = {
+    address: string; // e.g. A1
+    col: number;
+    row: number;
+    props: Partial<HeaderCellProps>;
+};
 
-export type CustomRenderEditCellProps<TRow, TSummaryRow = unknown> = 
-    Omit<RenderEditCellProps<TRow, TSummaryRow>, "column"> & {
-        column: CustomCalculatedColumn<TRow, TSummaryRow>;
-    };
-
-
-export interface MergedRange {
-    id: string;
-    mergeCellId: string;
-    range: { startRow: number; endRow: number; startCol: number; endCol: number };
-    value?: string;
-    editMode?: boolean;
-}
-
-export interface MergeCellsStore {
-    mergedRanges: MergedRange[];
-    actions: {
-        setMergedRanges: (mergedRanges: MergedRange[]) => void;
-    }
-}

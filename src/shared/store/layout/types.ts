@@ -1,19 +1,21 @@
 // src/shared/store/layout/types.ts
-export type SectionType = "box" | "text" | "image" | "button" | "tabs";
+export type SectionType = "search" | "single" | "grid" | "tab";
 
 export type InsertTool = SectionType | null;
 
 export interface Section {
   id: string;
+  parentId: string | null;
   type: SectionType;
   x: number;
   y: number;
   width: number;
   height: number;
+  z: number;
+
   rotate?: number;
   radius?: number;
   shadow?: number;
-  z: number;
 
   title?: string;
   purpose?: string; // 'header' | 'sidebar' | 'main' | 'footer' | ...

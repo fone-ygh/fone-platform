@@ -34,7 +34,7 @@ export function useSpaceDragPan(opts: {
   // 실제 마우스로 드래그하여 패닝 중인지 여부
   const [isPanning, setIsPanning] = useState(false);
 
-  // 드래그 시작 시점의 pan 좌표 저장
+  // 드래그 시작 시점의 캔버스 위치(pan 좌표) 저장
   const panStartRef = useRef<{ x: number; y: number } | null>(null);
 
   // 드래그 시작 시점의 마우스 위치 저장
@@ -81,6 +81,10 @@ export function useSpaceDragPan(opts: {
     (e: React.MouseEvent) => {
       if (!isPanning || !mouseStartRef.current || !panStartRef.current)
         return false;
+
+      /**
+       * 마우스를 처음 눌렀던 곳에서 얼마나 움직였는지
+       */
       const dx = e.clientX - mouseStartRef.current.x;
       const dy = e.clientY - mouseStartRef.current.y;
 

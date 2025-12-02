@@ -1,12 +1,10 @@
 import { useEffect } from "react";
 
-import { useLayoutStore } from "@/shared/store";
+import { useLayoutActions, useLayoutStore } from "@/shared/store";
 
 export function useKeyboardControl() {
   const { selectedIds } = useLayoutStore();
-
-  const setDeleteSelected = useLayoutStore(s => s.actions.setDeleteSelected);
-  const setSelectedIds = useLayoutStore(s => s.actions.setSelectedIds);
+  const { setDeleteSelected, setSelectedIds } = useLayoutActions();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
