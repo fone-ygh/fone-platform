@@ -1,8 +1,20 @@
+"use client";
+
+import { Fragment, useState } from "react";
 import styled from "@emotion/styled";
-import { Container } from "@mui/material";
+import { Container, Popover } from "@mui/material";
 import { Button } from "fone-design-system_v1";
 
 export default function Header() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    if (!anchorEl) setAnchorEl(event.currentTarget);
+    setIsOpen(prev => !prev);
+  };
+
   return (
     <HeaderBar>
       <Container>
@@ -11,16 +23,65 @@ export default function Header() {
             <BrandBadge>UI</BrandBadge>
             <BrandName>UI Platform</BrandName>
           </Brand>
-
           <Nav aria-label="주요">
             {[
-              { label: "화면패턴", href: "/pattern" },
-              { label: "그리드", href: "/table" },
-              { label: "리사이즈", href: "/resize" },
+              { id: "pattern", label: "화면패턴", href: "/pattern" },
+              { id: "grid", label: "그리드", href: "/table" },
+              { id: "resize", label: "리사이즈", href: "/resize" },
+              {
+                id: "components",
+                label: "컴포넌트",
+                children: [
+                  {
+                    id: "select",
+                    label: "Select",
+                    href: "/components/select",
+                  },
+                ],
+                onClick: handleClick,
+              },
             ].map(item => (
-              <Button key={item.href} variant="text" href={item.href}>
-                {item.label}
-              </Button>
+              <Fragment key={item.id}>
+                <Button
+                  variant="text"
+                  href={item?.href}
+                  onClick={item?.onClick}
+                >
+                  {item.label}
+                </Button>
+                <Popover
+                  open={isOpen}
+                  anchorEl={anchorEl}
+                  onClose={() => setIsOpen(false)}
+                  anchorOrigin={{
+                    vertical: "bottom",
+                    horizontal: "left",
+                  }}
+                  transformOrigin={{
+                    vertical: "top",
+                    horizontal: "left",
+                  }}
+                >
+                  <PopoverListStyle>
+                    {item.children?.map(child => (
+                      <li key={child.id}>
+                        <Button
+                          fullWidth
+                          sx={{
+                            fontSize: "1.5rem",
+                            height: "3rem",
+                            display: "flex",
+                            justifyContent: "left",
+                          }}
+                          href={child?.href}
+                        >
+                          {child.label}
+                        </Button>
+                      </li>
+                    ))}
+                  </PopoverListStyle>
+                </Popover>
+              </Fragment>
             ))}
           </Nav>
         </Toolbar>
@@ -83,4 +144,14 @@ const Nav = styled.nav`
   & a.btn {
     text-decoration: none;
   }
+`;
+
+const PopoverListStyle = styled.ul`
+  list-style: none;
+  margin: 0;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  width: 16rem;
 `;
