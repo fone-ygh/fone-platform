@@ -3,14 +3,20 @@
 
 import * as React from "react";
 
-import type { Section } from "@/shared/store/layout/types";
+import type {
+  GridSection,
+  SearchSection,
+  Section,
+  SingleSection,
+  TabSection,
+} from "@/shared/store/layout/types";
 
 import SectionItemView from "../canvas/SectionItemView";
 
 type DragRect = { x: number; y: number; w: number; h: number; on?: boolean };
 
 export default function InsertPreview({
-  tool, // "box" | "button" | "tabs" | ...
+  tool,
   rect,
 }: {
   tool: Section["type"];
@@ -31,12 +37,21 @@ export default function InsertPreview({
     } as const;
 
     switch (tool) {
+      case "search":
+        return {
+          ...base,
+        } as SearchSection;
+
       case "single":
         return {
           ...base,
-          btnLabel: "Button",
-          btnVariant: "contained",
-        } as Section;
+        } as SingleSection;
+
+      case "grid":
+        return {
+          ...base,
+        } as GridSection;
+
       case "tab":
         return {
           ...base,
@@ -44,10 +59,10 @@ export default function InsertPreview({
             { label: "Tab 1", content: "첫 번째" },
             { label: "Tab 2", content: "두 번째" },
           ],
-        } as Section;
-      case "search":
+        } as TabSection;
+      case "single":
       default:
-        return { ...base } as Section;
+        return { ...base } as SingleSection;
     }
   }, [tool, rect.x, rect.y, rect.w, rect.h]);
 

@@ -12,33 +12,42 @@ export interface Section {
   width: number;
   height: number;
   z: number;
+  lock: boolean;
 
   rotate?: number;
   radius?: number;
   shadow?: number;
 
   title?: string;
-  purpose?: string; // 'header' | 'sidebar' | 'main' | 'footer' | ...
 
-  // colors
   bg?: string;
   color?: string;
+}
 
-  // text
-  text?: string;
-  textAlign?: "left" | "center" | "right";
+// Search
+export interface SearchSection extends Section {
+  type: "search";
+  // 검색필드 정의
+  // fields: SearchField[];
+}
 
-  // image
-  imageUrl?: string;
-  objectFit?: "cover" | "contain" | "fill";
+// Single
+export interface SingleSection extends Section {
+  type: "single";
+}
 
-  // button
-  btnLabel?: string;
-  btnHref?: string;
-  btnVariant?: "text" | "contained" | "outlined";
+// Grid
+export interface GridSection extends Section {
+  type: "grid";
 
-  // tabs
-  tabs?: { label: string; content?: string }[];
+  // columns?: number;
+  // pageSize?: number;
+}
+
+// Tab
+export interface TabSection extends Section {
+  type: "tab";
+  tabs: { label: string; content?: string }[];
 }
 
 export interface LayoutState {

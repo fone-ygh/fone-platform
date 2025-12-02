@@ -1,58 +1,60 @@
-// src/features/patterns/patterns.ts
-export type SectionKind = "search" | "single" | "grid" | "tab";
-
-export interface PatternSectionDef {
-  type: SectionKind;
-  defaultHeight?: number;
-  title?: string;
-}
-
-export interface Pattern {
+// 화면 패턴 메타
+export interface ScreenPattern {
   id: string;
   name: string;
-  category?: string; // 조회형 / 상세형 / 탭형 등
   description?: string;
-  sections: PatternSectionDef[];
 }
 
-// 샘플 패턴들
-export const PATTERNS: Pattern[] = [
+// 실제 패턴 목록
+export const SCREEN_PATTERNS: ScreenPattern[] = [
   {
-    id: "search-grid-basic",
-    name: "조회 + 목록",
-    category: "조회형",
-    description: "상단 검색, 하단 그리드 기본 화면",
-    sections: [
-      { type: "search", defaultHeight: 140, title: "검색영역" },
-      { type: "grid", defaultHeight: 360, title: "목록" },
-    ],
+    id: "p1-1",
+    name: "[P1-1] Single Detail",
+    description: "상단 검색 + 하단 단일 상세",
   },
   {
-    id: "search-single-grid",
-    name: "조회 + 상세 + 목록",
-    category: "조회/상세형",
-    description: "검색 후 단건 상세 + 목록을 함께 보는 패턴",
-    sections: [
-      { type: "search", defaultHeight: 140, title: "검색영역" },
-      { type: "single", defaultHeight: 220, title: "상세영역" },
-      { type: "grid", defaultHeight: 260, title: "목록" },
-    ],
+    id: "p2-1",
+    name: "[P2-1] Multi Detail (R)",
+    description: "상단 검색 + 하단 목록(Grid) – 행 기반",
   },
   {
-    id: "single-tab",
-    name: "상세 + 탭",
-    category: "상세/탭형",
-    description: "단건 상세 위주, 탭으로 보조 정보를 구성",
-    sections: [
-      { type: "single", defaultHeight: 220, title: "기본정보" },
-      { type: "tab", defaultHeight: 280, title: "탭 영역" },
-    ],
+    id: "p2-2",
+    name: "[P2-2] Multi Detail (C)",
+    description: "상단 검색 + 하단 목록(Grid) – 열/카드 기반",
   },
   {
-    id: "blank",
-    name: "빈 화면에서 시작",
-    category: "기타",
-    description: "아무 패턴 없이 직접 섹션을 배치합니다.",
-    sections: [],
+    id: "p3-1",
+    name: "[P3-1] Master Detail (1:n)",
+    description: "좌측 단일 상세, 우측 목록(Grid)",
   },
+  {
+    id: "p3-2",
+    name: "[P3-2] Master Detail (n:1)",
+    description: "좌측 목록(Grid), 우측 단일 상세",
+  },
+  {
+    id: "p3-3",
+    name: "[P3-3] Master Detail (n:n)",
+    description: "좌/우 모두 목록(Grid)",
+  },
+  {
+    id: "p4-1",
+    name: "[P4-1] Tab",
+    description: "상단 검색 + 탭 구성",
+  },
+  {
+    id: "p4-2",
+    name: "[P4-2] Master / Tab",
+    description: "상단 검색 + 단일/목록 + 하단 탭",
+  },
+  {
+    id: "p5-1",
+    name: "[P5-1] Shuttle",
+    description: "좌/우 그리드 간 셔틀 이동",
+  },
+  // {
+  //   id: "px-1",
+  //   name: "[PX-1] Extra",
+  //   description: "특수/커스텀 화면용 단일 영역",
+  // },
 ];
