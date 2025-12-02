@@ -307,31 +307,31 @@ export default function RightPanel() {
                   }}
                 >
                   <Button
-                    variant={insertTool === "box" ? "contained" : "outlined"}
+                    variant={insertTool === "single" ? "contained" : "outlined"}
                     size="xsmall"
                     onClick={() =>
-                      setInsertTool(insertTool === "box" ? null : "box")
+                      setInsertTool(insertTool === "single" ? null : "single")
                     }
                   >
-                    Box
+                    single
                   </Button>
                   <Button
-                    variant={insertTool === "button" ? "contained" : "outlined"}
+                    variant={insertTool === "grid" ? "contained" : "outlined"}
                     size="xsmall"
                     onClick={() =>
-                      setInsertTool(insertTool === "button" ? null : "button")
+                      setInsertTool(insertTool === "grid" ? null : "grid")
                     }
                   >
-                    Button
+                    grid
                   </Button>
                   <Button
-                    variant={insertTool === "tabs" ? "contained" : "outlined"}
+                    variant={insertTool === "tab" ? "contained" : "outlined"}
                     size="xsmall"
                     onClick={() =>
-                      setInsertTool(insertTool === "tabs" ? null : "tabs")
+                      setInsertTool(insertTool === "tab" ? null : "tab")
                     }
                   >
-                    Tabs
+                    tab
                   </Button>
                 </div>
                 <div
@@ -477,151 +477,6 @@ export default function RightPanel() {
               },
             ]}
           />
-
-          {/* Type specific */}
-          {one.type === "text" && (
-            <AccordionCard
-              title="Text"
-              allowMultiple
-              defaultOpenAll
-              hideControls
-              items={[
-                {
-                  id: "text-content",
-                  title: "Content",
-                  content: (
-                    <div className="card-body">
-                      <div className="row" style={{ display: "grid", gap: 8 }}>
-                        <Label>Text</Label>
-                        <TextField2
-                          value={one.text || ""}
-                          onChange={e => onText("text")(e.target.value)}
-                        />
-                      </div>
-                      <div
-                        className="row"
-                        style={{ display: "grid", gap: 8, marginTop: 10 }}
-                      >
-                        <Label>Align</Label>
-                        <select
-                          value={one.textAlign ?? "left"}
-                          onChange={e => onSelect("textAlign")(e.target.value)}
-                          style={{
-                            height: 28,
-                            fontSize: 12,
-                            padding: "2px 6px",
-                          }}
-                        >
-                          <option value="left">left</option>
-                          <option value="center">center</option>
-                          <option value="right">right</option>
-                        </select>
-                      </div>
-                    </div>
-                  ),
-                },
-              ]}
-            />
-          )}
-
-          {one.type === "image" && (
-            <AccordionCard
-              title="Image"
-              allowMultiple
-              defaultOpenAll
-              hideControls
-              items={[
-                {
-                  id: "image-props",
-                  title: "Source / Fit",
-                  content: (
-                    <div className="card-body">
-                      <div className="row" style={{ display: "grid", gap: 8 }}>
-                        <Label>URL</Label>
-                        <TextField2
-                          value={one.imageUrl || ""}
-                          onChange={e => onText("imageUrl")(e.target.value)}
-                        />
-                      </div>
-                      <div
-                        className="row"
-                        style={{ display: "grid", gap: 8, marginTop: 10 }}
-                      >
-                        <Label>ObjectFit</Label>
-                        <select
-                          value={one.objectFit ?? "cover"}
-                          onChange={e => onSelect("objectFit")(e.target.value)}
-                          style={{
-                            height: 28,
-                            fontSize: 12,
-                            padding: "2px 6px",
-                          }}
-                        >
-                          <option value="cover">cover</option>
-                          <option value="contain">contain</option>
-                          <option value="fill">fill</option>
-                        </select>
-                      </div>
-                    </div>
-                  ),
-                },
-              ]}
-            />
-          )}
-
-          {one.type === "button" && (
-            <AccordionCard
-              title="Button"
-              allowMultiple
-              defaultOpenAll
-              hideControls
-              items={[
-                {
-                  id: "button-props",
-                  title: "Label / Link / Variant",
-                  content: (
-                    <div className="card-body">
-                      <div className="row" style={{ display: "grid", gap: 8 }}>
-                        <Label>Label</Label>
-                        <TextField2
-                          value={one.btnLabel || ""}
-                          onChange={e => onText("btnLabel")(e.target.value)}
-                        />
-                      </div>
-                      <div
-                        className="row"
-                        style={{ display: "grid", gap: 8, marginTop: 10 }}
-                      >
-                        <Label>Href</Label>
-                        <TextField2
-                          value={one.btnHref || ""}
-                          onChange={e => onText("btnHref")(e.target.value)}
-                        />
-                      </div>
-                      <div
-                        className="row"
-                        style={{ display: "grid", gap: 8, marginTop: 10 }}
-                      >
-                        <Label>Variant</Label>
-
-                        <Select
-                          value={one.btnVariant ?? "contained"}
-                          onChange={e => onSelect("btnVariant")(e.target.value)}
-                          MenuItems={[
-                            { label: "text", value: "text" },
-                            { label: "contained", value: "contained" },
-                            { label: "outlined", value: "outlined" },
-                          ]}
-                          select={true}
-                          all={false}
-                        />
-                      </div>
-                    </div>
-                  ),
-                },
-              ]}
-            />
-          )}
 
           {/* Appearance */}
           {/* <AccordionCard
