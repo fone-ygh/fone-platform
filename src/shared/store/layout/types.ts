@@ -27,8 +27,6 @@ export interface Section {
 // Search
 export interface SearchSection extends Section {
   type: "search";
-  // 검색필드 정의
-  // fields: SearchField[];
 }
 
 // Single
@@ -47,14 +45,20 @@ export interface GridSection extends Section {
 // Tab
 export interface TabSection extends Section {
   type: "tab";
-  tabs: { label: string; content?: string }[];
+  tabs?: { label: string; content?: string }[];
 }
+
+export type AnySection =
+  | SearchSection
+  | SingleSection
+  | GridSection
+  | TabSection;
 
 export interface LayoutState {
   canvasWidth: number;
   canvasHeight: number;
 
-  sections: Section[];
+  sections: AnySection[];
   selectedIds: string[];
   version: number;
 
@@ -65,7 +69,7 @@ export interface LayoutState {
 
     setSelectedIds: (ids: string[]) => void;
 
-    setSections: (next: Section[]) => void;
+    setSections: (next: AnySection[]) => void;
     setClearSections: () => void;
 
     setAddSection: (type: SectionType, init?: Partial<Section>) => string;

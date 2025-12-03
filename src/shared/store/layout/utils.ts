@@ -1,13 +1,20 @@
 // src/shared/store/layout/utils.ts
-import type { Section } from "./types";
+import type {
+  AnySection,
+  GridSection,
+  SearchSection,
+  Section,
+  SingleSection,
+  TabSection,
+} from "./types";
 
 // z 값을 0..n-1로 정규화
-export function normalizeZ(sections: Section[]): Section[] {
+export function normalizeZ(sections: AnySection[]) {
   const sorted = [...sections].sort((a, b) => (a.z ?? 0) - (b.z ?? 0));
   return sorted.map((s, i) => ({ ...s, z: i }));
 }
 
-export function maxZ(sections: Section[]): number {
+export function maxZ(sections: AnySection[]): number {
   return sections.reduce((m, s) => Math.max(m, s.z ?? 0), -1);
 }
 
@@ -30,10 +37,10 @@ export function cloneSection(s: Section, z: number): Section {
 }
 
 export function applyZChange(
-  sections: Section[],
+  sections: AnySection[],
   ids: string[],
   fn: (z: number) => number,
-): Section[] {
+) {
   const idSet = new Set(ids);
   const moved = sections.map(s =>
     idSet.has(s.id) ? { ...s, z: fn(s.z ?? 0) } : s,

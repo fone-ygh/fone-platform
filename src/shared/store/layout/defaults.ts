@@ -1,4 +1,11 @@
-import type { Section, SectionType } from "./types";
+import type {
+  GridSection,
+  SearchSection,
+  Section,
+  SectionType,
+  SingleSection,
+  TabSection,
+} from "./types";
 
 /** Editor와 일치시키면 혼란이 줄어든다. */
 export const DEFAULT_CANVAS_WIDTH = 1920;
@@ -53,11 +60,6 @@ export function createSection(
 
   return merged;
 }
-
-/**
- * 초기 레이아웃 (지금은 빈 배열)
- */
-export const INITIAL_SECTIONS: Section[] = [];
 
 /**
  * 패턴별 레이아웃 생성 함수
