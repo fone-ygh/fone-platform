@@ -12,8 +12,6 @@ const CellSettingArea = ({spreadsheet}: {spreadsheet: React.RefObject<Spreadshee
     const { selectedCellAddress, formData, headerCellPropsList } = useTableSettingStore();
     const { setFormData, setHeaderCellPropsList } = useTableSettingActions();
     
-    console.log("formData : ", formData);
-
     const [selectItems, setSelectItems] = useState<{label:string, value:string}[]>([]);
 
     // 선택된 셀 변경 시 해당 셀에 저장된 selectItems를 로드
@@ -40,7 +38,6 @@ const CellSettingArea = ({spreadsheet}: {spreadsheet: React.RefObject<Spreadshee
             return;
         }
         const currentHeaderCellProps = headerCellPropsList.find((x) => x.address === address);
-        console.log("currentHeaderCellProps : ", currentHeaderCellProps);
         if (currentHeaderCellProps) {
             setSelectItems((currentHeaderCellProps.props.selectItems as {label:string, value:string}[] | undefined) ?? []);
         }
@@ -130,16 +127,17 @@ const CellSettingArea = ({spreadsheet}: {spreadsheet: React.RefObject<Spreadshee
                             <Button 
                                 variant="contained"
                                 onClick={() => {
-                                    console.log("headerCellPropsList : ", headerCellPropsList);
                                     if (!spreadsheet.current) return;
                                     const headers = spreadsheet.current[0].getHeaders().split(",");
                                     if (!selectedPos) return;
-                                    const address = `${headers[selectedPos.col]}${selectedPos.row + 1}`;
+                                    const address = `${headers[selectedPos.startCol]}${selectedPos.startRow + 1}`;
                                     const mergedProps = formData.type === "select" ? { ...formData, selectItems } : { ...formData };
                                     const next: HeaderCellConfig = {
                                         address,
-                                        col: selectedPos.col,
-                                        row: selectedPos.row,
+                                        startCol: selectedPos.startCol,
+                                        startRow: selectedPos.startRow,
+                                        endCol: selectedPos.endCol,
+                                        endRow: selectedPos.endRow,
                                         props: { ...mergedProps },
                                     };
 
@@ -153,6 +151,7 @@ const CellSettingArea = ({spreadsheet}: {spreadsheet: React.RefObject<Spreadshee
                                         }
                                         return [...prev, next];
                                     }
+                                    console.log("setHeaderCellPropsListData : ", setHeaderCellPropsListData());
                                     setHeaderCellPropsList(setHeaderCellPropsListData());
                                     resetCell(spreadsheet.current![0] as Worksheet, address, formData.header as string, formData.type === "select" ? selectItems : undefined);
                                 }}
