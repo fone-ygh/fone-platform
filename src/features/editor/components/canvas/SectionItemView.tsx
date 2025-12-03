@@ -1,31 +1,22 @@
 // src/features/editor/components/canvas/SectionItemView.tsx
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
+ 
 import React, { forwardRef, useMemo } from "react";
-import { Box, Button, Tabs } from "fone-design-system_v1";
+import { Box } from "fone-design-system_v1";
 
-import type { Section } from "@/shared/store"; // ← 네 환경에 맞춰 경로 유지
+import type {
+  GridSection,
+  SearchSection,
+  Section,
+  SingleSection,
+  TabSection,
+} from "@/shared/store";
 
-/** purpose → 기본 배경/텍스트/보더 색 매핑 */
-function pickAutoColors(purpose: string) {
-  switch (purpose) {
-    case "header":
-      return { bg: "#f1f5ff", text: "#0f172a", border: "#c7d2fe" };
-    case "sidebar":
-      return { bg: "#f8fafc", text: "#0f172a", border: "#e2e8f0" };
-    case "main":
-      return { bg: "#ffffff", text: "#0f172a", border: "#e5e7eb" };
-    case "footer":
-      return { bg: "#f8fafc", text: "#0f172a", border: "#e2e8f0" };
-
-    default:
-      return { bg: "#ffffff", text: "#0f172a", border: "#e5e7eb" };
-  }
-}
+// ← 네 환경에 맞춰 경로 유지
 
 type Props = {
-  item: Section;
+  item: TabSection | GridSection | SingleSection | SearchSection;
   selected?: boolean;
   /** 프리뷰(Insert 가이드) 용일 때 true면 커서/선택 동작 비활성 */
   preview?: boolean;
@@ -38,12 +29,9 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
     ref,
   ) {
     // —— 색상 계산: item.bg / item.color가 우선, 없으면 purpose 기반 자동색 —— //
-    const auto = useMemo(
-      () => pickAutoColors(item.purpose ?? "neutral"),
-      [item.purpose],
-    );
-    const bg = item.bg ?? auto.bg;
-    const textColor = item.color ?? auto.text;
+
+    const bg = item.bg;
+    const textColor = item.color;
 
     // —— 공통 컨테이너 스타일(부모가 위치/크기/회전 담당) —— //
     const common: React.CSSProperties = useMemo(
@@ -64,7 +52,7 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
         // border: item.type === "box" ? `1px solid ${auto.border}` : undefined,
         userSelect: "none",
       }),
-      [item.radius, item.type, selected, preview, bg, textColor],
+      [item.radius, selected, preview, bg, textColor],
     );
 
     const handleMouseDown = (e: React.MouseEvent) => {
@@ -99,32 +87,27 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
             style={{
               padding: 8,
               width: "100%",
-              textAlign: item.textAlign ?? "left",
+
               lineHeight: 1.4,
             }}
           >
-            {item.text ?? "텍스트"}
+            {"single"}
           </div>
         );
         break;
       }
 
       case "grid": {
-        content = item.imageUrl ? (
-          <img
-            src={item.imageUrl}
-            alt={item.title ?? "image"}
+        content = (
+          <div
             style={{
+              padding: 8,
               width: "100%",
-              height: "100%",
-              objectFit: item.objectFit || "cover",
-              pointerEvents: "none",
+
+              lineHeight: 1.4,
             }}
-            draggable={false}
-          />
-        ) : (
-          <div style={{ padding: 8, color: "#6b7280" }}>
-            이미지 URL을 입력하세요
+          >
+            {"grid"}
           </div>
         );
         break;
@@ -149,28 +132,48 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
             }}
           >
             <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
-              {tabs.map((t, i) => {
-                const isActive = active === i;
-                return (
-                  <div
-                    key={i}
-                    style={{
-                      padding: "6px 10px",
-                      borderRadius: 8,
-                      border: `1px solid ${
-                        isActive ? "rgba(25,118,210,.95)" : "rgba(0,0,0,.2)"
-                      }`,
-                      background: isActive
-                        ? "rgba(25,118,210,.1)"
-                        : "transparent",
-                      fontWeight: isActive ? 800 : 600,
-                      userSelect: "none",
-                    }}
-                  >
-                    {t.label}
-                  </div>
-                );
-              })}
+              {tabs.map(
+                (
+                  t: {
+                    label:
+                      | string
+                      | number
+                      | bigint
+                      | boolean
+                      | React.ReactElement<
+                          any,
+                          string | React.JSXElementConstructor<any>
+                        >
+                      | Iterable<React.ReactNode>
+                      | React.ReactPortal
+                      | Promise<React.AwaitedReactNode>
+                      | null
+                      | undefined;
+                  },
+                  i: React.Key | null | undefined,
+                ) => {
+                  const isActive = active === i;
+                  return (
+                    <div
+                      key={i}
+                      style={{
+                        padding: "6px 10px",
+                        borderRadius: 8,
+                        border: `1px solid ${
+                          isActive ? "rgba(25,118,210,.95)" : "rgba(0,0,0,.2)"
+                        }`,
+                        background: isActive
+                          ? "rgba(25,118,210,.1)"
+                          : "transparent",
+                        fontWeight: isActive ? 800 : 600,
+                        userSelect: "none",
+                      }}
+                    >
+                      {t.label}
+                    </div>
+                  );
+                },
+              )}
             </div>
             <div style={{ color: "#6b7280", fontSize: 13 }}>
               {tabs[active]?.content ?? "내용"}
@@ -184,7 +187,7 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
         // 타입 정의에 없는 케이스는 안전하게 Fallback
         content = (
           <div style={{ padding: 8, color: "#6b7280", fontSize: 12 }}>
-            {item.title || "Unknown"} (type: {String(item.type)})
+            {/* {item.title || "Unknown"} (type: {String(item.type)}) */}
           </div>
         );
       }

@@ -273,17 +273,21 @@ export default function CanvasStage() {
       } else if (insertTool === "single") {
         init = {
           ...init,
-          title: "Button",
-          btnLabel: "Button",
+          title: "Single",
+        };
+      } else if (insertTool === "grid") {
+        init = {
+          ...init,
+          title: "Grid",
         };
       } else if (insertTool === "tab") {
         init = {
           ...init,
-          title: "Tabs",
-          tabs: [
-            { label: "Tab 1", content: "첫 번째" },
-            { label: "Tab 2", content: "두 번째" },
-          ],
+          title: "Tab",
+          // tabs: [
+          //   { label: "Tab 1", content: "첫 번째" },
+          //   { label: "Tab 2", content: "두 번째" },
+          // ],
         };
       }
 
@@ -349,12 +353,13 @@ export default function CanvasStage() {
           .map(s => {
             const isSelected = selectedIds.includes(s.id);
             const isActive = activeId === s.id;
+            const isLocked = !!s.lock;
 
             return (
               <ResizeContainer
                 key={s.id}
                 id={s.id}
-                active={isActive}
+                active={isLocked ? false : isActive}
                 onActiveChange={act => {
                   if (act) {
                     setSelectedIds([s.id]);
@@ -376,7 +381,7 @@ export default function CanvasStage() {
                 elementGuidelines={guidelineEls}
                 /* ===== 실시간 겹침 하이라이트: 드래그 중 ===== */
                 onDrag={(e: any) => {
-                  if (isPanning) return;
+                  if (isPanning || isLocked) return;
                   const target = e.target as HTMLElement;
                   const cs = getComputedStyle(target);
 
@@ -388,7 +393,7 @@ export default function CanvasStage() {
                 }}
                 /* ===== 실시간 겹침 하이라이트: 리사이즈 중 ===== */
                 onResize={(e: any) => {
-                  if (isPanning) return;
+                  if (isPanning || isLocked) return;
                   const target = e.target as HTMLElement;
                   const l =
                     e.drag?.left ?? parseFloat(target.style.left || "") ?? s.x;
@@ -406,7 +411,7 @@ export default function CanvasStage() {
                 }}
                 /* ===== Drag End ===== */
                 onDragEnd={(e: any) => {
-                  if (isPanning) return;
+                  if (isPanning || isLocked) return;
                   const el = e.target as HTMLElement;
                   const cs = getComputedStyle(el);
                   const nx =
@@ -442,7 +447,7 @@ export default function CanvasStage() {
                 }}
                 /* ===== Resize End ===== */
                 onResizeEnd={(e: any) => {
-                  if (isPanning) return;
+                  if (isPanning || isLocked) return;
                   const el = e.target as HTMLElement;
                   const cs = getComputedStyle(el);
 

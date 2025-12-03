@@ -25,10 +25,9 @@ export default function Header() {
           </Brand>
           <Nav aria-label="주요">
             {[
-              { id: "layout", label: "레이아웃", href: "/editor" },
+              { id: "pattern", label: "화면패턴", href: "/pattern" },
               { id: "grid", label: "그리드", href: "/table" },
               { id: "resize", label: "리사이즈", href: "/resize" },
-              { id: "pattern", label: "화면패턴", href: "/pattern" },
               {
                 id: "components",
                 label: "컴포넌트",
