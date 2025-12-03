@@ -34,48 +34,49 @@ export function createSection(
     title: capitalize(type),
     bg: "#ffffff",
     color: "#0f172a",
+    parentId: "root",
   };
 
   // 타입별 기본
-  switch (type) {
-    case "box":
-      // 그대로 base 사용
-      break;
+  // switch (type) {
+  //   case "box":
+  //     // 그대로 base 사용
+  //     break;
 
-    case "text":
-      base.width = 360;
-      base.height = 120;
-      base.text = "Lorem ipsum";
-      base.textAlign = "left";
-      base.title = "Text";
-      break;
+  //   case "text":
+  //     base.width = 360;
+  //     base.height = 120;
+  //     base.text = "Lorem ipsum";
+  //     base.textAlign = "left";
+  //     base.title = "Text";
+  //     break;
 
-    case "image":
-      base.width = 360;
-      base.height = 240;
-      base.imageUrl = "https://picsum.photos/seed/fone/720/480"; // 샘플 이미지
-      base.objectFit = "cover";
-      base.title = "Image";
-      break;
+  //   case "image":
+  //     base.width = 360;
+  //     base.height = 240;
+  //     base.imageUrl = "https://picsum.photos/seed/fone/720/480"; // 샘플 이미지
+  //     base.objectFit = "cover";
+  //     base.title = "Image";
+  //     break;
 
-    case "button":
-      base.width = 160;
-      base.height = 48;
-      base.btnLabel = "Button";
-      base.btnVariant = "contained";
-      base.title = "Button";
-      break;
+  //   case "button":
+  //     base.width = 160;
+  //     base.height = 48;
+  //     base.btnLabel = "Button";
+  //     base.btnVariant = "contained";
+  //     base.title = "Button";
+  //     break;
 
-    case "tabs":
-      base.width = 360;
-      base.height = 200;
-      base.title = "Tabs";
-      base.tabs = [
-        { label: "Tab 1", content: "첫 번째" },
-        { label: "Tab 2", content: "두 번째" },
-      ];
-      break;
-  }
+  //   case "tabs":
+  //     base.width = 360;
+  //     base.height = 200;
+  //     base.title = "Tabs";
+  //     base.tabs = [
+  //       { label: "Tab 1", content: "첫 번째" },
+  //       { label: "Tab 2", content: "두 번째" },
+  //     ];
+  //     break;
+  // }
 
   // init으로 덮어쓰기
   const merged = { ...base, ...init } as Section;

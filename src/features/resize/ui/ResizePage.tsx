@@ -21,7 +21,7 @@ export default function ResizePage() {
   };
 
   return (
-    <StyledResizePage onMouseDown={clearActive}>
+    <ResizePageStyle onMouseDown={clearActive}>
       <Button
         id="button"
         resizable
@@ -145,11 +145,11 @@ export default function ResizePage() {
       >
         Box
       </Box>
-    </StyledResizePage>
+    </ResizePageStyle>
   );
 }
 
-const StyledResizePage = styled.div`
+const ResizePageStyle = styled.div`
   position: relative;
   width: 100%;
   height: 100%;
