@@ -18,8 +18,6 @@ const defaultValue: Pick<TableSettingStore, 'checkbox' | 'noDisplay' | 'paginati
         type: "input",
         editable: true,
         width: "",
-        draggable: false,
-        resizable: true,
         required: false,
         align: "left",
         selectItems: [],
@@ -39,7 +37,7 @@ interface TableSettingActions {
     setSelectedCellAddress: (selectedCellAddress: string) => void;
     setFormData: (formData: FormData) => void;
     setHeaderCellPropsList: (headerCellPropsList: HeaderCellConfig[]) => void;
-    setSelectedPos: (selectedPos: { col: number; row: number } | null) => void;
+    setSelectedPos: (selectedPos: { startCol: number, startRow: number, endCol: number, endRow: number } | null) => void;
     setTitle: (title: string) => void;
 }
 
