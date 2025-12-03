@@ -1,9 +1,19 @@
-// src/shared/store/layout/defaults.ts
-import type { Section, SectionType } from "./types";
+import type {
+  GridSection,
+  SearchSection,
+  Section,
+  SectionType,
+  SingleSection,
+  TabSection,
+} from "./types";
 
 /** Editor와 일치시키면 혼란이 줄어든다. */
 export const DEFAULT_CANVAS_WIDTH = 1920;
 export const DEFAULT_CANVAS_HEIGHT = 1080;
+
+/** 공통 레이아웃 상수 */
+const SEARCH_HEIGHT = 140;
+const GAP = 20;
 
 /** 섹션용 고유 id 문자열을 만드는 함수 */
 const uid = () =>
@@ -19,7 +29,6 @@ export function createSection(
   z: number,
   init: Partial<Section> = {},
 ): Section {
-  // 공통 기본
   const base: Section = {
     id: uid(),
     type,
@@ -28,6 +37,8 @@ export function createSection(
     width: 320,
     height: 200,
     z,
+    lock: true,
+
     rotate: 0,
     radius: 0,
     shadow: 0,
@@ -37,50 +48,7 @@ export function createSection(
     parentId: "root",
   };
 
-  // 타입별 기본
-  // switch (type) {
-  //   case "box":
-  //     // 그대로 base 사용
-  //     break;
-
-  //   case "text":
-  //     base.width = 360;
-  //     base.height = 120;
-  //     base.text = "Lorem ipsum";
-  //     base.textAlign = "left";
-  //     base.title = "Text";
-  //     break;
-
-  //   case "image":
-  //     base.width = 360;
-  //     base.height = 240;
-  //     base.imageUrl = "https://picsum.photos/seed/fone/720/480"; // 샘플 이미지
-  //     base.objectFit = "cover";
-  //     base.title = "Image";
-  //     break;
-
-  //   case "button":
-  //     base.width = 160;
-  //     base.height = 48;
-  //     base.btnLabel = "Button";
-  //     base.btnVariant = "contained";
-  //     base.title = "Button";
-  //     break;
-
-  //   case "tabs":
-  //     base.width = 360;
-  //     base.height = 200;
-  //     base.title = "Tabs";
-  //     base.tabs = [
-  //       { label: "Tab 1", content: "첫 번째" },
-  //       { label: "Tab 2", content: "두 번째" },
-  //     ];
-  //     break;
-  // }
-
-  // init으로 덮어쓰기
   const merged = { ...base, ...init } as Section;
-  // width/height/x/y/rotate 등 숫자 필드가 NaN 되는 걸 방지
   merged.x = toInt(merged.x, 0);
   merged.y = toInt(merged.y, 0);
   merged.width = Math.max(1, toInt(merged.width, base.width));
@@ -94,64 +62,421 @@ export function createSection(
 }
 
 /**
- * 초기 레이아웃 (header / aside / main / footer)
- * - 모두 type: "box" 로 생성하고 purpose로 역할 지정
- * - 배치 간단히: 상단 헤더, 좌측 사이드, 본문, 하단 푸터
+ * 패턴별 레이아웃 생성 함수
+ *
+ * patternId 예시
+ *  - "blank"
+ *  - "p1-1"  : Single Detail
+ *  - "p2-1"  : Multi Detail (R)
+ *  - "p2-2"  : Multi Detail (C)
+ *  - "p3-1"  : Master Detail (1:n)
+ *  - "p3-2"  : Master Detail (n:1)
+ *  - "p3-3"  : Master Detail (n:n)
+ *  - "p4-1"  : Tab
+ *  - "p4-2"  : Master / Tab
+ *  - "p5-1"  : Shuttle
+ *  - "px-1"  : Extra
+ *
+ *  기존 호환용:
+ *  - "search-grid"        → p2-1 과 동일
+ *  - "search-single-grid" → p3-1 과 동일
  */
-export const INITIAL_SECTIONS: Section[] = [
-  // // Header
-  // createSection("box", 1, {
-  //   id: `header_${uid()}`,
-  //   title: "Header",
-  //   purpose: "header",
-  //   x: 0,
-  //   y: 0,
-  //   width: DEFAULT_CANVAS_WIDTH,
-  //   height: 120,
-  //   bg: "#f8fafc", // slate-50
-  //   color: "#0f172a",
-  //   radius: 0,
-  // }),
-  // // Aside
-  // createSection("box", 2, {
-  //   id: `aside_${uid()}`,
-  //   title: "Aside",
-  //   purpose: "sidebar",
-  //   x: 0,
-  //   y: 140,
-  //   width: 320,
-  //   height: 804,
-  //   bg: "#f1f5f9", // slate-100
-  //   color: "#0f172a",
-  //   radius: 0,
-  // }),
-  // // Main
-  // createSection("box", 3, {
-  //   id: `main_${uid()}`,
-  //   title: "Main",
-  //   purpose: "main",
-  //   x: 340, // 사이드바(320) + 20px 여백
-  //   y: 140,
-  //   width: DEFAULT_CANVAS_WIDTH - 340, // 우측까지 꽉
-  //   height: 804,
-  //   bg: "#ffffff",
-  //   color: "#0f172a",
-  //   radius: 0,
-  // }),
-  // // Footer
-  // createSection("box", 4, {
-  //   id: `footer_${uid()}`,
-  //   title: "Footer",
-  //   purpose: "footer",
-  //   x: 0,
-  //   y: 960,
-  //   width: DEFAULT_CANVAS_WIDTH,
-  //   height: 120,
-  //   bg: "#f8fafc",
-  //   color: "#0f172a",
-  //   radius: 0,
-  // }),
-];
+export function createSectionsForPattern(patternId: string): Section[] {
+  switch (patternId) {
+    case "blank":
+      return [];
+
+    // P1-1 Single Detail
+    case "p1-1":
+      return createP11SingleDetail();
+
+    // P2-1 / P2-2 Multi Detail (R/C) → Search + Grid 한 장
+    case "p2-1":
+    case "p2-2":
+    case "search-grid":
+      return createP2MultiDetail();
+
+    // P3-1 Master Detail (1:n) → 좌 Single, 우 Grid
+    case "p3-1":
+    case "search-single-grid":
+      return createP31MasterDetail();
+
+    // P3-2 Master Detail (n:1) → 좌 Grid, 우 Single
+    case "p3-2":
+      return createP32MasterDetail();
+
+    // P3-3 Master Detail (n:n) → 좌/우 모두 Grid
+    case "p3-3":
+      return createP33MasterDetail();
+
+    // P4-1 Tab → Search + Tab
+    case "p4-1":
+      return createP41Tab();
+
+    // P4-2 Master / Tab → Search + Single + Tab
+    case "p4-2":
+      return createP42MasterTab();
+
+    // P5-1 Shuttle → Search + 2 Grid
+    case "p5-1":
+      return createP51Shuttle();
+
+    // PX-1 Extra → 전체 단일 영역
+    // case "px-1":
+    //   return createPX1Extra();
+
+    default:
+      return [];
+  }
+}
+
+/* ------------------ 각 패턴 레이아웃 구현 ------------------ */
+
+function createP11SingleDetail(): Section[] {
+  let z = 1;
+  const sections: Section[] = [];
+
+  // 상단 Search
+  sections.push(
+    createSection("search", z++, {
+      title: "Search",
+      x: 0,
+      y: 0,
+      width: DEFAULT_CANVAS_WIDTH,
+      height: SEARCH_HEIGHT,
+      bg: "#f8fafc",
+    }),
+  );
+
+  // 하단 Single
+  sections.push(
+    createSection("single", z++, {
+      title: "Single",
+      x: 0,
+      y: SEARCH_HEIGHT + GAP,
+      width: DEFAULT_CANVAS_WIDTH,
+      height: DEFAULT_CANVAS_HEIGHT - (SEARCH_HEIGHT + GAP),
+      bg: "#ffffff",
+    }),
+  );
+
+  return sections;
+}
+
+function createP2MultiDetail(): Section[] {
+  let z = 1;
+  const sections: Section[] = [];
+
+  const contentTop = SEARCH_HEIGHT + GAP;
+  const contentHeight = DEFAULT_CANVAS_HEIGHT - contentTop;
+
+  sections.push(
+    createSection("search", z++, {
+      title: "Search",
+      x: 0,
+      y: 0,
+      width: DEFAULT_CANVAS_WIDTH,
+      height: SEARCH_HEIGHT,
+      bg: "#f8fafc",
+    }),
+  );
+
+  sections.push(
+    createSection("grid", z++, {
+      title: "Grid",
+      x: 0,
+      y: contentTop,
+      width: DEFAULT_CANVAS_WIDTH,
+      height: contentHeight,
+      bg: "#ffffff",
+    }),
+  );
+
+  return sections;
+}
+
+function createP31MasterDetail(): Section[] {
+  let z = 1;
+  const sections: Section[] = [];
+
+  const contentTop = SEARCH_HEIGHT + GAP;
+  const contentHeight = DEFAULT_CANVAS_HEIGHT - contentTop;
+  const leftWidth = Math.round(DEFAULT_CANVAS_WIDTH * 0.35);
+  const rightWidth = DEFAULT_CANVAS_WIDTH - leftWidth - GAP;
+
+  sections.push(
+    createSection("search", z++, {
+      title: "Search",
+      x: 0,
+      y: 0,
+      width: DEFAULT_CANVAS_WIDTH,
+      height: SEARCH_HEIGHT,
+      bg: "#f8fafc",
+    }),
+  );
+
+  // 좌측 Single (1)
+  sections.push(
+    createSection("single", z++, {
+      title: "Single (1)",
+      x: 0,
+      y: contentTop,
+      width: leftWidth,
+      height: contentHeight,
+      bg: "#ffffff",
+    }),
+  );
+
+  // 우측 Grid (n)
+  sections.push(
+    createSection("grid", z++, {
+      title: "Grid (n)",
+      x: leftWidth + GAP,
+      y: contentTop,
+      width: rightWidth,
+      height: contentHeight,
+      bg: "#ffffff",
+    }),
+  );
+
+  return sections;
+}
+
+function createP32MasterDetail(): Section[] {
+  let z = 1;
+  const sections: Section[] = [];
+
+  const contentTop = SEARCH_HEIGHT + GAP;
+  const contentHeight = DEFAULT_CANVAS_HEIGHT - contentTop;
+  const rightWidth = Math.round(DEFAULT_CANVAS_WIDTH * 0.35);
+  const leftWidth = DEFAULT_CANVAS_WIDTH - rightWidth - GAP;
+
+  sections.push(
+    createSection("search", z++, {
+      title: "Search",
+      x: 0,
+      y: 0,
+      width: DEFAULT_CANVAS_WIDTH,
+      height: SEARCH_HEIGHT,
+      bg: "#f8fafc",
+    }),
+  );
+
+  // 좌측 Grid (n)
+  sections.push(
+    createSection("grid", z++, {
+      title: "Grid (n)",
+      x: 0,
+      y: contentTop,
+      width: leftWidth,
+      height: contentHeight,
+      bg: "#ffffff",
+    }),
+  );
+
+  // 우측 Single (1)
+  sections.push(
+    createSection("single", z++, {
+      title: "Single (1)",
+      x: leftWidth + GAP,
+      y: contentTop,
+      width: rightWidth,
+      height: contentHeight,
+      bg: "#ffffff",
+    }),
+  );
+
+  return sections;
+}
+
+function createP33MasterDetail(): Section[] {
+  let z = 1;
+  const sections: Section[] = [];
+
+  const contentTop = SEARCH_HEIGHT + GAP;
+  const contentHeight = DEFAULT_CANVAS_HEIGHT - contentTop;
+  const halfWidth = Math.floor((DEFAULT_CANVAS_WIDTH - GAP) / 2);
+
+  sections.push(
+    createSection("search", z++, {
+      title: "Search",
+      x: 0,
+      y: 0,
+      width: DEFAULT_CANVAS_WIDTH,
+      height: SEARCH_HEIGHT,
+      bg: "#f8fafc",
+    }),
+  );
+
+  // 좌측 Grid (n)
+  sections.push(
+    createSection("grid", z++, {
+      title: "Grid (n)",
+      x: 0,
+      y: contentTop,
+      width: halfWidth,
+      height: contentHeight,
+      bg: "#ffffff",
+    }),
+  );
+
+  // 우측 Grid (n)
+  sections.push(
+    createSection("grid", z++, {
+      title: "Grid (n)",
+      x: halfWidth + GAP,
+      y: contentTop,
+      width: DEFAULT_CANVAS_WIDTH - (halfWidth + GAP),
+      height: contentHeight,
+      bg: "#ffffff",
+    }),
+  );
+
+  return sections;
+}
+
+function createP41Tab(): Section[] {
+  let z = 1;
+  const sections: Section[] = [];
+
+  const contentTop = SEARCH_HEIGHT + GAP;
+  const contentHeight = DEFAULT_CANVAS_HEIGHT - contentTop;
+
+  sections.push(
+    createSection("search", z++, {
+      title: "Search",
+      x: 0,
+      y: 0,
+      width: DEFAULT_CANVAS_WIDTH,
+      height: SEARCH_HEIGHT,
+      bg: "#f8fafc",
+    }),
+  );
+
+  sections.push(
+    createSection("tab", z++, {
+      title: "Tab",
+      x: 0,
+      y: contentTop,
+      width: DEFAULT_CANVAS_WIDTH,
+      height: contentHeight,
+      bg: "#ffffff",
+    }),
+  );
+
+  return sections;
+}
+
+function createP42MasterTab(): Section[] {
+  let z = 1;
+  const sections: Section[] = [];
+
+  const contentTop = SEARCH_HEIGHT + GAP;
+  const contentHeight = DEFAULT_CANVAS_HEIGHT - contentTop;
+  const masterHeight = Math.round(contentHeight * 0.45);
+  const tabHeight = contentHeight - masterHeight - GAP;
+
+  sections.push(
+    createSection("search", z++, {
+      title: "Search",
+      x: 0,
+      y: 0,
+      width: DEFAULT_CANVAS_WIDTH,
+      height: SEARCH_HEIGHT,
+      bg: "#f8fafc",
+    }),
+  );
+
+  // 상단 Single / Grid 영역
+  sections.push(
+    createSection("single", z++, {
+      title: "Single / Grid",
+      x: 0,
+      y: contentTop,
+      width: DEFAULT_CANVAS_WIDTH,
+      height: masterHeight,
+      bg: "#ffffff",
+    }),
+  );
+
+  // 하단 Tab 영역
+  sections.push(
+    createSection("tab", z++, {
+      title: "Tab",
+      x: 0,
+      y: contentTop + masterHeight + GAP,
+      width: DEFAULT_CANVAS_WIDTH,
+      height: tabHeight,
+      bg: "#ffffff",
+    }),
+  );
+
+  return sections;
+}
+
+function createP51Shuttle(): Section[] {
+  let z = 1;
+  const sections: Section[] = [];
+
+  const contentTop = SEARCH_HEIGHT + GAP;
+  const contentHeight = DEFAULT_CANVAS_HEIGHT - contentTop;
+  const halfWidth = Math.floor((DEFAULT_CANVAS_WIDTH - GAP) / 2);
+
+  sections.push(
+    createSection("search", z++, {
+      title: "Search",
+      x: 0,
+      y: 0,
+      width: DEFAULT_CANVAS_WIDTH,
+      height: SEARCH_HEIGHT,
+      bg: "#f8fafc",
+    }),
+  );
+
+  // 좌측 Grid
+  sections.push(
+    createSection("grid", z++, {
+      title: "Grid (L)",
+      x: 0,
+      y: contentTop,
+      width: halfWidth,
+      height: contentHeight,
+      bg: "#ffffff",
+    }),
+  );
+
+  // 우측 Grid
+  sections.push(
+    createSection("grid", z++, {
+      title: "Grid (R)",
+      x: halfWidth + GAP,
+      y: contentTop,
+      width: DEFAULT_CANVAS_WIDTH - (halfWidth + GAP),
+      height: contentHeight,
+      bg: "#ffffff",
+    }),
+  );
+
+  return sections;
+}
+
+function createPX1Extra(): Section[] {
+  let z = 1;
+  const sections: Section[] = [];
+
+  sections.push(
+    createSection("single", z++, {
+      title: "EXTRA",
+      x: 0,
+      y: 0,
+      width: DEFAULT_CANVAS_WIDTH,
+      height: DEFAULT_CANVAS_HEIGHT,
+      bg: "#f8fafc",
+    }),
+  );
+
+  return sections;
+}
 
 /* ------------------ utils (local) ------------------ */
 function toInt(v: unknown, fallback: number) {

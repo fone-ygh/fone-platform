@@ -12,40 +12,53 @@ export interface Section {
   width: number;
   height: number;
   z: number;
+  lock: boolean;
 
   rotate?: number;
   radius?: number;
   shadow?: number;
 
   title?: string;
-  purpose?: string; // 'header' | 'sidebar' | 'main' | 'footer' | ...
 
-  // colors
   bg?: string;
   color?: string;
+}
 
-  // text
-  text?: string;
-  textAlign?: "left" | "center" | "right";
+// Search
+export interface SearchSection extends Section {
+  type: "search";
+}
 
-  // image
-  imageUrl?: string;
-  objectFit?: "cover" | "contain" | "fill";
+// Single
+export interface SingleSection extends Section {
+  type: "single";
+}
 
-  // button
-  btnLabel?: string;
-  btnHref?: string;
-  btnVariant?: "text" | "contained" | "outlined";
+// Grid
+export interface GridSection extends Section {
+  type: "grid";
 
-  // tabs
+  // columns?: number;
+  // pageSize?: number;
+}
+
+// Tab
+export interface TabSection extends Section {
+  type: "tab";
   tabs?: { label: string; content?: string }[];
 }
+
+export type AnySection =
+  | SearchSection
+  | SingleSection
+  | GridSection
+  | TabSection;
 
 export interface LayoutState {
   canvasWidth: number;
   canvasHeight: number;
 
-  sections: Section[];
+  sections: AnySection[];
   selectedIds: string[];
   version: number;
 
@@ -56,7 +69,7 @@ export interface LayoutState {
 
     setSelectedIds: (ids: string[]) => void;
 
-    setSections: (next: Section[]) => void;
+    setSections: (next: AnySection[]) => void;
     setClearSections: () => void;
 
     setAddSection: (type: SectionType, init?: Partial<Section>) => string;

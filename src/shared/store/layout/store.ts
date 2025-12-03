@@ -10,7 +10,6 @@ import {
   createSection,
   DEFAULT_CANVAS_HEIGHT,
   DEFAULT_CANVAS_WIDTH,
-  INITIAL_SECTIONS,
 } from "./defaults";
 import type { InsertTool, LayoutState, Section, SectionType } from "./types";
 import { applyZChange, cloneSection, maxZ, normalizeZ } from "./utils";
@@ -23,7 +22,7 @@ export const useLayoutStore = create<LayoutState>()(
         canvasHeight: DEFAULT_CANVAS_HEIGHT,
 
         // ✅ 초기 레이아웃(헤더/사이드바/메인/푸터)
-        sections: normalizeZ(INITIAL_SECTIONS),
+        sections: [],
         selectedIds: [],
         version: 0,
 
