@@ -12,51 +12,67 @@ export interface Section {
   width: number;
   height: number;
   z: number;
+  lock: boolean;
 
   rotate?: number;
   radius?: number;
   shadow?: number;
 
   title?: string;
-  purpose?: string; // 'header' | 'sidebar' | 'main' | 'footer' | ...
 
-  // colors
   bg?: string;
   color?: string;
+}
 
-  // text
-  text?: string;
-  textAlign?: "left" | "center" | "right";
+// Search
+export interface SearchSection extends Section {
+  type: "search";
+}
 
-  // image
-  imageUrl?: string;
-  objectFit?: "cover" | "contain" | "fill";
+// Single
+export interface SingleSection extends Section {
+  type: "single";
+}
 
-  // button
-  btnLabel?: string;
-  btnHref?: string;
-  btnVariant?: "text" | "contained" | "outlined";
+// Grid
+export interface GridSection extends Section {
+  type: "grid";
 
-  // tabs
+  // columns?: number;
+  // pageSize?: number;
+}
+
+// Tab
+export interface TabSection extends Section {
+  type: "tab";
   tabs?: { label: string; content?: string }[];
 }
+
+export type AnySection =
+  | SearchSection
+  | SingleSection
+  | GridSection
+  | TabSection;
 
 export interface LayoutState {
   canvasWidth: number;
   canvasHeight: number;
 
-  sections: Section[];
+  sections: AnySection[];
   selectedIds: string[];
   version: number;
 
   insertTool: InsertTool;
+
+  // 드릴다운 스코프 (현재 캔버스가 어떤 parentId 그룹을 보여주는지)
+  scopeParentId: string | null;
 
   actions: {
     setCanvasSize: (w: number, h: number) => void;
 
     setSelectedIds: (ids: string[]) => void;
 
-    setSections: (next: Section[]) => void;
+    setSections: (next: AnySection[]) => void;
     setClearSections: () => void;
 
     setAddSection: (type: SectionType, init?: Partial<Section>) => string;
@@ -76,8 +92,14 @@ export interface LayoutState {
 
     setApplyColorToSelection: (color: string, target: "bg" | "text") => void;
 
+    /** 특정 섹션 lock 여부 설정 */
+    setLock: (id: string, lock: boolean) => void;
+
     setCommitAfterTransform: () => void;
 
     setInsertTool: (tool: InsertTool) => void;
+
+    // 스코프 변경 액션
+    setScopeParentId: (parentId: string | null) => void;
   };
 }

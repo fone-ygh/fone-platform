@@ -10,7 +10,6 @@ import {
   createSection,
   DEFAULT_CANVAS_HEIGHT,
   DEFAULT_CANVAS_WIDTH,
-  INITIAL_SECTIONS,
 } from "./defaults";
 import type { InsertTool, LayoutState, Section, SectionType } from "./types";
 import { applyZChange, cloneSection, maxZ, normalizeZ } from "./utils";
@@ -23,11 +22,13 @@ export const useLayoutStore = create<LayoutState>()(
         canvasHeight: DEFAULT_CANVAS_HEIGHT,
 
         // ✅ 초기 레이아웃(헤더/사이드바/메인/푸터)
-        sections: normalizeZ(INITIAL_SECTIONS),
+        sections: [],
         selectedIds: [],
         version: 0,
 
         insertTool: null as InsertTool,
+
+        scopeParentId: null,
         actions: {
           /* ---------------- Canvas ---------------- */
           setCanvasSize: (w, h) =>
@@ -169,6 +170,20 @@ export const useLayoutStore = create<LayoutState>()(
           setInsertTool: (tool: InsertTool) =>
             set(s => {
               s.insertTool = tool;
+            }),
+
+          /* ---------------- Lock ---------------- */
+          setLock: (id, lock) =>
+            set(s => {
+              s.sections = s.sections.map(sec =>
+                sec.id === id ? { ...sec, lock } : sec,
+              );
+            }),
+
+          setScopeParentId: parentId =>
+            set(s => {
+              s.scopeParentId = parentId;
+              s.selectedIds = []; // 스코프 바뀌면 선택 초기화(권장)
             }),
         },
       }),

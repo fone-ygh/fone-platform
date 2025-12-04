@@ -31,8 +31,14 @@ export default function CanvasStage() {
   useKeyboardControl();
 
   /* ========== Layout 상태 ========== */
-  const { canvasWidth, canvasHeight, sections, selectedIds, insertTool } =
-    useLayoutStore();
+  const {
+    canvasWidth,
+    canvasHeight,
+    sections,
+    selectedIds,
+    insertTool,
+    scopeParentId,
+  } = useLayoutStore();
 
   const {
     setSelectedIds,
@@ -40,9 +46,8 @@ export default function CanvasStage() {
     setCommitAfterTransform,
     setInsertTool,
     setAddSection,
+    setScopeParentId,
   } = useLayoutActions() as any;
-
-  // const addSection = useLayoutStore(s => s.actions.setAddSection);
 
   /* ========== Editor 전역 상태(줌/팬/그리드/스냅) ========== */
   const {
@@ -57,7 +62,7 @@ export default function CanvasStage() {
     snapToGuides,
   } = useEDITORStore();
   const { setCanvasZoom, setPan } = useEDITORActions();
-
+  console.log("scopeParentId : ", scopeParentId);
   // 25%~200% 사이에서 동작하도록 보정
   const zoom = Math.max(0.25, Math.min(2, canvasZoomPct / 100));
 
@@ -78,8 +83,30 @@ export default function CanvasStage() {
     [gridColor],
   );
 
-  /* ========== 훅 결합 ========== */
+  /* ========== 현재 스코프 컨테이너(드릴인한 섹션) 찾기 ========== */
+  const scopeContainer = useMemo(() => {
+    if (!scopeParentId) return null;
+    return sections.find(s => s.id === scopeParentId) ?? null;
+  }, [sections, scopeParentId]);
 
+  /* ==========  현재 캔버스 크기(루트면 전체 캔버스 / 드릴이면 컨테이너 크기) ========== */
+  const viewW = scopeContainer ? scopeContainer.width : canvasWidth;
+  const viewH = scopeContainer ? scopeContainer.height : canvasHeight;
+
+  // 현재 스코프 기준으로 보여줄 섹션 리스트
+  const scopedSections = React.useMemo(() => {
+    // 스코프 없으면 전체 (기본 동작 유지)
+    if (!scopeParentId) return sections;
+
+    // 스코프가 있으면:
+    // 1) 그 섹션(프레임) 자체
+    // 2) 그 섹션의 직계 자식들(parentId === scopeParentId)
+    return sections.filter(
+      s => s.id === scopeParentId || (s.parentId ?? null) === scopeParentId,
+    );
+  }, [sections, scopeParentId]);
+
+  /* ========== 훅 결합 ========== */
   // Ctrl+휠 줌(커서 기준 줌, 페이지 스크롤 방지)
   useZoomWheel({ stageRef, panX, panY, zoom, setCanvasZoom, setPan });
 
@@ -103,7 +130,7 @@ export default function CanvasStage() {
     panX,
     panY,
     zoom,
-    sections,
+    sections: scopedSections,
     setSelectedIds,
   });
 
@@ -119,11 +146,11 @@ export default function CanvasStage() {
 
   // 겹침 하이라이트(드래그/리사이즈 중), 종료 시 1px도 겹치지 않도록 해소
   const { overlaps, calcLive, resolveOnEnd, setOverlaps } =
-    useOverlapResolver(sections);
+    useOverlapResolver(scopedSections);
 
   // DOM 핸들 수집(그룹/가이드라인)
   const { selectedEls, guidelineEls } = useDomHandles({
-    sections,
+    sections: scopedSections,
     selectedIds,
     snapToElements,
   });
@@ -147,7 +174,7 @@ export default function CanvasStage() {
     );
 
   const candOverlapsAny = (cand: Rect) =>
-    sections.some(s =>
+    scopedSections.some(s =>
       rectsIntersect(cand, { x: s.x, y: s.y, w: s.width, h: s.height }),
     );
 
@@ -259,6 +286,7 @@ export default function CanvasStage() {
 
       // 2) 안 겹치면 실제 섹션 생성
       let init: Partial<Section> = {
+        parentId: scopeParentId ?? "root",
         x,
         y,
         width: w,
@@ -273,17 +301,21 @@ export default function CanvasStage() {
       } else if (insertTool === "single") {
         init = {
           ...init,
-          title: "Button",
-          btnLabel: "Button",
+          title: "Single",
+        };
+      } else if (insertTool === "grid") {
+        init = {
+          ...init,
+          title: "Grid",
         };
       } else if (insertTool === "tab") {
         init = {
           ...init,
-          title: "Tabs",
-          tabs: [
-            { label: "Tab 1", content: "첫 번째" },
-            { label: "Tab 2", content: "두 번째" },
-          ],
+          title: "Tab",
+          // tabs: [
+          //   { label: "Tab 1", content: "첫 번째" },
+          //   { label: "Tab 2", content: "두 번째" },
+          // ],
         };
       }
 
@@ -332,8 +364,8 @@ export default function CanvasStage() {
         className="zoom-layer"
         style={{
           position: "relative",
-          width: canvasWidth,
-          height: canvasHeight,
+          width: viewW,
+          height: viewH,
           transform: `translate3d(${panX}px, ${panY}px, 0) scale(${zoom})`,
           transformOrigin: "0 0",
           willChange: "transform",
@@ -343,18 +375,19 @@ export default function CanvasStage() {
           cursor: insertTool ? "crosshair" : panCursor ? panCursor : "default",
         }}
       >
-        {sections
+        {scopedSections
           .slice()
           .sort((a, b) => (a.z ?? 0) - (b.z ?? 0))
           .map(s => {
             const isSelected = selectedIds.includes(s.id);
             const isActive = activeId === s.id;
+            const isLocked = !!s.lock;
 
             return (
               <ResizeContainer
                 key={s.id}
                 id={s.id}
-                active={isActive}
+                active={isLocked ? false : isActive}
                 onActiveChange={act => {
                   if (act) {
                     setSelectedIds([s.id]);
@@ -376,7 +409,7 @@ export default function CanvasStage() {
                 elementGuidelines={guidelineEls}
                 /* ===== 실시간 겹침 하이라이트: 드래그 중 ===== */
                 onDrag={(e: any) => {
-                  if (isPanning) return;
+                  if (isPanning || isLocked) return;
                   const target = e.target as HTMLElement;
                   const cs = getComputedStyle(target);
 
@@ -388,7 +421,7 @@ export default function CanvasStage() {
                 }}
                 /* ===== 실시간 겹침 하이라이트: 리사이즈 중 ===== */
                 onResize={(e: any) => {
-                  if (isPanning) return;
+                  if (isPanning || isLocked) return;
                   const target = e.target as HTMLElement;
                   const l =
                     e.drag?.left ?? parseFloat(target.style.left || "") ?? s.x;
@@ -406,7 +439,7 @@ export default function CanvasStage() {
                 }}
                 /* ===== Drag End ===== */
                 onDragEnd={(e: any) => {
-                  if (isPanning) return;
+                  if (isPanning || isLocked) return;
                   const el = e.target as HTMLElement;
                   const cs = getComputedStyle(el);
                   const nx =
@@ -442,7 +475,7 @@ export default function CanvasStage() {
                 }}
                 /* ===== Resize End ===== */
                 onResizeEnd={(e: any) => {
-                  if (isPanning) return;
+                  if (isPanning || isLocked) return;
                   const el = e.target as HTMLElement;
                   const cs = getComputedStyle(el);
 
@@ -487,21 +520,38 @@ export default function CanvasStage() {
                   setIsOOB(false);
                 }}
               >
-                <SectionItemView
-                  item={s}
-                  selected={isSelected}
-                  onRequestSelect={multi => {
-                    setSelectedIds(
-                      multi
-                        ? isSelected
-                          ? selectedIds.filter(id => id !== s.id)
-                          : [...selectedIds, s.id]
-                        : [s.id],
-                    );
-                    // 다른 컴포넌트 선택 시 드래그 생성 모드 해제
-                    if (insertTool) setInsertTool(null);
+                <div
+                  style={{ width: "100%", height: "100%" }}
+                  onDoubleClick={e => {
+                    e.stopPropagation(); // 상위 zoom-layer 더블클릭으로 안 올라가게
+
+                    // 이 섹션을 "현재 작업 중인 부모"로 채택
+                    setScopeParentId(s.id);
+
+                    // 선택은 이 섹션으로 맞추기
+                    setSelectedIds([s.id]);
+
+                    // 드릴인할 때 줌/팬 초기화(선택 사항)
+                    setCanvasZoom(100);
+                    setPan(0, 0);
                   }}
-                />
+                >
+                  <SectionItemView
+                    item={s}
+                    selected={isSelected}
+                    onRequestSelect={multi => {
+                      setSelectedIds(
+                        multi
+                          ? isSelected
+                            ? selectedIds.filter(id => id !== s.id)
+                            : [...selectedIds, s.id]
+                          : [s.id],
+                      );
+                      // 다른 컴포넌트 선택 시 드래그 생성 모드 해제
+                      if (insertTool) setInsertTool(null);
+                    }}
+                  />
+                </div>
               </ResizeContainer>
             );
           })}

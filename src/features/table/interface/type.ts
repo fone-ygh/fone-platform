@@ -7,7 +7,7 @@ export interface TableSettingStore {
     selectedCellAddress?: string;
     formData: FormData;
     headerCellPropsList: HeaderCellConfig[];
-    selectedPos: { col: number; row: number } | null;
+    selectedPos: { startCol: number; startRow: number; endCol: number; endRow: number } | null;
     title?: string;
 }
 
@@ -17,8 +17,8 @@ export type FormData = {
     type: "input" | "number" | "button" | "date" | "select" | "radio" | "checkbox";
     editable: boolean;
     width: number | string;
-    draggable: boolean;
-    resizable: boolean;
+    draggable?: boolean;
+    resizable?: boolean;
     required: boolean;
     selectItems?: any[];
     align: "left" | "center" | "right";
@@ -41,8 +41,10 @@ export type HeaderCellProps = {
 
 export type HeaderCellConfig = {
     address: string; // e.g. A1
-    col: number;
-    row: number;
+    startCol: number;
+    startRow: number;
+    endCol: number;
+    endRow: number;
     props: Partial<HeaderCellProps>;
 };
 
