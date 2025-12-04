@@ -30,13 +30,13 @@ export default function Header() {
               { id: "resize", label: "리사이즈", href: "/resize" },
               { id: "pattern", label: "화면패턴", href: "/pattern" },
               {
-                id: "components",
-                label: "컴포넌트",
+                id: "componentManagement",
+                label: "컴포넌트관리",
                 children: [
                   {
                     id: "select",
                     label: "Select",
-                    href: "/components/select",
+                    href: "/componentManagement/select",
                   },
                 ],
                 onClick: handleClick,
