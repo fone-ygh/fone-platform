@@ -46,10 +46,7 @@ export default function TreeView({
   const defaultItems: NonNullable<DsTreeView2Props["items"]> = [
     {
       id: "F0",
-      parentId: "",
       label: "taskhub",
-      opOrgTcd: "F0",
-      menuLvSeq: "0",
       children: [
         {
           id: "F1",
