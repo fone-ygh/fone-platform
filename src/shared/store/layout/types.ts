@@ -64,6 +64,9 @@ export interface LayoutState {
 
   insertTool: InsertTool;
 
+  // 드릴다운 스코프 (현재 캔버스가 어떤 parentId 그룹을 보여주는지)
+  scopeParentId: string | null;
+
   actions: {
     setCanvasSize: (w: number, h: number) => void;
 
@@ -89,8 +92,14 @@ export interface LayoutState {
 
     setApplyColorToSelection: (color: string, target: "bg" | "text") => void;
 
+    /** 특정 섹션 lock 여부 설정 */
+    setLock: (id: string, lock: boolean) => void;
+
     setCommitAfterTransform: () => void;
 
     setInsertTool: (tool: InsertTool) => void;
+
+    // 스코프 변경 액션
+    setScopeParentId: (parentId: string | null) => void;
   };
 }

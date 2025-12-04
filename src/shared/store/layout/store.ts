@@ -27,6 +27,8 @@ export const useLayoutStore = create<LayoutState>()(
         version: 0,
 
         insertTool: null as InsertTool,
+
+        scopeParentId: null,
         actions: {
           /* ---------------- Canvas ---------------- */
           setCanvasSize: (w, h) =>
@@ -168,6 +170,20 @@ export const useLayoutStore = create<LayoutState>()(
           setInsertTool: (tool: InsertTool) =>
             set(s => {
               s.insertTool = tool;
+            }),
+
+          /* ---------------- Lock ---------------- */
+          setLock: (id, lock) =>
+            set(s => {
+              s.sections = s.sections.map(sec =>
+                sec.id === id ? { ...sec, lock } : sec,
+              );
+            }),
+
+          setScopeParentId: parentId =>
+            set(s => {
+              s.scopeParentId = parentId;
+              s.selectedIds = []; // 스코프 바뀌면 선택 초기화(권장)
             }),
         },
       }),
