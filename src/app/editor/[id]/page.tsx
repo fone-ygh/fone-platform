@@ -13,8 +13,6 @@ export default async function Editor({
   const { id } = await params;
   const search = await searchParams;
 
-  console.log("id : ", id);
-
   const rawPattern = search.patternId;
   const patternId =
     typeof rawPattern === "string" && rawPattern.length > 0
