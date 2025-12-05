@@ -264,8 +264,8 @@ export default function RightPanel() {
   }, [setSections, setSelectedIds]);
 
   return (
-    <Aside position="right" defaultWidth={340} minWidth={260} maxWidth={560}>
-      <CanvasViewCard
+    <Aside position="right" defaultWidth={340} minWidth={0} maxWidth={560}>
+      {/* <CanvasViewCard
         showGrid={showGrid}
         gridSize={gridSize}
         gridColor={gridColor}
@@ -280,8 +280,12 @@ export default function RightPanel() {
         setSnapTolerance={setSnapTolerance}
         onChangeCanvasW={onChangeCanvasW}
         onChangeCanvasH={onChangeCanvasH}
+      /> */}
+      <InspectorCard
+        selectedSection={one}
+        setPatchSection={setPatchSection}
+        setLock={setLock}
       />
-
       <LayoutCard
         selectedCount={selectedIds.length}
         hasSelection={hasSelection}
@@ -294,12 +298,6 @@ export default function RightPanel() {
         onImportFile={onImportFile}
         onDownloadJsonFile={onDownloadJsonFile}
         onOpenJsonModal={onExportJson}
-      />
-
-      <InspectorCard
-        selectedSection={one}
-        setPatchSection={setPatchSection}
-        setLock={setLock}
       />
     </Aside>
   );

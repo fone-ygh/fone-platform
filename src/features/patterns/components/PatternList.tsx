@@ -49,14 +49,7 @@ export default function PatternList() {
         >
           <Box>
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              화면 목록
-            </Typography>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ fontSize: 12 }}
-            >
-              패턴으로 만들었거나 수정한 레이아웃을 한 눈에 확인할 수 있어요.
+              화면패턴
             </Typography>
           </Box>
 
@@ -83,7 +76,7 @@ export default function PatternList() {
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(3, 1fr)",
-            gap: "2%",
+            gap: "20px",
           }}
         >
           {SCREEN_PATTERNS.map(screen => (

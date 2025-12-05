@@ -15,7 +15,8 @@ import { useDomHandles } from "../../hooks/useDomHandles";
 import { useDragRect } from "../../hooks/useDragRect";
 import { useKeyboardControl } from "../../hooks/useKeyboardControl";
 import { useMarqueeSelection } from "../../hooks/useMarqueeSelection";
-import { useOverlapResolver } from "../../hooks/useOverlapResolver";
+// 🔥 충돌 해결 훅 잠시 막기
+// import { useOverlapResolver } from "../../hooks/useOverlapResolver";
 import { useSpaceDragPan } from "../../hooks/useSpaceDragPan";
 import { useZoomWheel } from "../../hooks/useZoomWheel";
 import InsertPreview from "../overlays/InsertPreview";
@@ -62,7 +63,7 @@ export default function CanvasStage() {
     snapToGuides,
   } = useEDITORStore();
   const { setCanvasZoom, setPan } = useEDITORActions();
-  console.log("scopeParentId : ", scopeParentId);
+
   // 25%~200% 사이에서 동작하도록 보정
   const zoom = Math.max(0.25, Math.min(2, canvasZoomPct / 100));
 
@@ -114,7 +115,7 @@ export default function CanvasStage() {
   const {
     isPanning,
     cursor: panCursor,
-    onMouseDownCapture,
+    onMouseDownCapture: panMouseDownCapture,
     handlePanMouseMove,
     onMouseUp: panUp,
   } = useSpaceDragPan({ zoom, panX, panY, setPan, compensateZoom: true });
@@ -144,9 +145,9 @@ export default function CanvasStage() {
     resetRect,
   } = useDragRect({ stageRef, panX, panY, zoom });
 
-  // 겹침 하이라이트(드래그/리사이즈 중), 종료 시 1px도 겹치지 않도록 해소
-  const { overlaps, calcLive, resolveOnEnd, setOverlaps } =
-    useOverlapResolver(scopedSections);
+  // 🔥 섹션 간 충돌/겹침 관련 로직 잠시 비활성화
+  // const { overlaps, calcLive, resolveOnEnd, setOverlaps } =
+  //   useOverlapResolver(scopedSections);
 
   // DOM 핸들 수집(그룹/가이드라인)
   const { selectedEls, guidelineEls } = useDomHandles({
@@ -164,21 +165,35 @@ export default function CanvasStage() {
     ? selectedIds[selectedIds.length - 1]
     : "";
 
+  // Stage용 capture 핸들
+  const handleStageMouseDownCapture = (e: React.MouseEvent) => {
+    // 1) 인서트 모드면: 여기서 바로 Rect 드로잉 시작
+    if (insertTool) {
+      onDragRectDown(e);
+      setSelectedIds([]);
+      e.preventDefault();
+      return; // pan capture는 타지 않게 여기서 끝
+    }
+
+    // 2) 평상시에는 기존 pan capture 호출
+    panMouseDownCapture(e);
+  };
   /* ========== 유틸: 겹침 검사(사전 검사용) ========== */
-  const rectsIntersect = (a: Rect, b: Rect) =>
-    !(
-      a.x + a.w <= b.x ||
-      b.x + b.w <= a.x ||
-      a.y + a.h <= b.y ||
-      b.y + b.h <= a.y
-    );
+  // 🔥 섹션끼리 겹침 검사는 일단 막아둠
+  // const rectsIntersect = (a: Rect, b: Rect) =>
+  //   !(
+  //     a.x + a.w <= b.x ||
+  //     b.x + b.w <= a.x ||
+  //     a.y + a.h <= b.y ||
+  //     b.y + b.h <= a.y
+  //   );
 
-  const candOverlapsAny = (cand: Rect) =>
-    scopedSections.some(s =>
-      rectsIntersect(cand, { x: s.x, y: s.y, w: s.width, h: s.height }),
-    );
+  // const candOverlapsAny = (cand: Rect) =>
+  //   scopedSections.some(s =>
+  //     rectsIntersect(cand, { x: s.x, y: s.y, w: s.width, h: s.height }),
+  //   );
 
-  // 컨테이너(zoom-layer) 경계 밖 여부 판단
+  // 컨테이너(zoom-layer) 경계 밖 여부 판단(이건 그대로 유지)
   const isOutOfBounds = (r: Rect) => {
     return (
       r.x < 0 || r.y < 0 || r.x + r.w > canvasWidth || r.y + r.h > canvasHeight
@@ -187,7 +202,7 @@ export default function CanvasStage() {
 
   /* ========== Stage 이벤트 ========== */
   const onMouseDown = (e: React.MouseEvent) => {
-    if (isPanning) return; // 팬 중이면 마퀴/드로잉 막기
+    if (isPanning || insertTool) return; // 팬 중이면 마퀴/드로잉 막기
 
     // InsertTool이 켜져 있으면 Rect 드로잉 시작
     if (insertTool) {
@@ -207,15 +222,15 @@ export default function CanvasStage() {
 
     if (insertTool) {
       onDragRectMove(e);
-      // 인서트 가이드 사각형으로도 라이브 겹침 하이라이트
-      // (임의 id를 넘겨도 동작하도록 구현되어 있다면 그대로 사용)
+      // 인서트 가이드 사각형으로도 라이브 겹침 하이라이트 (현재 비활성화)
       if (dragRect.on) {
-        calcLive("__insert_preview__", {
-          x: dragRect.x,
-          y: dragRect.y,
-          w: dragRect.w,
-          h: dragRect.h,
-        } as Rect);
+        // calcLive("__insert_preview__", {
+        //   x: dragRect.x,
+        //   y: dragRect.y,
+        //   w: dragRect.w,
+        //   h: dragRect.h,
+        // } as Rect);
+
         // 드로잉 중 바깥 영역 여부 실시간 표시 (배경 빨간색 처리)
         setIsOOB(
           isOutOfBounds({
@@ -223,7 +238,7 @@ export default function CanvasStage() {
             y: dragRect.y,
             w: dragRect.w,
             h: dragRect.h,
-          }),
+          } as Rect),
         );
       }
       return;
@@ -255,7 +270,7 @@ export default function CanvasStage() {
         // OOB이면 생성 취소 + 상태 정리 (InsertTool 유지)
         onDragRectUp();
         resetRect();
-        setOverlaps([]);
+        // setOverlaps([]);
         setIsOOB(false);
         return;
       }
@@ -271,20 +286,17 @@ export default function CanvasStage() {
 
       const cand: Rect = { x, y, w, h };
 
-      // 1) 먼저 겹침 검사
-      const hasOverlap = candOverlapsAny(cand);
+      // 🔥 1) 섹션 간 겹침 검사 로직은 일단 비활성화
+      // const hasOverlap = candOverlapsAny(cand);
+      // if (hasOverlap) {
+      //   onDragRectUp();
+      //   resetRect();
+      //   setOverlaps([]);
+      //   setIsOOB(false);
+      //   return;
+      // }
 
-      if (hasOverlap) {
-        // 겹치면 "버림": 생성하지 않고 상태만 정리
-        onDragRectUp();
-        resetRect();
-        setOverlaps([]); // 하이라이트 클리어
-        setIsOOB(false); // 배경 복구
-        // 실패했을 땐 InsertTool 유지해서 다시 그릴 수 있게 둠
-        return;
-      }
-
-      // 2) 안 겹치면 실제 섹션 생성
+      // 2) 바로 섹션 생성
       let init: Partial<Section> = {
         parentId: scopeParentId ?? "root",
         x,
@@ -326,7 +338,7 @@ export default function CanvasStage() {
       // 가이드 정리 + 하이라이트 제거
       onDragRectUp();
       resetRect();
-      setOverlaps([]);
+      // setOverlaps([]);
 
       // 성공 시에는 기존 UX 유지: 한 번 그리면 Select로 복귀
       setInsertTool(null);
@@ -345,7 +357,7 @@ export default function CanvasStage() {
     <div
       ref={stageRef}
       className="stage"
-      onMouseDownCapture={onMouseDownCapture}
+      onMouseDownCapture={handleStageMouseDownCapture}
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
@@ -392,7 +404,7 @@ export default function CanvasStage() {
                   if (act) {
                     setSelectedIds([s.id]);
                     // InsertTool 활성 상태에서 기존 컴포넌트를 선택하면 툴 해제
-                    if (insertTool) setInsertTool(null);
+                    // if (insertTool) setInsertTool(null);
                   }
                 }}
                 width={s.width}
@@ -417,7 +429,7 @@ export default function CanvasStage() {
                   const h = parseFloat(cs.height || "") || s.height;
                   const cand: Rect = { x: e.left, y: e.top, w, h };
                   setIsOOB(isOutOfBounds(cand));
-                  calcLive(s.id, cand);
+                  // calcLive(s.id, cand);
                 }}
                 /* ===== 실시간 겹침 하이라이트: 리사이즈 중 ===== */
                 onResize={(e: any) => {
@@ -435,7 +447,7 @@ export default function CanvasStage() {
                     s.height;
                   const cand: Rect = { x: l, y: t, w, h };
                   setIsOOB(isOutOfBounds(cand));
-                  calcLive(s.id, cand);
+                  // calcLive(s.id, cand);
                 }}
                 /* ===== Drag End ===== */
                 onDragEnd={(e: any) => {
@@ -461,9 +473,10 @@ export default function CanvasStage() {
 
                   if (isOutOfBounds(proposal)) {
                     fixed = prev;
-                    setOverlaps([]);
+                    // setOverlaps([]);
                   } else {
-                    fixed = resolveOnEnd(s.id, proposal, prev);
+                    // fixed = resolveOnEnd(s.id, proposal, prev);
+                    fixed = proposal;
                   }
 
                   el.style.left = `${fixed.x}px`;
@@ -500,9 +513,10 @@ export default function CanvasStage() {
 
                   if (isOutOfBounds(proposal)) {
                     fixed = prev;
-                    setOverlaps([]);
+                    // setOverlaps([]);
                   } else {
-                    fixed = resolveOnEnd(s.id, proposal, prev);
+                    // fixed = resolveOnEnd(s.id, proposal, prev);
+                    fixed = proposal;
                   }
 
                   el.style.left = `${fixed.x}px`;
@@ -547,8 +561,6 @@ export default function CanvasStage() {
                             : [...selectedIds, s.id]
                           : [s.id],
                       );
-                      // 다른 컴포넌트 선택 시 드래그 생성 모드 해제
-                      if (insertTool) setInsertTool(null);
                     }}
                   />
                 </div>
@@ -556,7 +568,8 @@ export default function CanvasStage() {
             );
           })}
 
-        {/* 겹침 하이라이트 */}
+        {/* 🔥 겹침 하이라이트 렌더링도 잠시 비활성화 */}
+        {/*
         {overlaps.length > 0 && (
           <div aria-hidden>
             {overlaps.map((r, i) => (
@@ -576,6 +589,7 @@ export default function CanvasStage() {
             ))}
           </div>
         )}
+        */}
 
         {/* insertTool 드로잉 가이드 Rect */}
         {insertTool && dragRect.on && (
