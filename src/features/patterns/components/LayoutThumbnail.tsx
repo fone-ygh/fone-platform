@@ -60,7 +60,7 @@ export default function LayoutThumbnail({
     (width - padding * 2) / layoutWidth,
     (height - padding * 2) / layoutHeight,
   );
-
+  console.log("sections :", sections);
   return (
     <Box
       sx={{

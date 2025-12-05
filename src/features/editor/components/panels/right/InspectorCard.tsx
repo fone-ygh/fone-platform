@@ -24,35 +24,8 @@ export const InspectorCard: React.FC<InspectorCardProps> = ({
     content: React.ReactNode;
   }[] = [];
 
-  const onNum =
-    (key: "x" | "y" | "width" | "height" | "rotate" | "radius" | "shadow") =>
-    (v: string) => {
-      if (!one) return;
-      const num = Math.round(Number(v || 0));
-      setPatchSection(one.id, { [key]: num } as any);
-    };
-
-  const onText =
-    (key: "title" | "text" | "btnLabel" | "btnHref" | "imageUrl") =>
-    (v: string) => {
-      if (!one) return;
-      setPatchSection(one.id, { [key]: v });
-    };
-
   if (one) {
     inspectorItems.push(
-      {
-        id: "basic-title",
-        title: "Title",
-        content: (
-          <div className="card-body">
-            <div className="row" style={{ display: "grid", gap: 8 }}>
-              {/* <Label>Title</Label> */}
-              <h3>{one.title}</h3>
-            </div>
-          </div>
-        ),
-      },
       // {
       //   id: "basic-geometry",
       //   title: "Position & Size",

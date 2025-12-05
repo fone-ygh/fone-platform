@@ -101,5 +101,7 @@ export interface LayoutState {
 
     // 스코프 변경 액션
     setScopeParentId: (parentId: string | null) => void;
+
+    setReset: () => void;
   };
 }
