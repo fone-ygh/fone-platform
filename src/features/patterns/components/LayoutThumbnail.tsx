@@ -60,16 +60,13 @@ export default function LayoutThumbnail({
     (width - padding * 2) / layoutWidth,
     (height - padding * 2) / layoutHeight,
   );
-  console.log("sections :", sections);
+
   return (
     <Box
       sx={{
         position: "relative",
         width,
         height,
-        // borderRadius: 1,
-        // border: "1px solid",
-        // borderColor: "divider",
         bgcolor: "white",
         overflow: "hidden",
       }}

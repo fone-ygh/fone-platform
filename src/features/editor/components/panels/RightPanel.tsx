@@ -208,6 +208,9 @@ export default function RightPanel() {
         onDownloadJsonFile={onDownloadJsonFile}
         onOpenJsonModal={onExportJson}
       />
+      <Button variant="contained" onClick={() => {}}>
+        저장
+      </Button>
       <Button
         variant="contained"
         onClick={() => {
@@ -220,7 +223,7 @@ export default function RightPanel() {
           });
         }}
       >
-        패턴으로 저장
+        다른이름으로 저장
       </Button>
     </Aside>
   );

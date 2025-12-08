@@ -4,41 +4,53 @@
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
+import type { ScreenDefinition } from "@/features/patterns/types";
 import { persist } from "@/shared/lib/store-util";
 
-import type { PatternState } from "./type";
-
-const nowIso = () => new Date().toISOString();
-
-const makeCustomId = () => {
-  const base =
-    typeof crypto !== "undefined" && "randomUUID" in crypto
-      ? crypto.randomUUID()
-      : `${Math.random().toString(36).slice(2, 9)}_${Date.now().toString(36)}`;
-
-  return `custom_${base}`;
+type CustomPattern = ScreenDefinition & {
+  // ScreenDefinition에도 id가 있겠지만, 어쨌든 우리가 생성한다는 의미로 확장
+  id: string;
+  createdAt: string;
+  updatedAt?: string;
 };
+
+export interface PatternState {
+  customPatterns: CustomPattern[];
+  actions: {
+    /** 항상 새 patternId를 만들어서 패턴 추가 */
+    addPattern: (p: Omit<CustomPattern, "id" | "createdAt">) => string;
+    removeCustomPattern: (id: string) => void;
+    updateCustomPattern: (id: string, patch: Partial<ScreenDefinition>) => void;
+    clearCustomPatterns: () => void;
+  };
+}
+
+// patternId 생성 유틸
+const makePatternId = () =>
+  `custom_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 
 export const usePatternStore = create<PatternState>()(
   immer(
     persist(
-      (set, _get) => ({
+      (set, get) => ({
         customPatterns: [],
         actions: {
-          addPattern: pattern => {
-            const id = makeCustomId();
-            const createdAt = nowIso();
+          addPattern: payload => {
+            const id = makePatternId();
+            const now = new Date().toISOString();
+
+            const pattern: CustomPattern = {
+              ...payload,
+              id,
+              createdAt: now,
+              updatedAt: now,
+            };
 
             set(s => {
-              s.customPatterns.push({
-                ...pattern,
-                id: "p1-1",
-                createdAt,
-                updatedAt: createdAt,
-              });
+              s.customPatterns.push(pattern);
             });
 
-            return id;
+            return id; // 새로 만들어진 patternId를 리턴
           },
 
           removeCustomPattern: id =>
@@ -48,17 +60,11 @@ export const usePatternStore = create<PatternState>()(
 
           updateCustomPattern: (id, patch) =>
             set(s => {
-              const idx = s.customPatterns.findIndex(p => p.id === id);
-              if (idx < 0) return;
-
-              const prev = s.customPatterns[idx];
-              const { id: _ignoreId, ...rest } = patch as any;
-
-              s.customPatterns[idx] = {
-                ...prev,
-                ...rest,
-                updatedAt: nowIso(),
-              };
+              s.customPatterns = s.customPatterns.map(p =>
+                p.id === id
+                  ? { ...p, ...patch, updatedAt: new Date().toISOString() }
+                  : p,
+              );
             }),
 
           clearCustomPatterns: () =>
@@ -77,5 +83,4 @@ export const usePatternStore = create<PatternState>()(
   ),
 );
 
-// actions 헬퍼
 export const usePatternActions = () => usePatternStore(s => s.actions);
