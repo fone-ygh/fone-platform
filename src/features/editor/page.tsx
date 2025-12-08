@@ -15,16 +15,13 @@ type EditorFeaturePageProps = {
 };
 
 export default function Page({ id, patternId }: EditorFeaturePageProps) {
-  const { reset, setSections } = useLayoutActions() as unknown as {
-    reset: () => void;
-    setSections: (sections: Section[]) => void;
-  };
+  const { setSections, setReset } = useLayoutActions();
 
   useEffect(() => {
     console.log("id : ", id);
     console.log("patternId : ", patternId);
     // 매번 화면 들어올 때 초기화
-    // reset();
+    setReset();
 
     if (id === "new") {
       // 🔥 새 화면: patternId 기반으로 레이아웃 생성
@@ -38,7 +35,7 @@ export default function Page({ id, patternId }: EditorFeaturePageProps) {
       //   .then(res => res.json())
       //   .then(data => setSections(data.sections));
     }
-  }, [id, patternId, reset, setSections]);
+  }, [id, patternId, setReset, setSections]);
 
   return <EditorShell />;
 }

@@ -67,9 +67,6 @@ export default function LayoutThumbnail({
         position: "relative",
         width,
         height,
-        // borderRadius: 1,
-        // border: "1px solid",
-        // borderColor: "divider",
         bgcolor: "white",
         overflow: "hidden",
       }}

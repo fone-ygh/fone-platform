@@ -74,9 +74,7 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
               textAlign: "center",
               borderRadius: item.radius || "unset",
             }}
-          >
-            {item.title || "Box"}
-          </Box>
+          />
         );
         break;
       }
@@ -88,9 +86,7 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
               width: "100%",
               lineHeight: 1.4,
             }}
-          >
-            {"single"}
-          </div>
+          />
         );
         break;
       }
@@ -102,9 +98,7 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
               width: "100%",
               lineHeight: 1.4,
             }}
-          >
-            {"grid"}
-          </div>
+          />
         );
         break;
       }
