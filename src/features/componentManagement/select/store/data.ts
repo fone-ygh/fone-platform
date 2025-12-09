@@ -1,6 +1,7 @@
 import { create } from "zustand";
 
 interface SelectData {
+  crud?: string;
   componentId: string;
   name: string;
   style: string;
@@ -24,20 +25,31 @@ interface CommonCodeData {
   codeDescription: string;
 }
 
+interface ApiData {
+  apiName: string;
+  apiCode: string;
+  apiDescription: string;
+}
+
 interface State {
   selectId: string;
+  selectIdx: number;
   selectData: SelectData[];
   codeTypeData: CodeTypeData[];
   commonCodeData: CommonCodeData[];
+  apiData: ApiData[];
 
   setSelectId: (selectId: string) => void;
+  setSelectIdx: (selectIdx: number) => void;
   setSelectData: (selectData: SelectData[]) => void;
   setCodeTypeData: (codeTypeData: CodeTypeData[]) => void;
   setCommonCodeData: (commonCodeData: CommonCodeData[]) => void;
+  setApiData: (apiData: ApiData[]) => void;
 }
 
 const useDataStore = create<State>(set => ({
   selectId: "",
+  selectIdx: -1,
 
   selectData: [
     {
@@ -104,13 +116,27 @@ const useDataStore = create<State>(set => ({
     },
   ],
   commonCodeData: [],
+  apiData: [
+    {
+      apiName: "사용여부",
+      apiCode: "CT0001",
+      apiDescription: "컴포넌트의 사용여부를 나타냄",
+    },
+    {
+      apiName: "직책유형",
+      apiCode: "CT0002",
+      apiDescription: "조직 내 직책을 나타냄",
+    },
+  ],
 
   setSelectId: (selectId: string) => set({ selectId: selectId }),
+  setSelectIdx: (selectIdx: number) => set({ selectIdx: selectIdx }),
   setSelectData: (selectData: SelectData[]) => set({ selectData: selectData }),
   setCodeTypeData: (codeTypeData: CodeTypeData[]) =>
     set({ codeTypeData: codeTypeData }),
   setCommonCodeData: (commonCodeData: CommonCodeData[]) =>
     set({ commonCodeData: commonCodeData }),
+  setApiData: (apiData: ApiData[]) => set({ apiData: apiData }),
 }));
 
 export default useDataStore;

@@ -1,18 +1,11 @@
-import { useState } from "react";
 import { Table2 } from "fone-design-system_v1";
 
-import useCodeTypeStore from "../../../store/codeType";
-import useDataStore from "../../../store/data";
-import useDialogStore from "../../../store/dialog";
+import useCodeTypeStore from "@/features/componentManagement/select/store/codeType";
+import useDataStore from "@/features/componentManagement/select/store/data";
+import useDialogStore from "@/features/componentManagement/select/store/dialog";
 
 export default function CodeTypeTable() {
-  const [idx, setIdx] = useState(0);
-
-  const {
-    codeTypeData: data,
-    setCodeTypeData: setData,
-    setCommonCodeData,
-  } = useDataStore();
+  const { codeTypeData, setCodeTypeData, setCommonCodeData } = useDataStore();
   const {
     setSelectedGroupCode,
     setSelectedGroupName,
@@ -56,27 +49,25 @@ export default function CodeTypeTable() {
       };
     });
 
-    const updatedData = data.filter(item => {
+    const updatedData = codeTypeData.filter(item => {
       return !rows.find(row => row.groupCode === item.groupCode);
     });
 
-    setData([...newData, ...updatedData]);
+    setCodeTypeData([...newData, ...updatedData]);
   };
 
   const onDeleteHandler = (rows: any[]) => {
-    const newData = data.filter(item => {
+    const newData = codeTypeData.filter(item => {
       return !rows.find(row => row.groupCode === item.groupCode);
     });
 
-    setData(newData);
+    setCodeTypeData(newData);
   };
 
-  const onRowClickHandler = (row: any, idx: number) => {
-    setCommonCodeData(row.commonCodeData);
+  const onRowClickHandler = (row: any) => {
+    setCommonCodeData(row.commonCodeData || []);
     setSelectedGroupCode(row.groupCode);
     setSelectedGroupName(row.groupName);
-
-    setIdx(idx);
   };
 
   const onRowDoubleClickHandler = (row: any) => {
@@ -90,12 +81,12 @@ export default function CodeTypeTable() {
       title="코드유형"
       // @ts-ignore
       columns={columns}
-      data={data}
+      data={codeTypeData}
       onSave={onSaveHandler}
       onDelete={onDeleteHandler}
       onRowClick={onRowClickHandler}
       onRowDoubleClick={onRowDoubleClickHandler}
-      rowClickTriggerIdx={idx}
+      rowClickTriggerIdx={0}
       checkbox
     />
   );
