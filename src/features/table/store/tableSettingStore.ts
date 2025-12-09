@@ -17,7 +17,6 @@ const defaultValue: Pick<TableSettingStore, 'checkbox' | 'noDisplay' | 'paginati
         header: "",
         type: "input",
         editable: true,
-        width: "",
         required: false,
         align: "left",
         selectItems: [],

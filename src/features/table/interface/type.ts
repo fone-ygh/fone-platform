@@ -16,7 +16,7 @@ export type FormData = {
     header: string;
     type: "input" | "number" | "button" | "date" | "select" | "radio" | "checkbox";
     editable: boolean;
-    width: number | string;
+    width?: number | string;
     draggable?: boolean;
     resizable?: boolean;
     required: boolean;
