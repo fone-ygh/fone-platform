@@ -3,7 +3,7 @@ import { Section } from "@/shared/store";
 // src/features/patterns/types.ts
 export interface ScreenDefinition {
   id: string;
-  name: string;
+  title?: string;
   description?: string;
 
   // 레이아웃 정보
