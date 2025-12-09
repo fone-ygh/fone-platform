@@ -13,11 +13,14 @@ import {
 import { createSectionsForPattern } from "@/shared/store/layout/defaults";
 
 import type { ScreenPattern } from "../patterns";
+import { ScreenDefinition } from "../types";
 import LayoutThumbnail from "./LayoutThumbnail"; // Section[] 축소해서 그리는 컴포넌트
 
+export type ScreenPatternAndDiffition = ScreenPattern | ScreenDefinition;
+
 interface PatternCardProps {
-  pattern: ScreenPattern;
-  onSelect?: (pattern: ScreenPattern) => void;
+  pattern: ScreenPatternAndDiffition;
+  onSelect?: (pattern: ScreenPatternAndDiffition) => void;
 }
 
 export default function PatternCard({ pattern, onSelect }: PatternCardProps) {
@@ -53,7 +56,7 @@ export default function PatternCard({ pattern, onSelect }: PatternCardProps) {
 
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="subtitle2" noWrap sx={{ fontWeight: 600 }}>
-              {pattern.name}
+              {pattern.title}
             </Typography>
             {pattern.description && (
               <Typography

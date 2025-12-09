@@ -7,31 +7,54 @@ import {
   Box,
   Button,
   Container,
-  Grid,
-  Grid2,
-  TextField,
+  Divider,
+  Tab,
+  Tabs,
   Typography,
 } from "@mui/material";
 
-import { SCREEN_PATTERNS } from "../patterns";
-import type { ScreenDefinition } from "../types";
-import PatternCard from "./PatternCard";
+import { usePatternStore } from "@/shared/store/pattern/store";
 
-// 일단은 mock 데이터라고 가정
-// const MOCK_SCREENS: ScreenDefinition[] = [
-//   // { id, name, description, layout: Section[] } 형태
-// ];
+import { SCREEN_PATTERNS, ScreenPattern } from "../patterns";
+import type { ScreenDefinition } from "../types";
+import PatternCard, { ScreenPatternAndDiffition } from "./PatternCard";
+
+const TAB_BUILTIN = "builtin";
+const TAB_CUSTOM = "custom";
 
 export default function PatternList() {
   const router = useRouter();
+  const customPatterns = usePatternStore(s => s.customPatterns);
 
-  const handleOpenScreen = (screen: ScreenDefinition) => {
-    router.push(`/editor/new?patternId=${screen.id}`); // 혹은 /editor/new?patternId=... 대신 실제 screen id
+  const [tab, setTab] = React.useState<string>(TAB_BUILTIN);
+
+  const handleChangeTab = (_: React.SyntheticEvent, value: string) => {
+    setTab(value);
+  };
+
+  const newCustomId = () => {
+    const uuid =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Math.random().toString(36).slice(2)}_${Date.now().toString(36)}`;
+
+    return `custom_${uuid}`;
+  };
+
+  const handleOpenScreen = (screen: ScreenPatternAndDiffition) => {
+    const id = newCustomId();
+    router.push(
+      `/editor/new?id=${encodeURIComponent(id)}&originPatternId=${encodeURIComponent(screen.id)}`,
+    );
   };
 
   const handleCreateBlank = () => {
-    router.push("/editor/new?patternId=blank");
+    const id = newCustomId();
+    router.push(`/editor/new?id=${encodeURIComponent(id)}`); // originPatternId 없음 = blank
   };
+
+  const isBuiltinTab = tab === TAB_BUILTIN;
+  const isCustomTab = tab === TAB_CUSTOM;
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
@@ -41,67 +64,131 @@ export default function PatternList() {
           sx={{
             display: "flex",
             flexDirection: { xs: "column", sm: "row" },
-            alignItems: { sm: "center" },
+            alignItems: { xs: "flex-start", sm: "center" },
             justifyContent: "space-between",
             gap: 2,
-            mb: 4,
+            mb: 3,
           }}
         >
           <Box>
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              화면 목록
-            </Typography>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ fontSize: 12 }}
-            >
-              패턴으로 만들었거나 수정한 레이아웃을 한 눈에 확인할 수 있어요.
+              화면 패턴
             </Typography>
           </Box>
 
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: { xs: "column", sm: "row" },
-              gap: 1.5,
-              alignItems: { sm: "center" },
-            }}
-          >
-            <Button
-              variant="contained"
-              size="small"
-              onClick={handleCreateBlank}
-            >
-              새로 만들기
-            </Button>
-          </Box>
+          {/* Blank 시작 버튼 */}
+          <Button variant="outlined" size="small" onClick={handleCreateBlank}>
+            빈 화면으로 시작하기
+          </Button>
         </Box>
 
-        {/* 카드 그리드 */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: "2%",
-          }}
-        >
-          {SCREEN_PATTERNS.map(screen => (
-            <Grid2 key={screen.id}>
-              <PatternCard pattern={screen} onSelect={handleOpenScreen} />
-            </Grid2>
-          ))}
+        {/* 탭 헤더 */}
+        <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
+          <Tabs value={tab} onChange={handleChangeTab} variant="fullWidth">
+            <Tab
+              label="기본 패턴"
+              value={TAB_BUILTIN}
+              sx={{ fontSize: 13, fontWeight: 600 }}
+            />
+            <Tab
+              label="사용자 지정 패턴"
+              value={TAB_CUSTOM}
+              sx={{ fontSize: 13, fontWeight: 600 }}
+            />
+          </Tabs>
+        </Box>
 
-          {SCREEN_PATTERNS.length === 0 && (
-            <Grid2>
-              <Box sx={{ py: 6, textAlign: "center" }}>
-                <Typography variant="body2" color="text.secondary">
-                  검색 결과에 해당하는 화면이 없습니다.
-                </Typography>
+        {/* 기본 패턴 탭 */}
+        {isBuiltinTab && (
+          <Box>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                mb: 1,
+                gap: 1,
+              }}
+            >
+              <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                기본 패턴
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                제품에서 제공하는 고정 레이아웃
+              </Typography>
+            </Box>
+            <Divider sx={{ mb: 2 }} />
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                gap: "20px",
+              }}
+            >
+              {SCREEN_PATTERNS.map(screen => (
+                <PatternCard
+                  key={screen.id}
+                  pattern={screen}
+                  onSelect={handleOpenScreen}
+                />
+              ))}
+            </div>
+          </Box>
+        )}
+
+        {/* 사용자 지정 패턴 탭 */}
+        {isCustomTab && (
+          <Box>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                mb: 1,
+                gap: 1,
+              }}
+            >
+              <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                사용자 지정 패턴
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                레이아웃 편집기에서 저장한 나만의 패턴
+              </Typography>
+            </Box>
+            <Divider sx={{ mb: 2 }} />
+
+            {customPatterns.length === 0 ? (
+              <Box
+                sx={{
+                  py: 5,
+                  textAlign: "center",
+                  fontSize: 13,
+                  color: "text.secondary",
+                  borderRadius: 2,
+                  border: "1px dashed rgba(148,163,184,0.6)",
+                  bgcolor: "rgba(148,163,184,0.04)",
+                }}
+              >
+                아직 저장된 사용자 지정 패턴이 없습니다.
               </Box>
-            </Grid2>
-          )}
-        </div>
+            ) : (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                  gap: "20px",
+                }}
+              >
+                {customPatterns.map(screen => (
+                  <PatternCard
+                    key={screen.id}
+                    pattern={screen}
+                    onSelect={handleOpenScreen}
+                  />
+                ))}
+              </div>
+            )}
+          </Box>
+        )}
       </Container>
     </Box>
   );

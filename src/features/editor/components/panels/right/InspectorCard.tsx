@@ -24,97 +24,67 @@ export const InspectorCard: React.FC<InspectorCardProps> = ({
     content: React.ReactNode;
   }[] = [];
 
-  const onNum =
-    (key: "x" | "y" | "width" | "height" | "rotate" | "radius" | "shadow") =>
-    (v: string) => {
-      if (!one) return;
-      const num = Math.round(Number(v || 0));
-      setPatchSection(one.id, { [key]: num } as any);
-    };
-
-  const onText =
-    (key: "title" | "text" | "btnLabel" | "btnHref" | "imageUrl") =>
-    (v: string) => {
-      if (!one) return;
-      setPatchSection(one.id, { [key]: v });
-    };
-
   if (one) {
     inspectorItems.push(
-      {
-        id: "basic-title",
-        title: "Title",
-        content: (
-          <div className="card-body">
-            <div className="row" style={{ display: "grid", gap: 8 }}>
-              <Label>Title</Label>
-              <TextField2
-                value={one.title || ""}
-                onChange={e => onText("title")(e.target.value)}
-              />
-            </div>
-          </div>
-        ),
-      },
-      {
-        id: "basic-geometry",
-        title: "Position & Size",
-        content: (
-          <div className="card-body">
-            <div
-              className="row"
-              style={{
-                display: "grid",
-                gap: 8,
-                gridTemplateColumns: "1fr 1fr",
-              }}
-            >
-              <Label>X</Label>
-              <TextField2
-                type="number"
-                value={one.x}
-                onChange={e => onNum("x")(e.target.value)}
-              />
-              <Label>Y</Label>
-              <TextField2
-                type="number"
-                value={one.y}
-                onChange={e => onNum("y")(e.target.value)}
-              />
-              <Label>W</Label>
-              <TextField2
-                type="number"
-                value={one.width}
-                onChange={e => onNum("width")(e.target.value)}
-              />
-              <Label>H</Label>
-              <TextField2
-                type="number"
-                value={one.height}
-                onChange={e => onNum("height")(e.target.value)}
-              />
-              <Label>Rotate</Label>
-              <TextField2
-                type="number"
-                value={one.rotate ?? 0}
-                onChange={e => onNum("rotate")(e.target.value)}
-              />
-              <Label>Radius</Label>
-              <TextField2
-                type="number"
-                value={one.radius ?? 8}
-                onChange={e => onNum("radius")(e.target.value)}
-              />
-              <Label>Shadow</Label>
-              <TextField2
-                type="number"
-                value={one.shadow ?? 0}
-                onChange={e => onNum("shadow")(e.target.value)}
-              />
-            </div>
-          </div>
-        ),
-      },
+      // {
+      //   id: "basic-geometry",
+      //   title: "Position & Size",
+      //   content: (
+      //     <div className="card-body">
+      //       <div
+      //         className="row"
+      //         style={{
+      //           display: "grid",
+      //           gap: 8,
+      //           gridTemplateColumns: "1fr 1fr",
+      //         }}
+      //       >
+      //         <Label>X</Label>
+      //         <TextField2
+      //           type="number"
+      //           value={one.x}
+      //           onChange={e => onNum("x")(e.target.value)}
+      //         />
+      //         <Label>Y</Label>
+      //         <TextField2
+      //           type="number"
+      //           value={one.y}
+      //           onChange={e => onNum("y")(e.target.value)}
+      //         />
+      //         <Label>W</Label>
+      //         <TextField2
+      //           type="number"
+      //           value={one.width}
+      //           onChange={e => onNum("width")(e.target.value)}
+      //         />
+      //         <Label>H</Label>
+      //         <TextField2
+      //           type="number"
+      //           value={one.height}
+      //           onChange={e => onNum("height")(e.target.value)}
+      //         />
+      //         <Label>Rotate</Label>
+      //         <TextField2
+      //           type="number"
+      //           value={one.rotate ?? 0}
+      //           onChange={e => onNum("rotate")(e.target.value)}
+      //         />
+      //         <Label>Radius</Label>
+      //         <TextField2
+      //           type="number"
+      //           value={one.radius ?? 8}
+      //           onChange={e => onNum("radius")(e.target.value)}
+      //         />
+      //         <Label>Shadow</Label>
+      //         <TextField2
+      //           type="number"
+      //           value={one.shadow ?? 0}
+      //           onChange={e => onNum("shadow")(e.target.value)}
+      //         />
+      //       </div>
+      //     </div>
+      //   ),
+      // },
       {
         id: "lock",
         title: "Lock",

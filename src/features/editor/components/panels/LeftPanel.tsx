@@ -23,7 +23,7 @@ export default function LeftPanel() {
 
   const apiRef = useTreeViewApiRef();
 
-  // 👉 parentId 기준으로 프레임/그룹 구조 트리 만들기
+  // parentId 기준으로 프레임/그룹 구조 트리 만들기
   const items = React.useMemo<TreeViewBaseItem[]>(() => {
     // 섹션 없으면 빈 Page만
     if (!sections.length) {

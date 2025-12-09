@@ -2,15 +2,42 @@
 "use client";
 
 import * as React from "react";
-import { Button, Flex } from "fone-design-system_v1";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import {
+  Checkbox,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControlLabel,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { Button, Label, Switch } from "fone-design-system_v1";
 
 import Aside from "@/shared/components/layout/aside/Aside";
 import { useEDITORActions, useEDITORStore } from "@/shared/store/control";
 import { useLayoutActions, useLayoutStore } from "@/shared/store/layout";
+import {
+  usePatternActions,
+  usePatternStore,
+} from "@/shared/store/pattern/store";
 
-import { CanvasViewCard } from "./right/CanvasViewCard";
-import { InspectorCard } from "./right/InspectorCard";
 import { LayoutCard } from "./right/LayoutCard";
+
+type SaveMode = "overwrite" | "copy";
+
+function buildEditorUrl(
+  editorId: string,
+  patternId?: string | null,
+  originPatternId?: string | null,
+) {
+  const sp = new URLSearchParams();
+  if (patternId) sp.set("id", patternId);
+  if (originPatternId) sp.set("originPatternId", originPatternId);
+  const qs = sp.toString();
+  return qs ? `/editor/${editorId}?${qs}` : `/editor/${editorId}`;
+}
 
 export default function RightPanel() {
   /* -------- editor(view/snap/zoom) -------- */
@@ -42,53 +69,55 @@ export default function RightPanel() {
     useLayoutStore();
   const {
     setInsertTool,
-    setPatchSection,
     setDeleteSelected,
     setDuplicateSelected,
-    setAddSection,
     setCommitAfterTransform,
-    setApplyColorToSelection,
     setSelectedIds,
     setSections,
-    setCanvasSize,
     setLock,
   } = useLayoutActions();
 
-  const actionsAny = useLayoutStore(s => s.actions as any);
+  /* -------- patterns(zustand 저장) -------- */
+  const { addPattern, updateCustomPattern } = usePatternActions();
+  const customPatterns = usePatternStore(s => s.customPatterns);
 
-  // Canvas size 변경
-  const onChangeCanvasW = (v: string) => {
-    setCanvasSize(Number(v), canvasHeight);
-  };
-  const onChangeCanvasH = (v: string) => {
-    setCanvasSize(canvasWidth, Number(v));
-  };
+  /* -------- router / url params -------- */
+  const router = useRouter();
+  const params = useParams();
+  const editorId = String((params as any)?.id ?? "");
+  const searchParams = useSearchParams();
 
-  // JSON Export / Import
-  const [jsonValue, setJsonValue] = React.useState("");
-  const [isJsonModalOpen, setIsJsonModalOpen] = React.useState(false);
+  const urlPatternId = searchParams.get("id"); // 현재 편집중인 패턴 id(빌트인/커스텀)
+  const urlOriginPatternId = searchParams.get("originPatternId");
 
+  const editingCustom = React.useMemo(() => {
+    if (!urlPatternId) return null;
+    return customPatterns.find(p => p.id === urlPatternId) ?? null;
+  }, [customPatterns, urlPatternId]);
+  console.log("customPatterns : ", customPatterns);
+  const canOverwrite = !!editingCustom && !!urlPatternId;
+
+  // originPatternId 해석:
+  // 1) URL originPatternId 우선
+  // 2) 커스텀 패턴이면 store에 저장된 originPatternId
+  // 3) 빌트인(id가 custom_ 아님)에서 시작했는데 originPatternId가 없다면 id를 origin으로 취급
+  const resolvedOriginPatternId = React.useMemo(() => {
+    if (urlOriginPatternId) return urlOriginPatternId;
+    if (editingCustom?.originPatternId) return editingCustom.originPatternId;
+    if (urlPatternId && !urlPatternId.startsWith("custom_"))
+      return urlPatternId;
+    return null;
+  }, [urlOriginPatternId, editingCustom, urlPatternId]);
+
+  /* -------- selection helpers -------- */
   const one =
     selectedIds.length === 1
       ? sections.find(s => s.id === selectedIds[0]) || null
       : null;
 
-  const onNum =
-    (key: "x" | "y" | "width" | "height" | "rotate" | "radius" | "shadow") =>
-    (v: string) => {
-      if (!one) return;
-      const num = Math.round(Number(v || 0));
-      setPatchSection(one.id, { [key]: num } as any);
-    };
+  const hasSelection = selectedIds.length > 0;
 
-  const onText =
-    (key: "title" | "text" | "btnLabel" | "btnHref" | "imageUrl") =>
-    (v: string) => {
-      if (!one) return;
-      setPatchSection(one.id, { [key]: v });
-    };
-
-  // 전체 삭제
+  /* ====== Clear / Delete ====== */
   const onClearAll = React.useCallback(() => {
     if (!sections.length) return;
     if (
@@ -97,26 +126,11 @@ export default function RightPanel() {
     )
       return;
 
-    if (typeof actionsAny.clearSections === "function") {
-      actionsAny.clearSections();
-    } else if (typeof actionsAny.setSections === "function") {
-      actionsAny.setSections([]);
-    } else {
-      setSelectedIds(sections.map(s => s.id));
-      setDeleteSelected();
-    }
-
+    setSections([]);
     setSelectedIds([]);
     setCommitAfterTransform?.();
-  }, [
-    sections,
-    actionsAny,
-    setSelectedIds,
-    setDeleteSelected,
-    setCommitAfterTransform,
-  ]);
+  }, [sections.length, setSections, setSelectedIds, setCommitAfterTransform]);
 
-  // 선택 삭제
   const onDeleteSelected = React.useCallback(() => {
     if (!selectedIds.length) return;
     if (
@@ -124,108 +138,38 @@ export default function RightPanel() {
       !window.confirm(`선택된 ${selectedIds.length}개 항목을 삭제할까요?`)
     )
       return;
+
     setDeleteSelected();
     setSelectedIds([]);
     setCommitAfterTransform?.();
   }, [selectedIds, setDeleteSelected, setSelectedIds, setCommitAfterTransform]);
 
-  const hasSelection = selectedIds.length > 0;
+  /* ===== JSON Export / Import (선택) ===== */
+  const [jsonValue, setJsonValue] = React.useState("");
+  const [isJsonModalOpen, setIsJsonModalOpen] = React.useState(false);
 
-  // ===== JSON Export / Import =====
   const onExportJson = React.useCallback(() => {
-    const payload = { sections };
+    const payload = { canvasWidth, canvasHeight, sections };
     setJsonValue(JSON.stringify(payload, null, 2));
     setIsJsonModalOpen(true);
-  }, [sections]);
-
-  const onImportJson = React.useCallback(() => {
-    if (!jsonValue.trim()) return;
-
-    try {
-      const parsed = JSON.parse(jsonValue);
-      const nextSections = Array.isArray(parsed) ? parsed : parsed.sections;
-
-      if (!Array.isArray(nextSections)) {
-        throw new Error("sections 배열 형식이 아닙니다.");
-      }
-
-      if (
-        typeof window !== "undefined" &&
-        !window.confirm("현재 레이아웃을 JSON 데이터로 교체할까요?")
-      ) {
-        return;
-      }
-
-      if (typeof actionsAny.setSections === "function") {
-        actionsAny.setSections(nextSections);
-      } else {
-        if (typeof window !== "undefined") {
-          window.alert(
-            "layout store에 actions.setSections가 없어 JSON import를 사용할 수 없습니다.",
-          );
-        }
-        return;
-      }
-
-      setSelectedIds([]);
-      setCommitAfterTransform?.();
-    } catch (err: any) {
-      if (typeof window !== "undefined") {
-        window.alert(
-          "JSON 파싱에 실패했습니다. 형식을 확인해주세요.\n\n" +
-            (err?.message || String(err)),
-        );
-      }
-    }
-  }, [jsonValue, actionsAny, setSelectedIds, setCommitAfterTransform]);
-
-  const onCopyJson = React.useCallback(() => {
-    if (!jsonValue) return;
-
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
-      navigator.clipboard
-        .writeText(jsonValue)
-        .then(() => {
-          if (typeof window !== "undefined") {
-            window.alert("복사되었습니다.");
-          }
-          setIsJsonModalOpen(false);
-        })
-        .catch(() => {
-          if (typeof window !== "undefined") {
-            window.alert(
-              "클립보드 복사에 실패했습니다. 수동으로 복사해주세요.",
-            );
-          }
-        });
-    } else if (typeof window !== "undefined") {
-      window.alert("클립보드를 사용할 수 없습니다. 수동으로 복사해주세요.");
-    }
-  }, [jsonValue]);
+  }, [canvasWidth, canvasHeight, sections]);
 
   const onDownloadJsonFile = React.useCallback(() => {
-    try {
-      const payload = { sections };
-      const blob = new Blob([JSON.stringify(payload, null, 2)], {
-        type: "application/json",
-      });
+    const payload = { canvasWidth, canvasHeight, sections };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: "application/json",
+    });
 
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "layout.json";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      if (typeof window !== "undefined") {
-        window.alert("파일 다운로드 생성에 실패했습니다.");
-      }
-    }
-  }, [sections]);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "layout.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [canvasWidth, canvasHeight, sections]);
 
-  // ===== 파일로부터 Import =====
   const onImportFile = React.useCallback(() => {
     const input = document.createElement("input");
     input.type = "file";
@@ -233,54 +177,125 @@ export default function RightPanel() {
     input.onchange = () => {
       const file = input.files?.[0];
       if (!file) return;
+
       const reader = new FileReader();
       reader.onload = () => {
         try {
-          const text = String(reader.result || "");
-          const parsed = JSON.parse(text);
-          const sections = parsed.sections;
+          const parsed = JSON.parse(String(reader.result || ""));
+          const nextSections = parsed.sections;
+          if (!Array.isArray(nextSections))
+            throw new Error("sections가 배열이 아닙니다.");
 
-          setSections(sections);
-
-          setJsonValue(JSON.stringify({ sections: sections }, null, 2));
+          setSections(nextSections);
           setSelectedIds([]);
+          setCommitAfterTransform?.();
         } catch (err: any) {
-          if (typeof window !== "undefined") {
-            window.alert(
-              "JSON 파일 파싱에 실패했습니다. 형식을 확인해주세요.\n\n" +
-                (err?.message || String(err)),
-            );
-          }
-        }
-      };
-      reader.onerror = () => {
-        if (typeof window !== "undefined") {
-          window.alert("파일을 읽는 중 오류가 발생했습니다.");
+          window.alert(
+            "JSON 파일 파싱에 실패했습니다.\n\n" +
+              (err?.message || String(err)),
+          );
         }
       };
       reader.readAsText(file, "utf-8");
     };
     input.click();
-  }, [setSections, setSelectedIds]);
+  }, [setSections, setSelectedIds, setCommitAfterTransform]);
+
+  /* ===== Save Modal ===== */
+  const [saveOpen, setSaveOpen] = React.useState(false);
+  const [saveMode, setSaveMode] = React.useState<SaveMode>("copy");
+  const [title, setTitle] = React.useState("");
+  const [description, setDescription] = React.useState("");
+  const [error, setError] = React.useState<string | null>(null);
+
+  const openSaveModal = React.useCallback(
+    (mode: SaveMode) => {
+      setError(null);
+
+      // 덮어쓰기 모드로 열고 싶어도, overwrite 불가능하면 copy로 강제
+      const nextMode: SaveMode =
+        mode === "overwrite" && !canOverwrite ? "copy" : mode;
+
+      setSaveMode(nextMode);
+
+      // 커스텀 편집중이면 기존 메타로 프리필
+      setTitle(editingCustom?.title ?? "");
+      setDescription(editingCustom?.description ?? "");
+
+      setSaveOpen(true);
+    },
+    [canOverwrite, editingCustom],
+  );
+
+  const handleSave = React.useCallback(() => {
+    const t = title.trim();
+    if (!t) {
+      setError("제목(title)을 입력해주세요.");
+      return;
+    }
+
+    const payload = {
+      title: t,
+      description: description.trim(),
+      canvasWidth,
+      canvasHeight,
+      sections,
+      originPatternId: resolvedOriginPatternId ?? null,
+    };
+
+    let savedId: string;
+
+    if (saveMode === "overwrite" && canOverwrite && urlPatternId) {
+      // 덮어쓰기
+      updateCustomPattern(urlPatternId, payload);
+      savedId = urlPatternId;
+    } else {
+      // 새로 저장
+      savedId = addPattern(payload);
+    }
+
+    setSaveOpen(false);
+
+    // 저장 후에는 URL도 갱신해두면 다음부터 "저장"이 덮어쓰기로 동작하기 쉬움
+    if (editorId) {
+      router.replace(
+        buildEditorUrl(editorId, savedId, resolvedOriginPatternId),
+      );
+    }
+  }, [
+    title,
+    description,
+    canvasWidth,
+    canvasHeight,
+    sections,
+    resolvedOriginPatternId,
+    saveMode,
+    canOverwrite,
+    urlPatternId,
+    updateCustomPattern,
+    addPattern,
+    editorId,
+    router,
+  ]);
 
   return (
-    <Aside position="right" defaultWidth={340} minWidth={260} maxWidth={560}>
-      <CanvasViewCard
-        showGrid={showGrid}
-        gridSize={gridSize}
-        gridColor={gridColor}
-        snapToElements={snapToElements}
-        snapTolerance={snapTolerance}
-        canvasWidth={canvasWidth}
-        canvasHeight={canvasHeight}
-        setShowGrid={setShowGrid}
-        setGridSize={setGridSize}
-        setGridColor={setGridColor}
-        setSnapToElements={setSnapToElements}
-        setSnapTolerance={setSnapTolerance}
-        onChangeCanvasW={onChangeCanvasW}
-        onChangeCanvasH={onChangeCanvasH}
-      />
+    <Aside position="right" defaultWidth={340} minWidth={0} maxWidth={560}>
+      {selectedIds.length > 0 && (
+        <>
+          <h3 style={{ margin: "12px 0 6px" }}>{one?.title}</h3>
+          <div className="card-body">
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <Label>Lock</Label>
+              <Switch
+                checked={!!one?.lock}
+                onChange={e =>
+                  one && setLock(one.id, (e.target as any).checked)
+                }
+              />
+            </div>
+          </div>
+        </>
+      )}
 
       <LayoutCard
         selectedCount={selectedIds.length}
@@ -296,11 +311,91 @@ export default function RightPanel() {
         onOpenJsonModal={onExportJson}
       />
 
-      <InspectorCard
-        selectedSection={one}
-        setPatchSection={setPatchSection}
-        setLock={setLock}
-      />
+      <div style={{ display: "flex", gap: 8, padding: "10px 0" }}>
+        <Button
+          variant="contained"
+          onClick={() => openSaveModal(canOverwrite ? "overwrite" : "copy")}
+          style={{ flex: 1 }}
+        >
+          저장
+        </Button>
+        {/* <Button
+          variant="contained"
+          onClick={() => openSaveModal("copy")}
+          style={{ flex: 1 }}
+        >
+          다른 이름으로 저장
+        </Button> */}
+      </div>
+
+      {/* ===== Save Modal ===== */}
+      <Dialog
+        open={saveOpen}
+        onClose={() => setSaveOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>
+          {saveMode === "overwrite" && canOverwrite
+            ? "패턴 저장(덮어쓰기)"
+            : "새 패턴 저장"}
+        </DialogTitle>
+
+        <DialogContent sx={{ display: "grid", gap: 1.5, pt: 1 }}>
+          <TextField
+            label="Title"
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            autoFocus
+            fullWidth
+            size="small"
+          />
+          <TextField
+            label="Description"
+            value={description}
+            onChange={e => setDescription(e.target.value)}
+            fullWidth
+            size="small"
+            multiline
+            minRows={3}
+          />
+
+          {canOverwrite && (
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={saveMode === "overwrite"}
+                  onChange={e =>
+                    setSaveMode(e.target.checked ? "overwrite" : "copy")
+                  }
+                />
+              }
+              label="현재 커스텀 패턴 덮어쓰기"
+            />
+          )}
+
+          <Typography variant="caption" color="text.secondary">
+            originPatternId: {resolvedOriginPatternId ?? "null"}
+          </Typography>
+
+          {error && (
+            <Typography variant="body2" color="error">
+              {error}
+            </Typography>
+          )}
+        </DialogContent>
+
+        <DialogActions>
+          <Button variant="text" onClick={() => setSaveOpen(false)}>
+            취소
+          </Button>
+          <Button variant="contained" onClick={handleSave}>
+            {saveMode === "overwrite" && canOverwrite
+              ? "덮어쓰기 저장"
+              : "새로 저장"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Aside>
   );
 }
