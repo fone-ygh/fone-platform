@@ -10,22 +10,25 @@ import type { Section } from "@/shared/store/layout/types";
 import EditorShell from "./components/EditorShell";
 
 type EditorFeaturePageProps = {
-  id: string; // /editor/[id] 의 id 값
-  patternId?: string; // /editor/new?patternId=... 에서 넘어오는 값
+  routeId: string; // /editor/[id] 의 id 값
+  id: string; // /editor/new?patternId=... 에서 넘어오는 값
+  originPatternId?: string;
 };
 
-export default function Page({ id, patternId }: EditorFeaturePageProps) {
+export default function Page({
+  routeId,
+  id,
+  originPatternId,
+}: EditorFeaturePageProps) {
   const { setSections, setReset } = useLayoutActions();
 
   useEffect(() => {
-    console.log("id : ", id);
-    console.log("patternId : ", patternId);
     // 매번 화면 들어올 때 초기화
     setReset();
 
-    if (id === "new") {
+    if (routeId === "new") {
       // 🔥 새 화면: patternId 기반으로 레이아웃 생성
-      const pid = patternId ?? "blank";
+      const pid = originPatternId ?? "blank";
       const sections = createSectionsForPattern(pid);
       setSections(sections);
     } else {
@@ -35,7 +38,7 @@ export default function Page({ id, patternId }: EditorFeaturePageProps) {
       //   .then(res => res.json())
       //   .then(data => setSections(data.sections));
     }
-  }, [id, patternId, setReset, setSections]);
+  }, [routeId, originPatternId, setReset, setSections]);
 
   return <EditorShell />;
 }

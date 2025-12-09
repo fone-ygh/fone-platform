@@ -15,7 +15,7 @@ import {
 
 import { usePatternStore } from "@/shared/store/pattern/store";
 
-import { SCREEN_PATTERNS } from "../patterns";
+import { SCREEN_PATTERNS, ScreenPattern } from "../patterns";
 import type { ScreenDefinition } from "../types";
 import PatternCard, { ScreenPatternAndDiffition } from "./PatternCard";
 
@@ -32,12 +32,25 @@ export default function PatternList() {
     setTab(value);
   };
 
+  const newCustomId = () => {
+    const uuid =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Math.random().toString(36).slice(2)}_${Date.now().toString(36)}`;
+
+    return `custom_${uuid}`;
+  };
+
   const handleOpenScreen = (screen: ScreenPatternAndDiffition) => {
-    router.push(`/editor/new?patternId=${screen.id}`);
+    const id = newCustomId();
+    router.push(
+      `/editor/new?id=${encodeURIComponent(id)}&originPatternId=${encodeURIComponent(screen.id)}`,
+    );
   };
 
   const handleCreateBlank = () => {
-    router.push("/editor/new?patternId=blank");
+    const id = newCustomId();
+    router.push(`/editor/new?id=${encodeURIComponent(id)}`); // originPatternId 없음 = blank
   };
 
   const isBuiltinTab = tab === TAB_BUILTIN;

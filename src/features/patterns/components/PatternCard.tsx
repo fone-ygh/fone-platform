@@ -56,7 +56,7 @@ export default function PatternCard({ pattern, onSelect }: PatternCardProps) {
 
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="subtitle2" noWrap sx={{ fontWeight: 600 }}>
-              {pattern.name}
+              {pattern.title}
             </Typography>
             {pattern.description && (
               <Typography

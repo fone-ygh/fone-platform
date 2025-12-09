@@ -438,7 +438,15 @@ function createP51Shuttle(): Section[] {
 
   const contentTop = SEARCH_HEIGHT + GAP;
   const contentHeight = DEFAULT_CANVAS_HEIGHT - contentTop;
-  const halfWidth = Math.floor((DEFAULT_CANVAS_WIDTH - GAP) / 2);
+
+  // 가운데 버튼 영역 폭 (취향껏 조절 가능)
+  const CENTER_WIDTH = 80;
+
+  // 전체: [좌 Grid] GAP [버튼] GAP [우 Grid]
+  const leftWidth = Math.floor(
+    (DEFAULT_CANVAS_WIDTH - CENTER_WIDTH - GAP * 2) / 2,
+  );
+  const rightWidth = DEFAULT_CANVAS_WIDTH - leftWidth - CENTER_WIDTH - GAP * 2;
 
   sections.push(
     createSection("search", z++, {
@@ -458,7 +466,21 @@ function createP51Shuttle(): Section[] {
       title: "Grid (L)",
       x: 0,
       y: contentTop,
-      width: halfWidth,
+      width: leftWidth,
+      height: contentHeight,
+      bg: "#ffffff",
+      lock: true,
+    }),
+  );
+
+  // 가운데 Shuttle 버튼 영역 (여기에 >, <, >>, << 같은 버튼 배치)
+  const centerX = leftWidth + GAP;
+  sections.push(
+    createSection("single", z++, {
+      title: "Shuttle Controls",
+      x: centerX,
+      y: contentTop,
+      width: CENTER_WIDTH,
       height: contentHeight,
       bg: "#ffffff",
       lock: true,
@@ -469,9 +491,9 @@ function createP51Shuttle(): Section[] {
   sections.push(
     createSection("grid", z++, {
       title: "Grid (R)",
-      x: halfWidth + GAP,
+      x: centerX + CENTER_WIDTH + GAP,
       y: contentTop,
-      width: DEFAULT_CANVAS_WIDTH - (halfWidth + GAP),
+      width: rightWidth,
       height: contentHeight,
       bg: "#ffffff",
       lock: true,
