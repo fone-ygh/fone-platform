@@ -1,7 +1,7 @@
 import { Table2 } from "fone-design-system_v1";
 
-import useCodeTypeStore from "../../../store/codeType";
-import useDataStore from "../../../store/data";
+import useCodeTypeStore from "@/features/componentManagement/select/store/codeType";
+import useDataStore from "@/features/componentManagement/select/store/data";
 
 export default function CommonCodeTable() {
   const { selectedGroupCode } = useCodeTypeStore();
