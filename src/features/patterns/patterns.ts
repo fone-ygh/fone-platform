@@ -52,9 +52,9 @@ export const SCREEN_PATTERNS: ScreenPattern[] = [
     name: "[P5-1] Shuttle",
     description: "좌/우 그리드 간 셔틀 이동",
   },
-  // {
-  //   id: "px-1",
-  //   name: "[PX-1] Extra",
-  //   description: "특수/커스텀 화면용 단일 영역",
-  // },
+  {
+    id: "px-1",
+    name: "[PX-1] Extra",
+    description: "특수/커스텀 화면용 단일 영역",
+  },
 ];

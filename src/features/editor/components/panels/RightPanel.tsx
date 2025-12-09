@@ -2,11 +2,12 @@
 "use client";
 
 import * as React from "react";
-import { Button, Flex } from "fone-design-system_v1";
+import { Button, Flex, Label, Switch } from "fone-design-system_v1";
 
 import Aside from "@/shared/components/layout/aside/Aside";
 import { useEDITORActions, useEDITORStore } from "@/shared/store/control";
 import { useLayoutActions, useLayoutStore } from "@/shared/store/layout";
+import { usePatternActions } from "@/shared/store/pattern/store";
 
 import { CanvasViewCard } from "./right/CanvasViewCard";
 import { InspectorCard } from "./right/InspectorCard";
@@ -55,15 +56,7 @@ export default function RightPanel() {
   } = useLayoutActions();
 
   const actionsAny = useLayoutStore(s => s.actions as any);
-
-  // Canvas size 변경
-  const onChangeCanvasW = (v: string) => {
-    setCanvasSize(Number(v), canvasHeight);
-  };
-  const onChangeCanvasH = (v: string) => {
-    setCanvasSize(canvasWidth, Number(v));
-  };
-
+  const { addPattern } = usePatternActions();
   // JSON Export / Import
   const [jsonValue, setJsonValue] = React.useState("");
   const [isJsonModalOpen, setIsJsonModalOpen] = React.useState(false);
@@ -72,21 +65,6 @@ export default function RightPanel() {
     selectedIds.length === 1
       ? sections.find(s => s.id === selectedIds[0]) || null
       : null;
-
-  const onNum =
-    (key: "x" | "y" | "width" | "height" | "rotate" | "radius" | "shadow") =>
-    (v: string) => {
-      if (!one) return;
-      const num = Math.round(Number(v || 0));
-      setPatchSection(one.id, { [key]: num } as any);
-    };
-
-  const onText =
-    (key: "title" | "text" | "btnLabel" | "btnHref" | "imageUrl") =>
-    (v: string) => {
-      if (!one) return;
-      setPatchSection(one.id, { [key]: v });
-    };
 
   // 전체 삭제
   const onClearAll = React.useCallback(() => {
@@ -137,71 +115,6 @@ export default function RightPanel() {
     setJsonValue(JSON.stringify(payload, null, 2));
     setIsJsonModalOpen(true);
   }, [sections]);
-
-  const onImportJson = React.useCallback(() => {
-    if (!jsonValue.trim()) return;
-
-    try {
-      const parsed = JSON.parse(jsonValue);
-      const nextSections = Array.isArray(parsed) ? parsed : parsed.sections;
-
-      if (!Array.isArray(nextSections)) {
-        throw new Error("sections 배열 형식이 아닙니다.");
-      }
-
-      if (
-        typeof window !== "undefined" &&
-        !window.confirm("현재 레이아웃을 JSON 데이터로 교체할까요?")
-      ) {
-        return;
-      }
-
-      if (typeof actionsAny.setSections === "function") {
-        actionsAny.setSections(nextSections);
-      } else {
-        if (typeof window !== "undefined") {
-          window.alert(
-            "layout store에 actions.setSections가 없어 JSON import를 사용할 수 없습니다.",
-          );
-        }
-        return;
-      }
-
-      setSelectedIds([]);
-      setCommitAfterTransform?.();
-    } catch (err: any) {
-      if (typeof window !== "undefined") {
-        window.alert(
-          "JSON 파싱에 실패했습니다. 형식을 확인해주세요.\n\n" +
-            (err?.message || String(err)),
-        );
-      }
-    }
-  }, [jsonValue, actionsAny, setSelectedIds, setCommitAfterTransform]);
-
-  const onCopyJson = React.useCallback(() => {
-    if (!jsonValue) return;
-
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
-      navigator.clipboard
-        .writeText(jsonValue)
-        .then(() => {
-          if (typeof window !== "undefined") {
-            window.alert("복사되었습니다.");
-          }
-          setIsJsonModalOpen(false);
-        })
-        .catch(() => {
-          if (typeof window !== "undefined") {
-            window.alert(
-              "클립보드 복사에 실패했습니다. 수동으로 복사해주세요.",
-            );
-          }
-        });
-    } else if (typeof window !== "undefined") {
-      window.alert("클립보드를 사용할 수 없습니다. 수동으로 복사해주세요.");
-    }
-  }, [jsonValue]);
 
   const onDownloadJsonFile = React.useCallback(() => {
     try {
@@ -264,24 +177,24 @@ export default function RightPanel() {
   }, [setSections, setSelectedIds]);
 
   return (
-    <Aside position="right" defaultWidth={340} minWidth={260} maxWidth={560}>
-      <CanvasViewCard
-        showGrid={showGrid}
-        gridSize={gridSize}
-        gridColor={gridColor}
-        snapToElements={snapToElements}
-        snapTolerance={snapTolerance}
-        canvasWidth={canvasWidth}
-        canvasHeight={canvasHeight}
-        setShowGrid={setShowGrid}
-        setGridSize={setGridSize}
-        setGridColor={setGridColor}
-        setSnapToElements={setSnapToElements}
-        setSnapTolerance={setSnapTolerance}
-        onChangeCanvasW={onChangeCanvasW}
-        onChangeCanvasH={onChangeCanvasH}
-      />
-
+    <Aside position="right" defaultWidth={340} minWidth={0} maxWidth={560}>
+      {selectedIds.length > 0 && (
+        <>
+          <h3>{one?.title}</h3>
+          <div className="card-body">
+            <div
+              className="row"
+              style={{ display: "flex", alignItems: "center", gap: 8 }}
+            >
+              <Label>Lock</Label>
+              <Switch
+                checked={!!one?.lock}
+                onChange={e => setLock(one!.id, e.target.checked)}
+              />
+            </div>
+          </div>
+        </>
+      )}
       <LayoutCard
         selectedCount={selectedIds.length}
         hasSelection={hasSelection}
@@ -295,12 +208,23 @@ export default function RightPanel() {
         onDownloadJsonFile={onDownloadJsonFile}
         onOpenJsonModal={onExportJson}
       />
-
-      <InspectorCard
-        selectedSection={one}
-        setPatchSection={setPatchSection}
-        setLock={setLock}
-      />
+      <Button variant="contained" onClick={() => {}}>
+        저장
+      </Button>
+      <Button
+        variant="contained"
+        onClick={() => {
+          addPattern({
+            name: "ddd3",
+            description: "ddd3",
+            canvasWidth: 0,
+            canvasHeight: 0,
+            sections: sections,
+          });
+        }}
+      >
+        다른이름으로 저장
+      </Button>
     </Aside>
   );
 }
