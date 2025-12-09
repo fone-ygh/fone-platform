@@ -1,7 +1,5 @@
-import { useEffect } from "react";
 import styled from "@emotion/styled";
-import SettingsIcon from "@mui/icons-material/Settings";
-import { Button, Table2 } from "fone-design-system_v1";
+import { Table2 } from "fone-design-system_v1";
 
 import useCodeTypeStore from "../../store/codeType";
 import useDataStore from "../../store/data";
@@ -9,13 +7,9 @@ import useDialogStore from "../../store/dialog";
 
 export default function Table() {
   const { setIsOpen } = useDialogStore();
-  const {
-    selectData: data,
-    setSelectData: setData,
-    selectId,
-    setSelectId,
-  } = useDataStore();
-  const { groupCode, groupName } = useCodeTypeStore();
+  const { selectData, setSelectData, setSelectIdx } = useDataStore();
+  const { groupCode, groupName, setGroupCode, setGroupName, setDataType } =
+    useCodeTypeStore();
 
   const columns = [
     {
@@ -54,47 +48,34 @@ export default function Table() {
     {
       role: "group",
       header: "데이터",
-      width: "30%",
       columns: [
         {
           accessorKey: "dataType",
           header: "타입",
           editable: true,
           selectItems: [
-            { value: "commonCode", label: "공드코드" },
+            { value: "commonCode", label: "공통코드" },
             { value: "api", label: "API" },
           ],
           required: true,
           type: "select",
-          width: "15%",
         },
         {
           accessorKey: "dataSourceNm",
           header: "소스",
-          type: "custom",
+          type: "modal",
           editable: true,
-          width: "15%",
-          component: (row: any) => {
-            return (
-              <DataSourceContainerStyle>
-                <span>{row.dataSourceNm}</span>
-                <Button
-                  sx={{ height: 30 }}
-                  size="small"
-                  onClick={() => setIsOpen(true)}
-                >
-                  <SettingsIcon style={{ fontSize: 20 }} />
-                </Button>
-              </DataSourceContainerStyle>
-            );
+          modalFn: (row: any) => {
+            setDataType(row.dataType);
+            setIsOpen(true);
           },
         },
       ],
     },
   ];
 
-  const onSaveHandler = (rows: any[]) => {
-    const newData = rows.map(item => {
+  const onSaveHandler = (rows: any[], allData: any[]) => {
+    const newData = allData.map((item: any) => {
       return {
         componentId: item.componentId,
         name: item.name,
@@ -102,58 +83,43 @@ export default function Table() {
         required: item.required,
         defaultValue: item.defaultValue,
         dataType: item.dataType,
-        dataSourceCd: item.dataSourceCode,
+        dataSourceCd: item.dataSourceCd,
         dataSourceNm: item.dataSourceNm,
       };
     });
 
-    const updatedData = data.filter(item => {
-      return !rows.find((row: any) => row.componentId === item.componentId);
-    });
+    const filteredData = newData.filter(item => item.componentId !== "");
 
-    setData([...newData, ...updatedData]);
+    setSelectData(filteredData);
   };
 
   const onDeleteHandler = (rows: any[]) => {
-    const newData = data.filter(
+    const newData = selectData.filter(
       item => !rows.find((row: any) => row.componentId === item.componentId),
     );
 
-    setData(newData);
+    setSelectData(newData);
   };
 
-  const onRowClickHandler = (row: any) => {
-    setSelectId(row.componentId);
+  const onRowClickHandler = (row: any, idx: any) => {
+    setSelectIdx(idx);
   };
-
-  useEffect(() => {
-    if (groupCode && groupName && selectId) {
-      const updatedData = data.map(item => {
-        if (item.componentId === selectId) {
-          return {
-            ...item,
-            dataSourceCd: groupCode,
-            dataSourceNm: groupName,
-          };
-        }
-        return item;
-      });
-      setData(updatedData);
-    }
-  }, [groupCode, groupName, selectId]);
-
-  console.log(data);
 
   return (
     <div>
       <Table2
         // @ts-ignore
         columns={columns}
-        data={data}
+        data={selectData}
         checkbox
         onSave={onSaveHandler}
         onDelete={onDeleteHandler}
         onRowClick={onRowClickHandler}
+        modalData={{ dataSourceNm: groupName, dataSourceCd: groupCode }}
+        onModalApplied={() => {
+          setGroupCode("");
+          setGroupName("");
+        }}
       />
     </div>
   );
