@@ -21,12 +21,14 @@ export const useLayoutStore = create<LayoutState>()(
         canvasWidth: DEFAULT_CANVAS_WIDTH,
         canvasHeight: DEFAULT_CANVAS_HEIGHT,
 
-        // ✅ 초기 레이아웃(헤더/사이드바/메인/푸터)
         sections: [],
         selectedIds: [],
         version: 0,
 
         insertTool: null as InsertTool,
+
+        scopeParentId: null,
+
         actions: {
           /* ---------------- Canvas ---------------- */
           setCanvasSize: (w, h) =>
@@ -168,6 +170,33 @@ export const useLayoutStore = create<LayoutState>()(
           setInsertTool: (tool: InsertTool) =>
             set(s => {
               s.insertTool = tool;
+            }),
+
+          /* ---------------- Lock ---------------- */
+          setLock: (id, lock) =>
+            set(s => {
+              s.sections = s.sections.map(sec =>
+                sec.id === id ? { ...sec, lock } : sec,
+              );
+            }),
+
+          /* ---------------- Drilldown Scope ---------------- */
+          setScopeParentId: parentId =>
+            set(s => {
+              s.scopeParentId = parentId;
+              s.selectedIds = []; // 스코프 바뀌면 선택 초기화
+            }),
+
+          /* ---------------- 🔹 Reset 전체 초기화 ---------------- */
+          setReset: () =>
+            set(s => {
+              s.canvasWidth = DEFAULT_CANVAS_WIDTH;
+              s.canvasHeight = DEFAULT_CANVAS_HEIGHT;
+              s.sections = [];
+              s.selectedIds = [];
+              s.version = 0;
+              s.insertTool = null;
+              s.scopeParentId = null;
             }),
         },
       }),

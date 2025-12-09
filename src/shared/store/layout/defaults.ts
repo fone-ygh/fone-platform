@@ -37,7 +37,7 @@ export function createSection(
     width: 320,
     height: 200,
     z,
-    lock: true,
+    lock: false,
 
     rotate: 0,
     radius: 0,
@@ -45,7 +45,7 @@ export function createSection(
     title: capitalize(type),
     bg: "#ffffff",
     color: "#0f172a",
-    parentId: "root",
+    parentId: null,
   };
 
   const merged = { ...base, ...init } as Section;
@@ -145,6 +145,7 @@ function createP11SingleDetail(): Section[] {
       width: DEFAULT_CANVAS_WIDTH,
       height: SEARCH_HEIGHT,
       bg: "#f8fafc",
+      lock: true,
     }),
   );
 
@@ -157,6 +158,7 @@ function createP11SingleDetail(): Section[] {
       width: DEFAULT_CANVAS_WIDTH,
       height: DEFAULT_CANVAS_HEIGHT - (SEARCH_HEIGHT + GAP),
       bg: "#ffffff",
+      lock: true,
     }),
   );
 
@@ -178,6 +180,7 @@ function createP2MultiDetail(): Section[] {
       width: DEFAULT_CANVAS_WIDTH,
       height: SEARCH_HEIGHT,
       bg: "#f8fafc",
+      lock: true,
     }),
   );
 
@@ -189,6 +192,7 @@ function createP2MultiDetail(): Section[] {
       width: DEFAULT_CANVAS_WIDTH,
       height: contentHeight,
       bg: "#ffffff",
+      lock: true,
     }),
   );
 
@@ -212,6 +216,7 @@ function createP31MasterDetail(): Section[] {
       width: DEFAULT_CANVAS_WIDTH,
       height: SEARCH_HEIGHT,
       bg: "#f8fafc",
+      lock: true,
     }),
   );
 
@@ -224,6 +229,7 @@ function createP31MasterDetail(): Section[] {
       width: leftWidth,
       height: contentHeight,
       bg: "#ffffff",
+      lock: true,
     }),
   );
 
@@ -236,6 +242,7 @@ function createP31MasterDetail(): Section[] {
       width: rightWidth,
       height: contentHeight,
       bg: "#ffffff",
+      lock: true,
     }),
   );
 
@@ -259,6 +266,7 @@ function createP32MasterDetail(): Section[] {
       width: DEFAULT_CANVAS_WIDTH,
       height: SEARCH_HEIGHT,
       bg: "#f8fafc",
+      lock: true,
     }),
   );
 
@@ -271,6 +279,7 @@ function createP32MasterDetail(): Section[] {
       width: leftWidth,
       height: contentHeight,
       bg: "#ffffff",
+      lock: true,
     }),
   );
 
@@ -283,6 +292,7 @@ function createP32MasterDetail(): Section[] {
       width: rightWidth,
       height: contentHeight,
       bg: "#ffffff",
+      lock: true,
     }),
   );
 
@@ -305,6 +315,7 @@ function createP33MasterDetail(): Section[] {
       width: DEFAULT_CANVAS_WIDTH,
       height: SEARCH_HEIGHT,
       bg: "#f8fafc",
+      lock: true,
     }),
   );
 
@@ -317,6 +328,7 @@ function createP33MasterDetail(): Section[] {
       width: halfWidth,
       height: contentHeight,
       bg: "#ffffff",
+      lock: true,
     }),
   );
 
@@ -329,6 +341,7 @@ function createP33MasterDetail(): Section[] {
       width: DEFAULT_CANVAS_WIDTH - (halfWidth + GAP),
       height: contentHeight,
       bg: "#ffffff",
+      lock: true,
     }),
   );
 
@@ -350,6 +363,7 @@ function createP41Tab(): Section[] {
       width: DEFAULT_CANVAS_WIDTH,
       height: SEARCH_HEIGHT,
       bg: "#f8fafc",
+      lock: true,
     }),
   );
 
@@ -361,6 +375,7 @@ function createP41Tab(): Section[] {
       width: DEFAULT_CANVAS_WIDTH,
       height: contentHeight,
       bg: "#ffffff",
+      lock: true,
     }),
   );
 
@@ -384,6 +399,7 @@ function createP42MasterTab(): Section[] {
       width: DEFAULT_CANVAS_WIDTH,
       height: SEARCH_HEIGHT,
       bg: "#f8fafc",
+      lock: true,
     }),
   );
 
@@ -396,6 +412,7 @@ function createP42MasterTab(): Section[] {
       width: DEFAULT_CANVAS_WIDTH,
       height: masterHeight,
       bg: "#ffffff",
+      lock: true,
     }),
   );
 
@@ -408,6 +425,7 @@ function createP42MasterTab(): Section[] {
       width: DEFAULT_CANVAS_WIDTH,
       height: tabHeight,
       bg: "#ffffff",
+      lock: true,
     }),
   );
 
@@ -430,6 +448,7 @@ function createP51Shuttle(): Section[] {
       width: DEFAULT_CANVAS_WIDTH,
       height: SEARCH_HEIGHT,
       bg: "#f8fafc",
+      lock: true,
     }),
   );
 
@@ -442,6 +461,7 @@ function createP51Shuttle(): Section[] {
       width: halfWidth,
       height: contentHeight,
       bg: "#ffffff",
+      lock: true,
     }),
   );
 
@@ -454,6 +474,7 @@ function createP51Shuttle(): Section[] {
       width: DEFAULT_CANVAS_WIDTH - (halfWidth + GAP),
       height: contentHeight,
       bg: "#ffffff",
+      lock: true,
     }),
   );
 
