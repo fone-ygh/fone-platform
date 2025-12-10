@@ -85,7 +85,7 @@ function collectAncestors(id: string, parentById: Map<string, string | null>) {
   let cur: string | null = id;
 
   while (cur) {
-    const parent = parentById.get(cur) ?? null;
+    const parent: any = parentById.get(cur) ?? null;
     if (!parent) break;
     chain.push(parent);
     cur = parent;
