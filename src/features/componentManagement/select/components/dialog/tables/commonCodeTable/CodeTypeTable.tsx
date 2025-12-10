@@ -61,6 +61,7 @@ export default function CodeTypeTable() {
 
   const onRowClickHandler = (row: any) => {
     setCommonCodeData(row.commonCodeData || []);
+    setSelectedCheckedRows([row]);
   };
 
   const onRowDoubleClickHandler = (row: any) => {
