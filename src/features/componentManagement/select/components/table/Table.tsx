@@ -9,7 +9,6 @@ import useIdxStore from "../../store/idx";
 
 export default function Table() {
   const { idx, setIdx } = useIdxStore();
-  console.log(idx);
   const [isWarningOpen, setIsWarningOpen] = useState(false);
   const { setIsOpen } = useDialogStore();
   const { selectData, setSelectData, setSelectedSelectData } = useDataStore();
