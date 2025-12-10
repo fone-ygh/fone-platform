@@ -1,15 +1,19 @@
+import { useState } from "react";
 import styled from "@emotion/styled";
-import { Table2 } from "fone-design-system_v1";
+import { Dialog, Table2 } from "fone-design-system_v1";
 
 import useCodeTypeStore from "../../store/codeType";
 import useDataStore from "../../store/data";
 import useDialogStore from "../../store/dialog";
+import useIdxStore from "../../store/idx";
 
 export default function Table() {
+  const { idx, setIdx } = useIdxStore();
+  console.log(idx);
+  const [isWarningOpen, setIsWarningOpen] = useState(false);
   const { setIsOpen } = useDialogStore();
-  const { selectData, setSelectData, setSelectIdx } = useDataStore();
-  const { groupCode, groupName, setGroupCode, setGroupName, setDataType } =
-    useCodeTypeStore();
+  const { selectData, setSelectData, setSelectedSelectData } = useDataStore();
+  const { checkedRows, setCheckedRows, setDataType } = useCodeTypeStore();
 
   const columns = [
     {
@@ -18,6 +22,7 @@ export default function Table() {
       editable: true,
       type: (row: any) => (row.crud === "C" ? "input" : "text"),
       required: true,
+      width: 200,
     },
     {
       accessorKey: "name",
@@ -26,7 +31,13 @@ export default function Table() {
       type: "input",
       required: true,
     },
-
+    {
+      accessorKey: "label",
+      header: "라벨",
+      editable: true,
+      type: "input",
+      required: true,
+    },
     {
       accessorKey: "style",
       header: "스타일",
@@ -40,8 +51,8 @@ export default function Table() {
       type: "checkbox",
     },
     {
-      accessorKey: "defaultValue",
-      header: "기본값",
+      accessorKey: "all",
+      header: "전체옵션여부",
       editable: true,
       type: "checkbox",
     },
@@ -59,15 +70,26 @@ export default function Table() {
           ],
           required: true,
           type: "select",
+          onCellChange: (row: any) => (newValue: string) => ({
+            ...row,
+            dataType: newValue,
+            dataSourceCd: "",
+            dataSourceNm: "",
+          }),
         },
         {
           accessorKey: "dataSourceNm",
           header: "소스",
           type: "modal",
           editable: true,
+          required: true,
           modalFn: (row: any) => {
-            setDataType(row.dataType);
-            setIsOpen(true);
+            if (row.dataType === "select" || row.dataType === "") {
+              setIsWarningOpen(true);
+            } else {
+              setDataType(row.dataType);
+              setIsOpen(true);
+            }
           },
         },
       ],
@@ -79,8 +101,10 @@ export default function Table() {
       return {
         componentId: item.componentId,
         name: item.name,
+        label: item.label,
         style: item.style,
         required: item.required,
+        all: item.all,
         defaultValue: item.defaultValue,
         dataType: item.dataType,
         dataSourceCd: item.dataSourceCd,
@@ -90,7 +114,13 @@ export default function Table() {
 
     const filteredData = newData.filter(item => item.componentId !== "");
 
+    const rowIdx = allData.findIndex(
+      item => item.componentId === rows[0].componentId,
+    );
+
     setSelectData(filteredData);
+    setSelectedSelectData(rows[0]);
+    setIdx(rowIdx);
   };
 
   const onDeleteHandler = (rows: any[]) => {
@@ -101,12 +131,13 @@ export default function Table() {
     setSelectData(newData);
   };
 
-  const onRowClickHandler = (row: any, idx: any) => {
-    setSelectIdx(idx);
+  const onRowClickHandler = (row: any, index: number) => {
+    setSelectedSelectData(row);
+    setIdx(index);
   };
 
   return (
-    <div>
+    <TableContainerStyle>
       <Table2
         // @ts-ignore
         columns={columns}
@@ -115,21 +146,26 @@ export default function Table() {
         onSave={onSaveHandler}
         onDelete={onDeleteHandler}
         onRowClick={onRowClickHandler}
-        modalData={{ dataSourceNm: groupName, dataSourceCd: groupCode }}
+        rowClickTriggerIdx={idx}
+        modalData={{
+          dataSourceNm: checkedRows[0]?.groupName,
+          dataSourceCd: checkedRows[0]?.groupCode,
+        }}
         onModalApplied={() => {
-          setGroupCode("");
-          setGroupName("");
+          setCheckedRows([]);
         }}
       />
-    </div>
+      <Dialog
+        open={isWarningOpen}
+        onClose={() => setIsWarningOpen(false)}
+        type="error"
+        dialogContent="데이터 타입을 선택해주세요."
+      />
+    </TableContainerStyle>
   );
 }
 
-const DataSourceContainerStyle = styled.div`
-  display: flex;
-  align-items: center;
+const TableContainerStyle = styled.div`
   width: 100%;
-  font-size: 1.2rem;
-  padding-left: 0.8rem;
-  justify-content: space-between;
+  height: 400px;
 `;

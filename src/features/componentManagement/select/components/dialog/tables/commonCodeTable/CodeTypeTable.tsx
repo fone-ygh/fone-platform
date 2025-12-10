@@ -6,12 +6,7 @@ import useDialogStore from "@/features/componentManagement/select/store/dialog";
 
 export default function CodeTypeTable() {
   const { codeTypeData, setCodeTypeData, setCommonCodeData } = useDataStore();
-  const {
-    setSelectedGroupCode,
-    setSelectedGroupName,
-    setGroupCode,
-    setGroupName,
-  } = useCodeTypeStore();
+  const { setCheckedRows, setSelectedCheckedRows } = useCodeTypeStore();
   const { setIsOpen } = useDialogStore();
 
   const columns = [
@@ -66,14 +61,15 @@ export default function CodeTypeTable() {
 
   const onRowClickHandler = (row: any) => {
     setCommonCodeData(row.commonCodeData || []);
-    setSelectedGroupCode(row.groupCode);
-    setSelectedGroupName(row.groupName);
   };
 
   const onRowDoubleClickHandler = (row: any) => {
-    setGroupCode(row.groupCode);
-    setGroupName(row.groupName);
+    setCheckedRows([row]);
     setIsOpen(false);
+  };
+
+  const onCheckedHandler = (checkedRows: any[]) => {
+    setSelectedCheckedRows(checkedRows);
   };
 
   return (
@@ -87,6 +83,7 @@ export default function CodeTypeTable() {
       onRowClick={onRowClickHandler}
       onRowDoubleClick={onRowDoubleClickHandler}
       rowClickTriggerIdx={0}
+      onChecked={onCheckedHandler}
       checkbox
     />
   );
