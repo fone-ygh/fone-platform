@@ -1,10 +1,10 @@
 import { Table2 } from "fone-design-system_v1";
 
-import useCodeTypeStore from "../../../store/codeType";
-import useDataStore from "../../../store/data";
+import useCodeTypeStore from "@/features/componentManagement/select/store/codeType";
+import useDataStore from "@/features/componentManagement/select/store/data";
 
 export default function CommonCodeTable() {
-  const { selectedGroupCode } = useCodeTypeStore();
+  const { selectedCheckedRows } = useCodeTypeStore();
   const {
     commonCodeData: data,
     codeTypeData,
@@ -50,8 +50,10 @@ export default function CommonCodeTable() {
       return !rows.find(row => row.code === item.code);
     });
 
+    console.log(selectedCheckedRows);
+
     const updatedCodeTypeData = codeTypeData.map(ctd => {
-      if (ctd.groupCode === selectedGroupCode) {
+      if (ctd.groupCode === selectedCheckedRows[0].groupCode) {
         return {
           ...ctd,
           commonCodeData: [...newData, ...updatedData],
@@ -71,7 +73,7 @@ export default function CommonCodeTable() {
     });
 
     const updatedCodeTypeData = codeTypeData.map(ctd => {
-      if (ctd.groupCode === selectedGroupCode) {
+      if (ctd.groupCode === selectedCheckedRows[0].groupCode) {
         return {
           ...ctd,
           commonCodeData: newData,

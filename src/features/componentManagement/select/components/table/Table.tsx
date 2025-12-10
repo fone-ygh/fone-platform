@@ -1,21 +1,18 @@
-import { useEffect } from "react";
+import { useState } from "react";
 import styled from "@emotion/styled";
-import SettingsIcon from "@mui/icons-material/Settings";
-import { Button, Table2 } from "fone-design-system_v1";
+import { Dialog, Table2 } from "fone-design-system_v1";
 
 import useCodeTypeStore from "../../store/codeType";
 import useDataStore from "../../store/data";
 import useDialogStore from "../../store/dialog";
+import useIdxStore from "../../store/idx";
 
 export default function Table() {
+  const { idx, setIdx } = useIdxStore();
+  const [isWarningOpen, setIsWarningOpen] = useState(false);
   const { setIsOpen } = useDialogStore();
-  const {
-    selectData: data,
-    setSelectData: setData,
-    selectId,
-    setSelectId,
-  } = useDataStore();
-  const { groupCode, groupName } = useCodeTypeStore();
+  const { selectData, setSelectData, setSelectedSelectData } = useDataStore();
+  const { checkedRows, setCheckedRows, setDataType } = useCodeTypeStore();
 
   const columns = [
     {
@@ -24,6 +21,7 @@ export default function Table() {
       editable: true,
       type: (row: any) => (row.crud === "C" ? "input" : "text"),
       required: true,
+      width: 200,
     },
     {
       accessorKey: "name",
@@ -32,7 +30,13 @@ export default function Table() {
       type: "input",
       required: true,
     },
-
+    {
+      accessorKey: "label",
+      header: "라벨",
+      editable: true,
+      type: "input",
+      required: true,
+    },
     {
       accessorKey: "style",
       header: "스타일",
@@ -46,124 +50,121 @@ export default function Table() {
       type: "checkbox",
     },
     {
-      accessorKey: "defaultValue",
-      header: "기본값",
+      accessorKey: "all",
+      header: "전체옵션여부",
       editable: true,
       type: "checkbox",
     },
     {
       role: "group",
       header: "데이터",
-      width: "30%",
       columns: [
         {
           accessorKey: "dataType",
           header: "타입",
           editable: true,
           selectItems: [
-            { value: "commonCode", label: "공드코드" },
+            { value: "commonCode", label: "공통코드" },
             { value: "api", label: "API" },
           ],
           required: true,
           type: "select",
-          width: "15%",
+          onCellChange: (row: any) => (newValue: string) => ({
+            ...row,
+            dataType: newValue,
+            dataSourceCd: "",
+            dataSourceNm: "",
+          }),
         },
         {
           accessorKey: "dataSourceNm",
           header: "소스",
-          type: "custom",
+          type: "modal",
           editable: true,
-          width: "15%",
-          component: (row: any) => {
-            return (
-              <DataSourceContainerStyle>
-                <span>{row.dataSourceNm}</span>
-                <Button
-                  sx={{ height: 30 }}
-                  size="small"
-                  onClick={() => setIsOpen(true)}
-                >
-                  <SettingsIcon style={{ fontSize: 20 }} />
-                </Button>
-              </DataSourceContainerStyle>
-            );
+          required: true,
+          modalFn: (row: any) => {
+            if (row.dataType === "select" || row.dataType === "") {
+              setIsWarningOpen(true);
+            } else {
+              setDataType(row.dataType);
+              setIsOpen(true);
+            }
           },
         },
       ],
     },
   ];
 
-  const onSaveHandler = (rows: any[]) => {
-    const newData = rows.map(item => {
+  const onSaveHandler = (rows: any[], allData: any[]) => {
+    const newData = allData.map((item: any) => {
       return {
         componentId: item.componentId,
         name: item.name,
+        label: item.label,
         style: item.style,
         required: item.required,
+        all: item.all,
         defaultValue: item.defaultValue,
         dataType: item.dataType,
-        dataSourceCd: item.dataSourceCode,
+        dataSourceCd: item.dataSourceCd,
         dataSourceNm: item.dataSourceNm,
       };
     });
 
-    const updatedData = data.filter(item => {
-      return !rows.find((row: any) => row.componentId === item.componentId);
-    });
+    const filteredData = newData.filter(item => item.componentId !== "");
 
-    setData([...newData, ...updatedData]);
+    const rowIdx = allData.findIndex(
+      item => item.componentId === rows[0].componentId,
+    );
+
+    setSelectData(filteredData);
+    setSelectedSelectData(rows[0]);
+    setIdx(rowIdx);
   };
 
   const onDeleteHandler = (rows: any[]) => {
-    const newData = data.filter(
+    const newData = selectData.filter(
       item => !rows.find((row: any) => row.componentId === item.componentId),
     );
 
-    setData(newData);
+    setSelectData(newData);
   };
 
-  const onRowClickHandler = (row: any) => {
-    setSelectId(row.componentId);
+  const onRowClickHandler = (row: any, index: number) => {
+    setSelectedSelectData(row);
+    setIdx(index);
   };
-
-  useEffect(() => {
-    if (groupCode && groupName && selectId) {
-      const updatedData = data.map(item => {
-        if (item.componentId === selectId) {
-          return {
-            ...item,
-            dataSourceCd: groupCode,
-            dataSourceNm: groupName,
-          };
-        }
-        return item;
-      });
-      setData(updatedData);
-    }
-  }, [groupCode, groupName, selectId]);
-
-  console.log(data);
 
   return (
-    <div>
+    <TableContainerStyle>
       <Table2
         // @ts-ignore
         columns={columns}
-        data={data}
+        data={selectData}
         checkbox
         onSave={onSaveHandler}
         onDelete={onDeleteHandler}
         onRowClick={onRowClickHandler}
+        rowClickTriggerIdx={idx}
+        modalData={{
+          dataSourceNm: checkedRows[0]?.groupName,
+          dataSourceCd: checkedRows[0]?.groupCode,
+        }}
+        onModalApplied={() => {
+          setCheckedRows([]);
+        }}
       />
-    </div>
+      <Dialog
+        open={isWarningOpen}
+        onClose={() => setIsWarningOpen(false)}
+        type="error"
+        dialogContent="데이터 타입을 선택해주세요."
+      />
+    </TableContainerStyle>
   );
 }
 
-const DataSourceContainerStyle = styled.div`
-  display: flex;
-  align-items: center;
+const TableContainerStyle = styled.div`
   width: 100%;
-  font-size: 1.2rem;
-  padding-left: 0.8rem;
-  justify-content: space-between;
+  height: 400px;
 `;

@@ -2,199 +2,303 @@
 "use client";
 
 import * as React from "react";
-import { Button, Flex, Label, Switch } from "fone-design-system_v1";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { Button, Label, Switch } from "fone-design-system_v1";
 
 import Aside from "@/shared/components/layout/aside/Aside";
-import { useEDITORActions, useEDITORStore } from "@/shared/store/control";
 import { useLayoutActions, useLayoutStore } from "@/shared/store/layout";
-import { usePatternActions } from "@/shared/store/pattern/store";
+import {
+  usePatternActions,
+  usePatternStore,
+} from "@/shared/store/pattern/store";
 
-import { CanvasViewCard } from "./right/CanvasViewCard";
-import { InspectorCard } from "./right/InspectorCard";
+import { useCurrentPatternMeta } from "../../hooks/useCurrentPatternMeta";
 import { LayoutCard } from "./right/LayoutCard";
 
-export default function RightPanel() {
-  /* -------- editor(view/snap/zoom) -------- */
-  const {
-    showGrid,
-    gridSize,
-    gridColor,
-    showGuides,
-    showRulers,
-    snapToGrid,
-    snapToGuides,
-    snapToElements,
-    snapTolerance,
-  } = useEDITORStore();
-  const {
-    setShowGrid,
-    setGridSize,
-    setGridColor,
-    setShowGuides,
-    setShowRulers,
-    setSnapToGrid,
-    setSnapToGuides,
-    setSnapToElements,
-    setSnapTolerance,
-  } = useEDITORActions();
+function buildEditorUrl(
+  editorId: string,
+  patternId?: string | null,
+  originPatternId?: string | null,
+) {
+  const sp = new URLSearchParams();
+  if (patternId) sp.set("id", patternId);
+  if (originPatternId) sp.set("originPatternId", originPatternId);
+  const qs = sp.toString();
+  return qs ? `/editor/${editorId}?${qs}` : `/editor/${editorId}`;
+}
 
-  /* -------- layout(canvas/columns/selection 등) -------- */
+/* ---------------- Dialogs ---------------- */
+
+type SavePatternDialogProps = {
+  open: boolean;
+  title: string;
+  description: string;
+  error?: string | null;
+  onChangeTitle: (v: string) => void;
+  onChangeDescription: (v: string) => void;
+  onClose: () => void;
+  onSave: () => void;
+};
+
+function SavePatternDialog({
+  open,
+  title,
+  description,
+  error,
+  onChangeTitle,
+  onChangeDescription,
+  onClose,
+  onSave,
+}: SavePatternDialogProps) {
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle>새 패턴 저장</DialogTitle>
+
+      <DialogContent sx={{ display: "grid", gap: 1.5, pt: 1 }}>
+        <TextField
+          label="Title"
+          value={title}
+          onChange={e => onChangeTitle(e.target.value)}
+          autoFocus
+          fullWidth
+          size="small"
+        />
+        <TextField
+          label="Description"
+          value={description}
+          onChange={e => onChangeDescription(e.target.value)}
+          fullWidth
+          size="small"
+          multiline
+          minRows={3}
+        />
+
+        {error && (
+          <Typography variant="body2" color="error">
+            {error}
+          </Typography>
+        )}
+      </DialogContent>
+
+      <DialogActions>
+        <Button variant="text" onClick={onClose}>
+          취소
+        </Button>
+        <Button variant="contained" onClick={onSave}>
+          새로 저장
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+/* ---------------- RightPanel ---------------- */
+
+export default function RightPanel() {
+  /* -------- router / url params -------- */
+  const router = useRouter();
+  const params = useParams();
+  const editorId = String((params as any)?.id ?? "");
+  const searchParams = useSearchParams();
+  const originPatternId = searchParams.get("originPatternId"); // string | null
+  const { title: pageTitle, setTitle: setPageTitle } = useCurrentPatternMeta();
+  /* -------- layout -------- */
   const { selectedIds, sections, insertTool, canvasWidth, canvasHeight } =
     useLayoutStore();
   const {
     setInsertTool,
-    setPatchSection,
     setDeleteSelected,
     setDuplicateSelected,
-    setAddSection,
     setCommitAfterTransform,
-    setApplyColorToSelection,
     setSelectedIds,
     setSections,
-    setCanvasSize,
     setLock,
   } = useLayoutActions();
 
-  const actionsAny = useLayoutStore(s => s.actions as any);
+  /* -------- patterns (zustand) -------- */
   const { addPattern } = usePatternActions();
-  // JSON Export / Import
-  const [jsonValue, setJsonValue] = React.useState("");
-  const [isJsonModalOpen, setIsJsonModalOpen] = React.useState(false);
 
-  const one =
-    selectedIds.length === 1
-      ? sections.find(s => s.id === selectedIds[0]) || null
-      : null;
+  /* -------- selection -------- */
+  const selectedOne = React.useMemo(() => {
+    if (selectedIds.length !== 1) return null;
+    return sections.find(s => s.id === selectedIds[0]) ?? null;
+  }, [sections, selectedIds]);
 
-  // 전체 삭제
-  const onClearAll = React.useCallback(() => {
+  const hasSelection = selectedIds.length > 0;
+
+  /* -------- handlers: clear / delete -------- */
+  const handleClearAll = React.useCallback(() => {
     if (!sections.length) return;
-    if (
-      typeof window !== "undefined" &&
-      !window.confirm("모든 컴포넌트를 삭제할까요?")
-    )
-      return;
+    if (!window.confirm("모든 컴포넌트를 삭제할까요?")) return;
 
-    if (typeof actionsAny.clearSections === "function") {
-      actionsAny.clearSections();
-    } else if (typeof actionsAny.setSections === "function") {
-      actionsAny.setSections([]);
-    } else {
-      setSelectedIds(sections.map(s => s.id));
-      setDeleteSelected();
-    }
-
+    setSections([]);
     setSelectedIds([]);
     setCommitAfterTransform?.();
-  }, [
-    sections,
-    actionsAny,
-    setSelectedIds,
-    setDeleteSelected,
-    setCommitAfterTransform,
-  ]);
+  }, [sections.length, setSections, setSelectedIds, setCommitAfterTransform]);
 
-  // 선택 삭제
-  const onDeleteSelected = React.useCallback(() => {
+  const handleDeleteSelected = React.useCallback(() => {
     if (!selectedIds.length) return;
-    if (
-      typeof window !== "undefined" &&
-      !window.confirm(`선택된 ${selectedIds.length}개 항목을 삭제할까요?`)
-    )
+    if (!window.confirm(`선택된 ${selectedIds.length}개 항목을 삭제할까요?`))
       return;
+
     setDeleteSelected();
     setSelectedIds([]);
     setCommitAfterTransform?.();
   }, [selectedIds, setDeleteSelected, setSelectedIds, setCommitAfterTransform]);
 
-  const hasSelection = selectedIds.length > 0;
+  /* -------- JSON export/import -------- */
+  const downloadJsonFile = React.useCallback(() => {
+    const payload = { canvasWidth, canvasHeight, sections };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: "application/json",
+    });
 
-  // ===== JSON Export / Import =====
-  const onExportJson = React.useCallback(() => {
-    const payload = { sections };
-    setJsonValue(JSON.stringify(payload, null, 2));
-    setIsJsonModalOpen(true);
-  }, [sections]);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "layout.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [canvasWidth, canvasHeight, sections]);
 
-  const onDownloadJsonFile = React.useCallback(() => {
-    try {
-      const payload = { sections };
-      const blob = new Blob([JSON.stringify(payload, null, 2)], {
-        type: "application/json",
-      });
-
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "layout.json";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      if (typeof window !== "undefined") {
-        window.alert("파일 다운로드 생성에 실패했습니다.");
-      }
-    }
-  }, [sections]);
-
-  // ===== 파일로부터 Import =====
-  const onImportFile = React.useCallback(() => {
+  const importJsonFile = React.useCallback(() => {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "application/json,.json";
+
     input.onchange = () => {
       const file = input.files?.[0];
       if (!file) return;
+
       const reader = new FileReader();
       reader.onload = () => {
         try {
-          const text = String(reader.result || "");
-          const parsed = JSON.parse(text);
-          const sections = parsed.sections;
+          const parsed = JSON.parse(String(reader.result || ""));
+          const nextSections = parsed.sections;
 
-          setSections(sections);
-
-          setJsonValue(JSON.stringify({ sections: sections }, null, 2));
-          setSelectedIds([]);
-        } catch (err: any) {
-          if (typeof window !== "undefined") {
-            window.alert(
-              "JSON 파일 파싱에 실패했습니다. 형식을 확인해주세요.\n\n" +
-                (err?.message || String(err)),
-            );
+          if (!Array.isArray(nextSections)) {
+            throw new Error("sections가 배열이 아닙니다.");
           }
-        }
-      };
-      reader.onerror = () => {
-        if (typeof window !== "undefined") {
-          window.alert("파일을 읽는 중 오류가 발생했습니다.");
+
+          setSections(nextSections);
+          setSelectedIds([]);
+          setCommitAfterTransform?.();
+        } catch (err: any) {
+          window.alert(
+            "JSON 파일 파싱에 실패했습니다.\n\n" +
+              (err?.message || String(err)),
+          );
         }
       };
       reader.readAsText(file, "utf-8");
     };
+
     input.click();
-  }, [setSections, setSelectedIds]);
+  }, [setSections, setSelectedIds, setCommitAfterTransform]);
+
+  /* -------- Save modal -------- */
+  const [saveOpen, setSaveOpen] = React.useState(false);
+  const [title, setTitle] = React.useState("");
+  const [description, setDescription] = React.useState("");
+  const [saveError, setSaveError] = React.useState<string | null>(null);
+
+  const openSaveModal = React.useCallback(() => {
+    setSaveError(null);
+    setTitle("");
+    setDescription("");
+    setSaveOpen(true);
+  }, []);
+
+  const closeSaveModal = React.useCallback(() => setSaveOpen(false), []);
+
+  const handleSave = React.useCallback(() => {
+    const t = title.trim();
+    if (!t) {
+      setSaveError("제목(title)을 입력해주세요.");
+      return;
+    }
+
+    const payload = {
+      title: t,
+      description: description.trim(),
+      canvasWidth,
+      canvasHeight,
+      sections,
+      originPatternId, // string|null
+    };
+
+    const savedId = addPattern(payload);
+    setPageTitle(t);
+    closeSaveModal();
+
+    // 저장 후 URL 갱신 (id = 저장된 커스텀패턴)
+    if (editorId) {
+      router.replace(
+        buildEditorUrl(editorId, savedId, payload.originPatternId),
+      );
+      alert("저장되었습니다.");
+    }
+  }, [
+    title,
+    description,
+    canvasWidth,
+    canvasHeight,
+    sections,
+    originPatternId,
+    addPattern,
+    editorId,
+    router,
+    closeSaveModal,
+    setPageTitle,
+  ]);
 
   return (
     <Aside position="right" defaultWidth={340} minWidth={0} maxWidth={560}>
-      {selectedIds.length > 0 && (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          marginBottom: "10px",
+        }}
+      >
+        <label htmlFor="" style={{ flexShrink: 0 }}>
+          페이지명 :
+        </label>
+        <TextField
+          size="small"
+          value={pageTitle}
+          onChange={e => setPageTitle(e.target.value)} // ★ 여기가 포인트
+          sx={{ "& input": { fontWeight: "bold" } }}
+        />
+      </div>
+      {/* selection lock */}
+      {selectedOne && (
         <>
-          <h3>{one?.title}</h3>
+          <h3 style={{ margin: "12px 0 6px" }}>{selectedOne.title}</h3>
           <div className="card-body">
-            <div
-              className="row"
-              style={{ display: "flex", alignItems: "center", gap: 8 }}
-            >
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <Label>Lock</Label>
               <Switch
-                checked={!!one?.lock}
-                onChange={e => setLock(one!.id, e.target.checked)}
+                checked={!!selectedOne.lock}
+                onChange={(e: any) => setLock(selectedOne.id, e.target.checked)}
               />
             </div>
           </div>
         </>
       )}
+
+      {/* layout card */}
       <LayoutCard
         selectedCount={selectedIds.length}
         hasSelection={hasSelection}
@@ -202,29 +306,30 @@ export default function RightPanel() {
         insertTool={insertTool}
         setInsertTool={setInsertTool}
         onDuplicateSelected={setDuplicateSelected}
-        onDeleteSelected={onDeleteSelected}
-        onClearAll={onClearAll}
-        onImportFile={onImportFile}
-        onDownloadJsonFile={onDownloadJsonFile}
-        onOpenJsonModal={onExportJson}
+        onDeleteSelected={handleDeleteSelected}
+        onClearAll={handleClearAll}
+        onImportFile={importJsonFile}
+        onDownloadJsonFile={downloadJsonFile}
       />
-      <Button variant="contained" onClick={() => {}}>
-        저장
-      </Button>
-      <Button
-        variant="contained"
-        onClick={() => {
-          addPattern({
-            name: "ddd3",
-            description: "ddd3",
-            canvasWidth: 0,
-            canvasHeight: 0,
-            sections: sections,
-          });
-        }}
-      >
-        다른이름으로 저장
-      </Button>
+
+      {/* save */}
+      <div style={{ display: "flex", gap: 8, padding: "10px 0" }}>
+        <Button variant="contained" onClick={openSaveModal} style={{ flex: 1 }}>
+          저장
+        </Button>
+      </div>
+
+      {/* dialogs */}
+      <SavePatternDialog
+        open={saveOpen}
+        title={title}
+        description={description}
+        error={saveError}
+        onChangeTitle={setTitle}
+        onChangeDescription={setDescription}
+        onClose={closeSaveModal}
+        onSave={handleSave}
+      />
     </Aside>
   );
 }

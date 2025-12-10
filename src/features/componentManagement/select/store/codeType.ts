@@ -1,29 +1,29 @@
 import { create } from "zustand";
 
-interface State {
+interface CheckedRow {
   groupCode: string;
   groupName: string;
-  selectedGroupCode: string;
-  selectedGroupName: string;
+}
 
-  setGroupCode: (groupCode: string) => void;
-  setGroupName: (groupName: string) => void;
-  setSelectedGroupCode: (groupCode: string) => void;
-  setSelectedGroupName: (groupName: string) => void;
+interface State {
+  dataType: string;
+  checkedRows: CheckedRow[];
+  selectedCheckedRows: CheckedRow[];
+
+  setDataType: (dataType: string) => void;
+  setCheckedRows: (checkedRows: CheckedRow[]) => void;
+  setSelectedCheckedRows: (selectedCheckedRows: CheckedRow[]) => void;
 }
 
 const useCodeTypeStore = create<State>(set => ({
-  groupCode: "",
-  groupName: "",
-  selectedGroupCode: "",
-  selectedGroupName: "",
+  dataType: "",
+  checkedRows: [],
+  selectedCheckedRows: [],
 
-  setGroupCode: (groupCode: string) => set({ groupCode }),
-  setGroupName: (groupName: string) => set({ groupName }),
-  setSelectedGroupCode: (groupCode: string) =>
-    set({ selectedGroupCode: groupCode }),
-  setSelectedGroupName: (groupName: string) =>
-    set({ selectedGroupName: groupName }),
+  setDataType: (dataType: string) => set({ dataType }),
+  setCheckedRows: (checkedRows: CheckedRow[]) => set({ checkedRows }),
+  setSelectedCheckedRows: (selectedCheckedRows: CheckedRow[]) =>
+    set({ selectedCheckedRows }),
 }));
 
 export default useCodeTypeStore;

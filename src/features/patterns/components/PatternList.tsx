@@ -13,11 +13,11 @@ import {
   Typography,
 } from "@mui/material";
 
+import { SCREEN_PATTERNS } from "@/shared/store/pattern/default";
 import { usePatternStore } from "@/shared/store/pattern/store";
+import { CustomPattern } from "@/shared/store/pattern/type";
 
-import { SCREEN_PATTERNS } from "../patterns";
-import type { ScreenDefinition } from "../types";
-import PatternCard, { ScreenPatternAndDiffition } from "./PatternCard";
+import PatternCard from "./PatternCard";
 
 const TAB_BUILTIN = "builtin";
 const TAB_CUSTOM = "custom";
@@ -32,12 +32,12 @@ export default function PatternList() {
     setTab(value);
   };
 
-  const handleOpenScreen = (screen: ScreenPatternAndDiffition) => {
-    router.push(`/editor/new?patternId=${screen.id}`);
+  const handleOpenScreen = (screen: CustomPattern) => {
+    router.push(`/editor/new?originPatternId=${encodeURIComponent(screen.id)}`);
   };
 
   const handleCreateBlank = () => {
-    router.push("/editor/new?patternId=blank");
+    router.push(`/editor/new?originPatternId=null`); // originPatternId 없음 = blank
   };
 
   const isBuiltinTab = tab === TAB_BUILTIN;

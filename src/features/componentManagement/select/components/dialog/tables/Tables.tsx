@@ -1,13 +1,16 @@
 import styled from "@emotion/styled";
 
-import CodeTypeTable from "./CodeTypeTable";
-import CommonCodeTable from "./CommonCodeTable";
+import useCodeTypeStore from "../../../store/codeType";
+import ApiTableContainer from "./apiTable/ApiTableContainer";
+import CommonCodeTableContainer from "./commonCodeTable/CommonCodeTableContainer";
 
 export default function Tables() {
+  const { dataType } = useCodeTypeStore();
+
   return (
     <TablesStyle>
-      <CodeTypeTable />
-      <CommonCodeTable />
+      {dataType === "commonCode" && <CommonCodeTableContainer />}
+      {dataType === "api" && <ApiTableContainer />}
     </TablesStyle>
   );
 }
