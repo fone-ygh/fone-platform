@@ -11,21 +11,17 @@ import {
 } from "@mui/material";
 
 import { createSectionsForPattern } from "@/shared/store/layout/defaults";
+import { CustomPattern } from "@/shared/store/pattern/type";
 
-import type { ScreenPattern } from "../patterns";
-import { ScreenDefinition } from "../types";
 import LayoutThumbnail from "./LayoutThumbnail"; // Section[] 축소해서 그리는 컴포넌트
 
-export type ScreenPatternAndDiffition = ScreenPattern | ScreenDefinition;
-
 interface PatternCardProps {
-  pattern: ScreenPatternAndDiffition;
-  onSelect?: (pattern: ScreenPatternAndDiffition) => void;
+  pattern: CustomPattern;
+  onSelect?: (pattern: CustomPattern) => void;
 }
 
 export default function PatternCard({ pattern, onSelect }: PatternCardProps) {
   const handleClick = () => onSelect?.(pattern);
-
   const sectionsForThumb = React.useMemo(
     () => createSectionsForPattern(pattern.id),
     [pattern.id],
@@ -48,7 +44,13 @@ export default function PatternCard({ pattern, onSelect }: PatternCardProps) {
         >
           <Box sx={{ mb: 1.5, display: "flex", justifyContent: "center" }}>
             <LayoutThumbnail
-              sections={sectionsForThumb}
+              sections={
+                sectionsForThumb?.length > 0
+                  ? sectionsForThumb
+                  : pattern?.sections
+                    ? pattern?.sections
+                    : []
+              }
               width={220}
               height={120}
             />

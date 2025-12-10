@@ -9,6 +9,7 @@ import { useEDITORActions, useEDITORStore } from "@/shared/store/control";
 import { useLayoutStore } from "@/shared/store/layout";
 import { useLayoutActions } from "@/shared/store/layout/store";
 import type { Section } from "@/shared/store/layout/types";
+import { usePatternStore } from "@/shared/store/pattern/store";
 
 import type { Rect } from "../../hooks/collision";
 import { useDomHandles } from "../../hooks/useDomHandles";
@@ -64,6 +65,7 @@ export default function CanvasStage() {
   } = useEDITORStore();
   const { setCanvasZoom, setPan } = useEDITORActions();
 
+  const { customPatterns } = usePatternStore();
   // 25%~200% 사이에서 동작하도록 보정
   const zoom = Math.max(0.25, Math.min(2, canvasZoomPct / 100));
 

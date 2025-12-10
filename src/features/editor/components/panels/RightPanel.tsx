@@ -4,28 +4,24 @@
 import * as React from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
-  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControlLabel,
   TextField,
   Typography,
 } from "@mui/material";
 import { Button, Label, Switch } from "fone-design-system_v1";
 
 import Aside from "@/shared/components/layout/aside/Aside";
-import { useEDITORActions, useEDITORStore } from "@/shared/store/control";
 import { useLayoutActions, useLayoutStore } from "@/shared/store/layout";
 import {
   usePatternActions,
   usePatternStore,
 } from "@/shared/store/pattern/store";
 
+import { useCurrentPatternMeta } from "../../hooks/useCurrentPatternMeta";
 import { LayoutCard } from "./right/LayoutCard";
-
-type SaveMode = "overwrite" | "copy";
 
 function buildEditorUrl(
   editorId: string,
@@ -39,32 +35,82 @@ function buildEditorUrl(
   return qs ? `/editor/${editorId}?${qs}` : `/editor/${editorId}`;
 }
 
-export default function RightPanel() {
-  /* -------- editor(view/snap/zoom) -------- */
-  const {
-    showGrid,
-    gridSize,
-    gridColor,
-    showGuides,
-    showRulers,
-    snapToGrid,
-    snapToGuides,
-    snapToElements,
-    snapTolerance,
-  } = useEDITORStore();
-  const {
-    setShowGrid,
-    setGridSize,
-    setGridColor,
-    setShowGuides,
-    setShowRulers,
-    setSnapToGrid,
-    setSnapToGuides,
-    setSnapToElements,
-    setSnapTolerance,
-  } = useEDITORActions();
+/* ---------------- Dialogs ---------------- */
 
-  /* -------- layout(canvas/columns/selection 등) -------- */
+type SavePatternDialogProps = {
+  open: boolean;
+  title: string;
+  description: string;
+  error?: string | null;
+  onChangeTitle: (v: string) => void;
+  onChangeDescription: (v: string) => void;
+  onClose: () => void;
+  onSave: () => void;
+};
+
+function SavePatternDialog({
+  open,
+  title,
+  description,
+  error,
+  onChangeTitle,
+  onChangeDescription,
+  onClose,
+  onSave,
+}: SavePatternDialogProps) {
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle>새 패턴 저장</DialogTitle>
+
+      <DialogContent sx={{ display: "grid", gap: 1.5, pt: 1 }}>
+        <TextField
+          label="Title"
+          value={title}
+          onChange={e => onChangeTitle(e.target.value)}
+          autoFocus
+          fullWidth
+          size="small"
+        />
+        <TextField
+          label="Description"
+          value={description}
+          onChange={e => onChangeDescription(e.target.value)}
+          fullWidth
+          size="small"
+          multiline
+          minRows={3}
+        />
+
+        {error && (
+          <Typography variant="body2" color="error">
+            {error}
+          </Typography>
+        )}
+      </DialogContent>
+
+      <DialogActions>
+        <Button variant="text" onClick={onClose}>
+          취소
+        </Button>
+        <Button variant="contained" onClick={onSave}>
+          새로 저장
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+/* ---------------- RightPanel ---------------- */
+
+export default function RightPanel() {
+  /* -------- router / url params -------- */
+  const router = useRouter();
+  const params = useParams();
+  const editorId = String((params as any)?.id ?? "");
+  const searchParams = useSearchParams();
+  const originPatternId = searchParams.get("originPatternId"); // string | null
+  const { title: pageTitle, setTitle: setPageTitle } = useCurrentPatternMeta();
+  /* -------- layout -------- */
   const { selectedIds, sections, insertTool, canvasWidth, canvasHeight } =
     useLayoutStore();
   const {
@@ -77,66 +123,30 @@ export default function RightPanel() {
     setLock,
   } = useLayoutActions();
 
-  /* -------- patterns(zustand 저장) -------- */
-  const { addPattern, updateCustomPattern } = usePatternActions();
-  const customPatterns = usePatternStore(s => s.customPatterns);
+  /* -------- patterns (zustand) -------- */
+  const { addPattern } = usePatternActions();
 
-  /* -------- router / url params -------- */
-  const router = useRouter();
-  const params = useParams();
-  const editorId = String((params as any)?.id ?? "");
-  const searchParams = useSearchParams();
-
-  const urlPatternId = searchParams.get("id"); // 현재 편집중인 패턴 id(빌트인/커스텀)
-  const urlOriginPatternId = searchParams.get("originPatternId");
-
-  const editingCustom = React.useMemo(() => {
-    if (!urlPatternId) return null;
-    return customPatterns.find(p => p.id === urlPatternId) ?? null;
-  }, [customPatterns, urlPatternId]);
-  console.log("customPatterns : ", customPatterns);
-  const canOverwrite = !!editingCustom && !!urlPatternId;
-
-  // originPatternId 해석:
-  // 1) URL originPatternId 우선
-  // 2) 커스텀 패턴이면 store에 저장된 originPatternId
-  // 3) 빌트인(id가 custom_ 아님)에서 시작했는데 originPatternId가 없다면 id를 origin으로 취급
-  const resolvedOriginPatternId = React.useMemo(() => {
-    if (urlOriginPatternId) return urlOriginPatternId;
-    if (editingCustom?.originPatternId) return editingCustom.originPatternId;
-    if (urlPatternId && !urlPatternId.startsWith("custom_"))
-      return urlPatternId;
-    return null;
-  }, [urlOriginPatternId, editingCustom, urlPatternId]);
-
-  /* -------- selection helpers -------- */
-  const one =
-    selectedIds.length === 1
-      ? sections.find(s => s.id === selectedIds[0]) || null
-      : null;
+  /* -------- selection -------- */
+  const selectedOne = React.useMemo(() => {
+    if (selectedIds.length !== 1) return null;
+    return sections.find(s => s.id === selectedIds[0]) ?? null;
+  }, [sections, selectedIds]);
 
   const hasSelection = selectedIds.length > 0;
 
-  /* ====== Clear / Delete ====== */
-  const onClearAll = React.useCallback(() => {
+  /* -------- handlers: clear / delete -------- */
+  const handleClearAll = React.useCallback(() => {
     if (!sections.length) return;
-    if (
-      typeof window !== "undefined" &&
-      !window.confirm("모든 컴포넌트를 삭제할까요?")
-    )
-      return;
+    if (!window.confirm("모든 컴포넌트를 삭제할까요?")) return;
 
     setSections([]);
     setSelectedIds([]);
     setCommitAfterTransform?.();
   }, [sections.length, setSections, setSelectedIds, setCommitAfterTransform]);
 
-  const onDeleteSelected = React.useCallback(() => {
+  const handleDeleteSelected = React.useCallback(() => {
     if (!selectedIds.length) return;
-    if (
-      typeof window !== "undefined" &&
-      !window.confirm(`선택된 ${selectedIds.length}개 항목을 삭제할까요?`)
-    )
+    if (!window.confirm(`선택된 ${selectedIds.length}개 항목을 삭제할까요?`))
       return;
 
     setDeleteSelected();
@@ -144,17 +154,8 @@ export default function RightPanel() {
     setCommitAfterTransform?.();
   }, [selectedIds, setDeleteSelected, setSelectedIds, setCommitAfterTransform]);
 
-  /* ===== JSON Export / Import (선택) ===== */
-  const [jsonValue, setJsonValue] = React.useState("");
-  const [isJsonModalOpen, setIsJsonModalOpen] = React.useState(false);
-
-  const onExportJson = React.useCallback(() => {
-    const payload = { canvasWidth, canvasHeight, sections };
-    setJsonValue(JSON.stringify(payload, null, 2));
-    setIsJsonModalOpen(true);
-  }, [canvasWidth, canvasHeight, sections]);
-
-  const onDownloadJsonFile = React.useCallback(() => {
+  /* -------- JSON export/import -------- */
+  const downloadJsonFile = React.useCallback(() => {
     const payload = { canvasWidth, canvasHeight, sections };
     const blob = new Blob([JSON.stringify(payload, null, 2)], {
       type: "application/json",
@@ -170,10 +171,11 @@ export default function RightPanel() {
     URL.revokeObjectURL(url);
   }, [canvasWidth, canvasHeight, sections]);
 
-  const onImportFile = React.useCallback(() => {
+  const importJsonFile = React.useCallback(() => {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "application/json,.json";
+
     input.onchange = () => {
       const file = input.files?.[0];
       if (!file) return;
@@ -183,8 +185,10 @@ export default function RightPanel() {
         try {
           const parsed = JSON.parse(String(reader.result || ""));
           const nextSections = parsed.sections;
-          if (!Array.isArray(nextSections))
+
+          if (!Array.isArray(nextSections)) {
             throw new Error("sections가 배열이 아닙니다.");
+          }
 
           setSections(nextSections);
           setSelectedIds([]);
@@ -198,39 +202,29 @@ export default function RightPanel() {
       };
       reader.readAsText(file, "utf-8");
     };
+
     input.click();
   }, [setSections, setSelectedIds, setCommitAfterTransform]);
 
-  /* ===== Save Modal ===== */
+  /* -------- Save modal -------- */
   const [saveOpen, setSaveOpen] = React.useState(false);
-  const [saveMode, setSaveMode] = React.useState<SaveMode>("copy");
   const [title, setTitle] = React.useState("");
   const [description, setDescription] = React.useState("");
-  const [error, setError] = React.useState<string | null>(null);
+  const [saveError, setSaveError] = React.useState<string | null>(null);
 
-  const openSaveModal = React.useCallback(
-    (mode: SaveMode) => {
-      setError(null);
+  const openSaveModal = React.useCallback(() => {
+    setSaveError(null);
+    setTitle("");
+    setDescription("");
+    setSaveOpen(true);
+  }, []);
 
-      // 덮어쓰기 모드로 열고 싶어도, overwrite 불가능하면 copy로 강제
-      const nextMode: SaveMode =
-        mode === "overwrite" && !canOverwrite ? "copy" : mode;
-
-      setSaveMode(nextMode);
-
-      // 커스텀 편집중이면 기존 메타로 프리필
-      setTitle(editingCustom?.title ?? "");
-      setDescription(editingCustom?.description ?? "");
-
-      setSaveOpen(true);
-    },
-    [canOverwrite, editingCustom],
-  );
+  const closeSaveModal = React.useCallback(() => setSaveOpen(false), []);
 
   const handleSave = React.useCallback(() => {
     const t = title.trim();
     if (!t) {
-      setError("제목(title)을 입력해주세요.");
+      setSaveError("제목(title)을 입력해주세요.");
       return;
     }
 
@@ -240,27 +234,19 @@ export default function RightPanel() {
       canvasWidth,
       canvasHeight,
       sections,
-      originPatternId: resolvedOriginPatternId ?? null,
+      originPatternId, // string|null
     };
 
-    let savedId: string;
+    const savedId = addPattern(payload);
+    setPageTitle(t);
+    closeSaveModal();
 
-    if (saveMode === "overwrite" && canOverwrite && urlPatternId) {
-      // 덮어쓰기
-      updateCustomPattern(urlPatternId, payload);
-      savedId = urlPatternId;
-    } else {
-      // 새로 저장
-      savedId = addPattern(payload);
-    }
-
-    setSaveOpen(false);
-
-    // 저장 후에는 URL도 갱신해두면 다음부터 "저장"이 덮어쓰기로 동작하기 쉬움
+    // 저장 후 URL 갱신 (id = 저장된 커스텀패턴)
     if (editorId) {
       router.replace(
-        buildEditorUrl(editorId, savedId, resolvedOriginPatternId),
+        buildEditorUrl(editorId, savedId, payload.originPatternId),
       );
+      alert("저장되었습니다.");
     }
   }, [
     title,
@@ -268,35 +254,51 @@ export default function RightPanel() {
     canvasWidth,
     canvasHeight,
     sections,
-    resolvedOriginPatternId,
-    saveMode,
-    canOverwrite,
-    urlPatternId,
-    updateCustomPattern,
+    originPatternId,
     addPattern,
     editorId,
     router,
+    closeSaveModal,
+    setPageTitle,
   ]);
 
   return (
     <Aside position="right" defaultWidth={340} minWidth={0} maxWidth={560}>
-      {selectedIds.length > 0 && (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          marginBottom: "10px",
+        }}
+      >
+        <label htmlFor="" style={{ flexShrink: 0 }}>
+          페이지명 :
+        </label>
+        <TextField
+          size="small"
+          value={pageTitle}
+          onChange={e => setPageTitle(e.target.value)} // ★ 여기가 포인트
+          sx={{ "& input": { fontWeight: "bold" } }}
+        />
+      </div>
+      {/* selection lock */}
+      {selectedOne && (
         <>
-          <h3 style={{ margin: "12px 0 6px" }}>{one?.title}</h3>
+          <h3 style={{ margin: "12px 0 6px" }}>{selectedOne.title}</h3>
           <div className="card-body">
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <Label>Lock</Label>
               <Switch
-                checked={!!one?.lock}
-                onChange={e =>
-                  one && setLock(one.id, (e.target as any).checked)
-                }
+                checked={!!selectedOne.lock}
+                onChange={(e: any) => setLock(selectedOne.id, e.target.checked)}
               />
             </div>
           </div>
         </>
       )}
 
+      {/* layout card */}
       <LayoutCard
         selectedCount={selectedIds.length}
         hasSelection={hasSelection}
@@ -304,98 +306,30 @@ export default function RightPanel() {
         insertTool={insertTool}
         setInsertTool={setInsertTool}
         onDuplicateSelected={setDuplicateSelected}
-        onDeleteSelected={onDeleteSelected}
-        onClearAll={onClearAll}
-        onImportFile={onImportFile}
-        onDownloadJsonFile={onDownloadJsonFile}
-        onOpenJsonModal={onExportJson}
+        onDeleteSelected={handleDeleteSelected}
+        onClearAll={handleClearAll}
+        onImportFile={importJsonFile}
+        onDownloadJsonFile={downloadJsonFile}
       />
 
+      {/* save */}
       <div style={{ display: "flex", gap: 8, padding: "10px 0" }}>
-        <Button
-          variant="contained"
-          onClick={() => openSaveModal(canOverwrite ? "overwrite" : "copy")}
-          style={{ flex: 1 }}
-        >
+        <Button variant="contained" onClick={openSaveModal} style={{ flex: 1 }}>
           저장
         </Button>
-        {/* <Button
-          variant="contained"
-          onClick={() => openSaveModal("copy")}
-          style={{ flex: 1 }}
-        >
-          다른 이름으로 저장
-        </Button> */}
       </div>
 
-      {/* ===== Save Modal ===== */}
-      <Dialog
+      {/* dialogs */}
+      <SavePatternDialog
         open={saveOpen}
-        onClose={() => setSaveOpen(false)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>
-          {saveMode === "overwrite" && canOverwrite
-            ? "패턴 저장(덮어쓰기)"
-            : "새 패턴 저장"}
-        </DialogTitle>
-
-        <DialogContent sx={{ display: "grid", gap: 1.5, pt: 1 }}>
-          <TextField
-            label="Title"
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            autoFocus
-            fullWidth
-            size="small"
-          />
-          <TextField
-            label="Description"
-            value={description}
-            onChange={e => setDescription(e.target.value)}
-            fullWidth
-            size="small"
-            multiline
-            minRows={3}
-          />
-
-          {canOverwrite && (
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={saveMode === "overwrite"}
-                  onChange={e =>
-                    setSaveMode(e.target.checked ? "overwrite" : "copy")
-                  }
-                />
-              }
-              label="현재 커스텀 패턴 덮어쓰기"
-            />
-          )}
-
-          <Typography variant="caption" color="text.secondary">
-            originPatternId: {resolvedOriginPatternId ?? "null"}
-          </Typography>
-
-          {error && (
-            <Typography variant="body2" color="error">
-              {error}
-            </Typography>
-          )}
-        </DialogContent>
-
-        <DialogActions>
-          <Button variant="text" onClick={() => setSaveOpen(false)}>
-            취소
-          </Button>
-          <Button variant="contained" onClick={handleSave}>
-            {saveMode === "overwrite" && canOverwrite
-              ? "덮어쓰기 저장"
-              : "새로 저장"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        title={title}
+        description={description}
+        error={saveError}
+        onChangeTitle={setTitle}
+        onChangeDescription={setDescription}
+        onClose={closeSaveModal}
+        onSave={handleSave}
+      />
     </Aside>
   );
 }

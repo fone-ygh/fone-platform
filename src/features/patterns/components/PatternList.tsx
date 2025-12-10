@@ -13,11 +13,11 @@ import {
   Typography,
 } from "@mui/material";
 
+import { SCREEN_PATTERNS } from "@/shared/store/pattern/default";
 import { usePatternStore } from "@/shared/store/pattern/store";
+import { CustomPattern } from "@/shared/store/pattern/type";
 
-import { SCREEN_PATTERNS, ScreenPattern } from "../patterns";
-import type { ScreenDefinition } from "../types";
-import PatternCard, { ScreenPatternAndDiffition } from "./PatternCard";
+import PatternCard from "./PatternCard";
 
 const TAB_BUILTIN = "builtin";
 const TAB_CUSTOM = "custom";
@@ -32,25 +32,12 @@ export default function PatternList() {
     setTab(value);
   };
 
-  const newCustomId = () => {
-    const uuid =
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : `${Math.random().toString(36).slice(2)}_${Date.now().toString(36)}`;
-
-    return `custom_${uuid}`;
-  };
-
-  const handleOpenScreen = (screen: ScreenPatternAndDiffition) => {
-    const id = newCustomId();
-    router.push(
-      `/editor/new?id=${encodeURIComponent(id)}&originPatternId=${encodeURIComponent(screen.id)}`,
-    );
+  const handleOpenScreen = (screen: CustomPattern) => {
+    router.push(`/editor/new?originPatternId=${encodeURIComponent(screen.id)}`);
   };
 
   const handleCreateBlank = () => {
-    const id = newCustomId();
-    router.push(`/editor/new?id=${encodeURIComponent(id)}`); // originPatternId 없음 = blank
+    router.push(`/editor/new?originPatternId=null`); // originPatternId 없음 = blank
   };
 
   const isBuiltinTab = tab === TAB_BUILTIN;
