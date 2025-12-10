@@ -32,7 +32,7 @@ export default function SearchForm() {
       setCommonCodeData(filteredCodeTypeData?.[0]?.commonCodeData || []);
     } else {
       const filteredApiData = initialApiData.filter(ad => {
-        return ad.apiName.includes(data.name);
+        return ad.groupName.includes(data.name);
       });
       setApiData(filteredApiData);
     }

@@ -4,9 +4,10 @@ interface SelectData {
   crud?: string;
   componentId: string;
   name: string;
+  label: string;
   style: string;
   required: string;
-  defaultValue: string;
+  all: string;
   dataType: string;
   dataSourceCd: string;
   dataSourceNm: string;
@@ -26,43 +27,62 @@ interface CommonCodeData {
 }
 
 interface ApiData {
-  apiName: string;
-  apiCode: string;
-  apiDescription: string;
+  groupName: string;
+  groupCode: string;
+  groupDescription: string;
 }
 
 interface State {
-  selectId: string;
-  selectIdx: number;
   selectData: SelectData[];
+  selectedSelectData: SelectData;
   codeTypeData: CodeTypeData[];
   commonCodeData: CommonCodeData[];
   apiData: ApiData[];
 
-  setSelectId: (selectId: string) => void;
-  setSelectIdx: (selectIdx: number) => void;
   setSelectData: (selectData: SelectData[]) => void;
+  setSelectedSelectData: (selectedSelectData: SelectData) => void;
   setCodeTypeData: (codeTypeData: CodeTypeData[]) => void;
   setCommonCodeData: (commonCodeData: CommonCodeData[]) => void;
   setApiData: (apiData: ApiData[]) => void;
 }
 
 const useDataStore = create<State>(set => ({
-  selectId: "",
-  selectIdx: -1,
-
   selectData: [
     {
       componentId: "useYn",
       name: "사용여부",
+      label: "사용여부",
       style: "default",
-      required: "Y",
-      defaultValue: "Y",
+      required: "N",
+      all: "Y",
       dataType: "commonCode",
       dataSourceCd: "CT0001",
       dataSourceNm: "사용여부",
     },
+    {
+      componentId: "position",
+      name: "직책유형",
+      label: "직책유형",
+      style: "default",
+      required: "Y",
+      all: "N",
+      dataType: "commonCode",
+      dataSourceCd: "CT0002",
+      dataSourceNm: "직책유형",
+    },
   ],
+
+  selectedSelectData: {
+    componentId: "",
+    name: "",
+    label: "",
+    style: "",
+    required: "",
+    all: "",
+    dataType: "",
+    dataSourceCd: "",
+    dataSourceNm: "",
+  },
 
   codeTypeData: [
     {
@@ -118,20 +138,20 @@ const useDataStore = create<State>(set => ({
   commonCodeData: [],
   apiData: [
     {
-      apiName: "사용여부",
-      apiCode: "CT0001",
-      apiDescription: "컴포넌트의 사용여부를 나타냄",
+      groupName: "사용여부",
+      groupCode: "CT0001",
+      groupDescription: "컴포넌트의 사용여부를 나타냄",
     },
     {
-      apiName: "직책유형",
-      apiCode: "CT0002",
-      apiDescription: "조직 내 직책을 나타냄",
+      groupName: "직책유형",
+      groupCode: "CT0002",
+      groupDescription: "조직 내 직책을 나타냄",
     },
   ],
 
-  setSelectId: (selectId: string) => set({ selectId: selectId }),
-  setSelectIdx: (selectIdx: number) => set({ selectIdx: selectIdx }),
   setSelectData: (selectData: SelectData[]) => set({ selectData: selectData }),
+  setSelectedSelectData: (selectedSelectData: SelectData) =>
+    set({ selectedSelectData: selectedSelectData }),
   setCodeTypeData: (codeTypeData: CodeTypeData[]) =>
     set({ codeTypeData: codeTypeData }),
   setCommonCodeData: (commonCodeData: CommonCodeData[]) =>
