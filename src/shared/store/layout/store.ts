@@ -202,8 +202,8 @@ export const useLayoutStore = create<LayoutState>()(
       }),
       {
         name: "LAYOUT",
-        // actions 직렬화 이슈 회피 — 현재는 아무 것도 저장하지 않음
-        partialize: () => ({}),
+
+        partialize: state => ({ sections: state.sections }),
       },
     ),
   ),
