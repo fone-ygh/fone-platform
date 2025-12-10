@@ -1,12 +1,12 @@
 import styled from "@emotion/styled";
 
-import SearchBar from "./searchBar/SearchBar";
+import SearchForm from "./searchForm/SearchForm";
 import Tables from "./tables/Tables";
 
 export default function DialogContent() {
   return (
     <DialogContentStyle>
-      <SearchBar />
+      <SearchForm />
       <Tables />
     </DialogContentStyle>
   );
