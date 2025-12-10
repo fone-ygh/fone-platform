@@ -20,10 +20,7 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"],
-      "fone-design-system_v1": [
-        "C:/Users/letit/OneDrive/문서/project/fone-design-system/src/index.ts"
-      ]
+      "@/*": ["./src/*"]
     }
   },
   "include": [
