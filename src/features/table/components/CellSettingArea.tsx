@@ -3,15 +3,14 @@ import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 import { HeaderCellConfig } from '../interface/type';
 import { Spreadsheet, Worksheet } from '@jspreadsheet-ce/react';
-import { useTableSettingActions, useTableSettingStore } from '../store/tableSettingStore';
+import { getHeaderCellPropsListData, useTableSettingActions, useTableSettingStore } from '../store/tableSettingStore';
 
 const CellSettingArea = ({spreadsheet}: {spreadsheet: React.RefObject<Spreadsheet>}) => {
 
-    const { selectedPos } = useTableSettingStore();
 
-    const { selectedCellAddress, formData, headerCellPropsList } = useTableSettingStore();
+    const { selectedPos, selectedCellAddress, formData, headerCellPropsList } = useTableSettingStore();
     const { setFormData, setHeaderCellPropsList } = useTableSettingActions();
-    
+    console.log("formData : ", formData)
     const [selectItems, setSelectItems] = useState<{label:string, value:string}[]>([]);
 
     // 선택된 셀 변경 시 해당 셀에 저장된 selectItems를 로드
@@ -32,7 +31,9 @@ const CellSettingArea = ({spreadsheet}: {spreadsheet: React.RefObject<Spreadshee
     }, [selectedCellAddress, headerCellPropsList]);
 
     const resetCell = (worksheet: Worksheet, address: string, header?: string, overrideSelectItems?: {label:string, value:string}[]) => {
-        worksheet.setValue(address, header ?? "");
+        // address가 "A1:A1" 같은 범위 형태면 좌상단 단일 셀 주소로 변환
+        const singleAddress = address.includes(":") ? address.split(":")[0] : address;
+        worksheet.setValue(singleAddress, header ?? "");
         if (overrideSelectItems) {
             setSelectItems(overrideSelectItems);
             return;
@@ -59,7 +60,9 @@ const CellSettingArea = ({spreadsheet}: {spreadsheet: React.RefObject<Spreadshee
                                     return (
                                         <SettingRow key={key}>
                                             <SettingLabel>{key}</SettingLabel>
-                                            <Select key={key} defaultValue={value as any} value={value as any} onChange={(e) => setFormData({ ...formData, [key]: e.target.value as any })} 
+                                            <Select key={key} defaultValue={value as any} value={value as any} onChange={(e) => {
+                                                setFormData({ ...formData, [key]: e.target.value as any, ...(key === "type" && e.target.value === "select" ? {selectItems: []} : {})})
+                                            }} 
                                                 MenuItems={selectSettings.find((x) => x.key === key)?.value.map((x) => ({label: x, value: x})) as any} />
                                         </SettingRow>
                                     )
@@ -69,7 +72,10 @@ const CellSettingArea = ({spreadsheet}: {spreadsheet: React.RefObject<Spreadshee
                                         return (
                                             <SettingRow key={key}>
                                                 <SettingLabel>{key}</SettingLabel>
-                                                <TextField2 type="text" value={value} onChange={(e) => setFormData({ ...formData, [key]: e.target.value })} />
+                                                <TextField2 type="text" value={value} onChange={(e) => {
+                                                    console.log("string e.target.value : ", e.target.value)
+                                                    setFormData({ ...formData, [key]: e.target.value })}
+                                                    } />
                                             </SettingRow>
                                         )
                                     case "boolean":
@@ -81,17 +87,32 @@ const CellSettingArea = ({spreadsheet}: {spreadsheet: React.RefObject<Spreadshee
                                         )
                                     case "object":
                                         return (
-                                            <SettingRow key={key}>
-                                                <SettingLabel>type</SettingLabel>
-                                                <Select defaultValue={formData.type as any} value={formData.type as any} onChange={(e) => setFormData({ ...formData, type: e.target.value as any })} 
-                                                    MenuItems={[{label: "input", value: "input"}, {label: "button", value: "button"}, {label: "select", value: "select"}, {label: "checkbox", value: "checkbox"}, {label: "datePicker", value: "datePicker"}] as any} />
+                                            <SettingRow key={key} style={{flexDirection:"column", gap:"10px"}}>
+                                                <div style={{display:"flex", gap:"10px", justifyContent:"space-between"}}>
+                                                    <SettingLabel>selectItems</SettingLabel>
+                                                    <Button variant="contained" onClick={() => setSelectItems([...selectItems, {label: "", value: ""}])}>추가</Button>
+                                                </div>
+                                                {/* <TextField2 type="text" onChange={(e) => setFormData({ ...formData, [key]: e.target.value })} /> */}
+                                                <Box sx={{display:"flex", gap:"10px", flexDirection:"column", paddingLeft:"30px"}}>
+                                                    {selectItems.map((item: {label:string, value:string}, index) => (
+                                                        <Box key={index} style={{display:"flex", gap:"10px"}}>
+                                                            <SettingLabel>label {index + 1}</SettingLabel>
+                                                            <TextField2 value={item.label} onChange={(e) => setSelectItems([...selectItems.slice(0, index), { label: e.target.value, value: item.value }, ...selectItems.slice(index + 1)])} />
+                                                            <SettingLabel>value {index + 1}</SettingLabel>
+                                                            <TextField2 value={item.value} onChange={(e) => setSelectItems([...selectItems.slice(0, index), { label: item.label, value: e.target.value }, ...selectItems.slice(index + 1)])} />
+                                                        </Box>
+                                                    ))}
+                                                </Box>
                                             </SettingRow>
                                         )
                                     default:
                                         return (
                                             <SettingRow key={key}>
                                                 <SettingLabel>{key}</SettingLabel>
-                                                <TextField2 type="text" value={value} onChange={(e) => setFormData({ ...formData, [key]: e.target.value })} />
+                                                <TextField2 type="text" value={value ?? ""} onChange={(e) => {
+                                                    console.log("e.target.value : ", e.target.value)
+                                                    setFormData({ ...formData, [key]: e.target.value })
+                                                }} />
                                             </SettingRow>
                                         )
                                     }
@@ -104,25 +125,7 @@ const CellSettingArea = ({spreadsheet}: {spreadsheet: React.RefObject<Spreadshee
                                 // )
                         )}
                         
-                        {formData.type === "select" &&  
-                            <SettingRow style={{flexDirection:"column", gap:"10px"}}>
-                                <div style={{display:"flex", gap:"10px", justifyContent:"space-between"}}>
-                                    <SettingLabel>selectItems</SettingLabel>
-                                    <Button variant="contained" onClick={() => setSelectItems([...selectItems, {label: "", value: ""}])}>추가</Button>
-                                </div>
-                                {/* <TextField2 type="text" onChange={(e) => setFormData({ ...formData, [key]: e.target.value })} /> */}
-                                <Box sx={{display:"flex", gap:"10px", flexDirection:"column", paddingLeft:"30px"}}>
-                                    {selectItems.map((item: {label:string, value:string}, index) => (
-                                        <Box key={index} style={{display:"flex", gap:"10px"}}>
-                                            <SettingLabel>label {index + 1}</SettingLabel>
-                                            <TextField2 value={item.label} onChange={(e) => setSelectItems([...selectItems.slice(0, index), { label: e.target.value, value: item.value }, ...selectItems.slice(index + 1)])} />
-                                            <SettingLabel>value {index + 1}</SettingLabel>
-                                            <TextField2 value={item.value} onChange={(e) => setSelectItems([...selectItems.slice(0, index), { label: item.label, value: e.target.value }, ...selectItems.slice(index + 1)])} />
-                                        </Box>
-                                    ))}
-                                </Box>
-                            </SettingRow>
-                        }
+                        
 
                             <Button 
                                 variant="contained"
@@ -130,29 +133,19 @@ const CellSettingArea = ({spreadsheet}: {spreadsheet: React.RefObject<Spreadshee
                                     if (!spreadsheet.current) return;
                                     const headers = spreadsheet.current[0].getHeaders().split(",");
                                     if (!selectedPos) return;
-                                    const address = `${headers[selectedPos.startCol]}${selectedPos.startRow + 1}`;
-                                    const mergedProps = formData.type === "select" ? { ...formData, selectItems } : { ...formData };
-                                    const next: HeaderCellConfig = {
-                                        address,
-                                        startCol: selectedPos.startCol,
-                                        startRow: selectedPos.startRow,
-                                        endCol: selectedPos.endCol,
-                                        endRow: selectedPos.endRow,
-                                        props: { ...mergedProps },
-                                    };
+                                    // 주소를 단일이더라도 "A1:A1" 형태로 통일
+                                    const address = `${headers[selectedPos.startCol]}${selectedPos.startRow + 1}:${headers[selectedPos.endCol]}${selectedPos.endRow + 1}`;
+                                    // const mergedProps = formData.type === "select" ? { ...formData, selectItems } : { ...formData };
+                                    // const next: HeaderCellConfig = {
+                                    //     address,
+                                    //     startCol: selectedPos.startCol,
+                                    //     startRow: selectedPos.startRow,
+                                    //     endCol: selectedPos.endCol,
+                                    //     endRow: selectedPos.endRow,
+                                    //     props: { ...mergedProps },
+                                    // };
 
-                                    const setHeaderCellPropsListData = () => {
-                                        const prev = headerCellPropsList;
-                                        const idx = prev.findIndex((x) => x.address === address);
-                                        if (idx >= 0) {
-                                            const copy = prev.slice();
-                                            copy[idx] = next;
-                                            return copy;
-                                        }
-                                        return [...prev, next];
-                                    }
-                                    console.log("setHeaderCellPropsListData : ", setHeaderCellPropsListData());
-                                    setHeaderCellPropsList(setHeaderCellPropsListData());
+                                    setHeaderCellPropsList(getHeaderCellPropsListData(address));
                                     resetCell(spreadsheet.current![0] as Worksheet, address, formData.header as string, formData.type === "select" ? selectItems : undefined);
                                 }}
                             >저장</Button>

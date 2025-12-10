@@ -6,11 +6,11 @@ import "jsuites/dist/jsuites.css";
 import "jspreadsheet-ce/dist/jspreadsheet.css";
 import { Box, Button, Dialog, Table2 } from "fone-design-system_v1";
 import TableSettingArea from "../components/TableSettingArea";
-import { useTableSettingActions, useTableSettingStore } from "../store/tableSettingStore";
+import { getHeaderCellPropsListData, useTableSettingActions, useTableSettingStore } from "../store/tableSettingStore";
 import { HeaderCellProps, HeaderCellConfig } from "../interface/type";
 import CellSettingArea from "../components/CellSettingArea";
 
-type ColumnNode = { accessorKey?: string; key: string; header?: string; name?: string, type?: "input" | "number" | "button" | "date" | "select" | "radio" | "checkbox"; component?: React.ReactNode; children?: ColumnNode[], editable?: boolean; width?: number | string; draggable?: boolean; resizable?: boolean; align?: "left" | "center" | "right"; required?: boolean; selectItems?: any[]; columns?: ColumnNode[], role?: "group" | "leaf", disabled?: boolean; readonly?: boolean };
+type ColumnNode = { accessorKey?: string; key: string; header?: string; name?: string, type?: "input" | "number" | "button" | "date" | "select" | "radio" | "checkbox" | "custom"; component?: React.ReactNode; children?: ColumnNode[], editable?: boolean; width?: number | string; draggable?: boolean; resizable?: boolean; align?: "left" | "center" | "right"; required?: boolean; selectItems?: any[]; columns?: ColumnNode[], role?: "group" | "leaf", disabled?: boolean; readonly?: boolean };
 
 export default function JspreadSheet() {
 
@@ -47,21 +47,33 @@ export default function JspreadSheet() {
             return 1;
         }
         // deps부터 시작해서 연속적으로 값이나 병합 정의가 있는 행을 센다
-        let depth = 0;
+        let depth = deps;
         for (let r = deps; r < rowDatas.length; r++) {
             const row = rowDatas[r] ?? [];
             const hasValue = row.some((v) => v !== null && v !== undefined && String(v).trim() !== '');
-            console.log("hasValue : ", hasValue, r);
             const hasMergeOnRow = !!mergeData && Object.keys(mergeData).some((k) => k.endsWith(String(r + 1)));
             if (hasValue || hasMergeOnRow) {
-                depth = r;
+                depth++;
             } else {
                 break;
             }
         }
         // 최소 1 보장
-        console.log("depth : ", depth);
         return Math.max(1, depth);
+    }
+
+    function getHeaderLevel(rowDatas: any[][]) {
+        if (!rowDatas || rowDatas.length === 0) return 0;
+
+        for (let r = 0; r < rowDatas.length; r++) {
+            const row = rowDatas[r] ?? [];
+            const hasValue = row.some((v) => v !== null && v !== undefined && String(v).trim() !== '');
+            if (hasValue) {
+                return r;
+            }
+        }
+        // 값이 있는 row가 없다면 0을 반환 (혹은 필요에 따라 -1)
+        return 0;
     }
 
     
@@ -182,7 +194,6 @@ export default function JspreadSheet() {
             // 현재 레벨 셀에 입력(또는 override header)이 없으면 그룹 헤더를 만들지 않고 자식만 평탄화
             if (hasOverrideHeader || hasNameHere) {
               const children = buildLevel(headers, rowDatas, mergeData, col, col + spanCols, level + 1, headerDepth, cellPropsMap);
-              const parentWidth = children.reduce((acc, child) => acc + (Number(child.width) ?? 0), 0);
               nodes.push({
                 key: overrideProps?.accessorKey || `group_${headers[col].header}_${headers[col + spanCols - 1].header}`,
                 header: safeName,
@@ -234,29 +245,28 @@ export default function JspreadSheet() {
 
                 if (hasLeafOverrideHeader || hasLeafNameHere) {
                     nodes.push({
-                    key: (leafOverride?.accessorKey && String(leafOverride.accessorKey).trim() !== "") ? String(leafOverride.accessorKey) : headers[c].header,
-                    accessorKey: (leafOverride?.accessorKey && String(leafOverride.accessorKey).trim() !== "") ? String(leafOverride.accessorKey) : headers[c].header,
-                    header: leafName,
-                    type: (leafOverride?.type as ColumnNode["type"]) || inferType(rowDatas, headerDepth, c),
-                    // type: "custom",
-                    editable: leafOverride?.editable ?? true,
-                    width: headers[c].width ?? undefined,
+                        key: (leafOverride?.accessorKey && String(leafOverride.accessorKey).trim() !== "") ? String(leafOverride.accessorKey) : headers[c].header,
+                        accessorKey: (leafOverride?.accessorKey && String(leafOverride.accessorKey).trim() !== "") ? String(leafOverride.accessorKey) : headers[c].header,
+                        header: leafName,
+                        type: (leafOverride?.type === "button" ? "custom" : leafOverride?.type as ColumnNode["type"]) || inferType(rowDatas, headerDepth, c),
+                        editable: leafOverride?.editable ?? true,
+                        width: headers[c].width ?? undefined,
 
-                    // type이 custom이여야 component를 사용할 수 있음
-                    // component:React.createElement(() => {
-                    //     return (
-                    //         <div>
-                    //             asd;akjsd
-                    //         </div>
-                    //     )
-                    // }),
-                    // draggable: leafOverride?.draggable ?? false,
-                    resizable: leafOverride?.resizable ?? true,
-                    align: (leafOverride?.align as any) ?? "left",
-                    required: leafOverride?.required ?? false,
-                    selectItems: leafOverride?.selectItems ?? [],
-                    // disabled: leafOverride?.disabled ?? false,
-                    // readonly: leafOverride?.readonly ?? false,
+                        // type이 custom이여야 component를 사용할 수 있음
+                        component:React.createElement(() => {
+                            return (
+                                <Button variant="contained" size="small" sx={{width:"200px"}} onClick={() => {
+                                    console.log("button click")
+                                }}>{leafName}</Button>
+                            )
+                        }),
+                        // draggable: leafOverride?.draggable ?? false,
+                        resizable: leafOverride?.resizable ?? true,
+                        align: (leafOverride?.align as any) ?? "left",
+                        required: leafOverride?.required ?? false,
+                        selectItems: leafOverride?.selectItems ?? [],
+                        // disabled: leafOverride?.disabled ?? false,
+                        // readonly: leafOverride?.readonly ?? false,
                     });
                 }
             }
@@ -275,8 +285,8 @@ export default function JspreadSheet() {
         cellPropsMap?: Record<string, Partial<HeaderCellProps>>
       ): ColumnNode[] {
         const depth = headerDepth ?? detectHeaderDepth(rowDatas, mergeData);
-        console.log("depth : ", depth, detectHeaderDepth(rowDatas, mergeData));
-        return buildLevel(headers, rowDatas, mergeData, 0, headers.length, 0, depth, cellPropsMap);
+        const level = getHeaderLevel(rowDatas);
+        return buildLevel(headers, rowDatas, mergeData, 0, headers.length, level, depth, cellPropsMap);
       }
 
     const toCellPropsMapRef = useRef(toCellPropsMap);
@@ -287,10 +297,10 @@ export default function JspreadSheet() {
         let depth = 0;
         for (let r = 0; r < rowDatas.length; r++) {
             const row = rowDatas[r] ?? [];
-            const hasValue = row.some((v) => v !== null && v !== undefined && String(v).trim() !== "");
+            const hasValue = row.some((v) => v !== null && v !== undefined && String(v).trim() !== '');
             const hasMergeOnRow = !!mergeData && Object.keys(mergeData).some((k) => k.endsWith(String(r + 1)));
-            if (hasValue || hasMergeOnRow) depth++;
-            else break;
+            if (hasValue || hasMergeOnRow) depth = r;
+            
         }
         return Math.max(1, depth);
     }, []);
@@ -301,7 +311,6 @@ export default function JspreadSheet() {
         const inst = spreadsheet?.current?.[0];
         if (!inst) return;
         const rawData = inst.getData();
-        console.log("rawData : ", rawData);
         const headers = inst.getHeaders().split(",").map((header:string, index:number) => {
             return {
                 header,
@@ -354,7 +363,7 @@ export default function JspreadSheet() {
         const mergeData = inst.getMerge();
         const cellPropsMap = toCellPropsMapRef.current(headers, headerCellPropsListRef.current);
         const resultHeaders = buildColumnsFromJSSRef.current(headers, rawData, mergeData, undefined, cellPropsMap);
-        console.log("resultHeaders : ", resultHeaders);
+        console.log("resultHeaders : ", resultHeaders)
         setTable2Headers(resultHeaders as ColumnNode[]);
     }, []);
 
@@ -387,178 +396,69 @@ export default function JspreadSheet() {
                 }
             });
             setSelectedPos({ startCol, startRow, endCol, endRow });
-            const address = `${headers?.[startCol]?.header}${startRow + 1}`;
+            // const address = `${headers?.[startCol]?.header}${startRow + 1}:${headers?.[endCol]?.header}${endRow + 1}`;
+            const address = getAddress(headers.map((h:{header:string}) => h.header), startCol, startRow, endCol, endRow);
             const width = headers?.[startCol]?.width ?? undefined;
             const headerList = headerCellPropsListRef.current;
             const existing = headerList.find((x:any) => x.address === address);
+            console.log("existing : ", existing, address, headerList)
             if (existing) {
                 setFormData({
                     accessorKey: existing.props.accessorKey ?? "",
                     header: existing.props.header ?? "",
                     type: existing.props.type ?? "input",
                     editable: existing.props.editable ?? true,
-                    draggable: existing.props.draggable ?? false,
-                    resizable: existing.props.resizable ?? true,
+                    // draggable: existing.props.draggable ?? false,
+                    // resizable: existing.props.resizable ?? true,
                     align: existing.props.align ?? "left",
                     required: existing.props.required ?? false,
                     isParent: existing.props.isParent ?? false,
                     width: width ?? existing.props.width ?? undefined,
                 });
+                setHeaderCellPropsList(getHeaderCellPropsListData(address));
+                console.log("getHeaderCellPropsListData : ", getHeaderCellPropsListData(address))
             }
         }
         
         if (eventName === "onchange" || eventName === "onafterchanges" || eventName === "onmerge" || eventName === "onbeforeunmerge") {
-            // 헤더 셀 값 입력 시, 셀 설정값(props.header)에도 반영
-            try {
-                const inst = spreadsheet?.current?.[0];
-                if (inst) {
-                    const headersArr = inst.getHeaders().split(",").map((header:string, index:number) => ({
-                        header,
-                        width: inst.options.columns[index]?.width ?? undefined,
-                    }));
-                    const raw = inst.getData();
-                    const mergeData = inst.getMerge();
-                    const headerDepth = stableDetectHeaderDepth(raw, mergeData);
+            const inst = spreadsheet?.current?.[0];
+            if (!inst) return;
+            const selected = inst.selectedContainer;
+            if (!Array.isArray(selected) || selected.length !== 4 || !selected.every((v:any) => typeof v === "number")) return;
 
-                    const selected = inst.selectedContainer;
-                    if (Array.isArray(selected) && selected.length === 4 && selected.every((v:any) => typeof v === "number")) {
-                        const [x1, y1, x2, y2] = selected as [number, number, number, number];
+            const [x1, y1, x2, y2] = selected as [number, number, number, number];
+            const colStart = Math.min(x1, x2);
+            const rowStart = Math.min(y1, y2);
+            const colEnd = Math.max(x1, x2);
+            const rowEnd = Math.max(y1, y2);
 
-                        const colStart = Math.min(x1, x2);
-                        const rowStart = Math.min(y1, y2);
-                        const colEnd = Math.max(x1, x2);
-                        const rowEnd = Math.max(y1, y2);
-                        console.log("colStart : ", colStart, colEnd, rowStart, rowEnd);
-                        const nextList = [...headerCellPropsListRef.current];
+            const headers = inst.getHeaders().split(",") ?? [];
+            const rangeAddress = getAddress(headers, colStart, rowStart, colEnd, rowEnd);
 
-                        // 병합 해제 시에는 선택된 병합 범위 주소를 우선적으로 정리
-                        if (eventName === "onbeforeunmerge") {
-                            const mergedAddress = getAddress(
-                                headersArr.map((x:any) => x.header),
-                                colStart, rowStart, colEnd, rowEnd
-                            );
-                            for (let i = nextList.length - 1; i >= 0; i--) {
-                                if (nextList[i].address === mergedAddress) {
-                                    nextList.splice(i, 1);
-                                }
-                            }
-                        }
-                        for (let r = rowStart; r <= rowEnd; r++) {
-                            if (r >= headerDepth) continue; // 헤더 영역만 반영
-                            for (let c = colStart; c <= colEnd; c++) {
-                                const val = raw?.[r]?.[c];
-                                // 값 제거(빈 문자열) 시 저장된 설정/주소 제거
-                                if (val === null || val === undefined || String(val).trim() === "") {
-                                    const includeAddress = getAddress(
-                                        headersArr.map((x:any) => x.header),
-                                        c, r, c, r
-                                    );
-                                    const cellToRangeAddress = getAddress(
-                                        headersArr.map((x:any) => x.header),
-                                        c, r, colEnd, rowEnd
-                                    );
-                                    const mergedAddress = getAddress(
-                                        headersArr.map((x:any) => x.header),
-                                        colStart, rowStart, colEnd, rowEnd
-                                    );
-                                    for (let i = nextList.length - 1; i >= 0; i--) {
-                                        const addr = nextList[i].address;
-                                        if (addr === includeAddress || addr === cellToRangeAddress || addr === mergedAddress) {
-                                            nextList.splice(i, 1);
-                                        }
-                                    }
-                                    // 단일 셀 선택이었다면 패널 formData.header도 초기화
-                                    if (colStart === colEnd && rowStart === rowEnd) {
-                                        setFormData({
-                                            ...formData,
-                                            header: "",
-                                        });
-                                    }
-                                    continue;
-                                }
-                                // const address = getAddressFromHeader(headersArr, c, r);
-                                const address = getAddress(headersArr.map((x:any) => x.header), c, r, colEnd, rowEnd);
-                                const idx = nextList.findIndex((x:any) => x.address === address);
+            // 선택 상태 동기화
+            setSelectedPos({ startCol: colStart, startRow: rowStart, endCol: colEnd, endRow: rowEnd });
+            setSelectedCellAddress(rangeAddress);
 
-                                // 병합 영역 내에 기존 값이 있다면 삭제하고 병합된 셀 값만 남도록 처리
-                                // 병합된 셀의 주소
-                                const isMergedSelected =
-                                    (colEnd - colStart > 0 || rowEnd - rowStart > 0) &&
-                                    (c === colStart && r === rowStart);
+            // 병합/해제 시, 겹치는 설정만 정리
+            if (eventName === "onmerge" || eventName === "onbeforeunmerge") {
+                const prev = headerCellPropsListRef.current;
+                const filtered = prev.filter((x:any) => (x.endCol < colStart || x.startCol > colEnd || x.endRow < rowStart || x.startRow > rowEnd));
+                setHeaderCellPropsList(filtered);
+            }
 
-                                if (isMergedSelected) {
-                                    // 병합된 셀 내부에 등록된 기존 값들 삭제 (현재 셀은 예외)
-                                    for (let rr = rowStart; rr <= rowEnd; rr++) {
-                                        for (let cc = colStart; cc <= colEnd; cc++) {
-                                            // if (rr === rowStart && cc === colStart) continue; // 대표 셀은 예외
-                                            const mergedAddress = getAddress(
-                                                headersArr.map((x:any) => x.header),
-                                                cc,
-                                                rr,
-                                                colEnd,
-                                                rowEnd
-                                            );
-
-                                            const includeAddress = getAddress(
-                                                headersArr.map((x:any) => x.header),
-                                                cc,
-                                                rr,
-                                                cc,
-                                                rr
-                                            )
-
-                                            console.log("mergedAddress : ", mergedAddress);
-                                            console.log("includeAddress : ", includeAddress);
-                                            const mergedIdx = nextList.findIndex(
-                                                (x:any) => x.address === mergedAddress
-                                            );
-                                            if (mergedIdx >= 0) {
-                                                nextList.splice(mergedIdx, 1);
-                                            }
-                                            const includeIdx = nextList.findIndex(
-                                                (x:any) => x.address === includeAddress
-                                            );
-                                            if (includeIdx >= 0) {
-                                                nextList.splice(includeIdx, 1);
-                                            }
-                                        }
-                                    }
-                                }
-
-                                if (idx >= 0) {
-                                    nextList[idx] = {
-                                        ...nextList[idx],
-                                        props: {
-                                            ...nextList[idx].props,
-                                            header: String(val),
-                                        },
-                                    };
-                                } else {
-                                    
-                                    nextList.push({
-                                        address,
-                                        startCol: c,
-                                        startRow: r,
-                                        endCol: colEnd,
-                                        endRow: rowEnd,
-                                        props: { header: String(val) },
-                                    });
-                                }
-                                // 현재 단일 셀 선택인 경우 formData.header도 동기화
-                                if (colStart === colEnd && rowStart === rowEnd) {
-                                    setFormData({
-                                        ...formData,
-                                        header: String(val),
-                                    });
-                                }
-                            }
-                        }
-                        console.log("nextList : ", nextList);
-                        setHeaderCellPropsList(nextList);
-                    }
+            // 단일 셀 편집 시 패널 header 동기화 (헤더 영역에 한함)
+            if (eventName === "onchange" || eventName === "onafterchanges") {
+                const raw = inst.getData();
+                const mergeData = inst.getMerge();
+                const headerDepth = stableDetectHeaderDepth(raw, mergeData);
+                console.log("rowStart : ", rowStart, headerDepth, colStart, colEnd, rowStart, rowEnd)
+                if (rowStart <= headerDepth && colStart === colEnd && rowStart === rowEnd) {
+                    const val = raw?.[rowStart]?.[colStart] ?? "";
+                    console.log("val : ", val, rangeAddress, formData)
+                    setHeaderCellPropsList(getHeaderCellPropsListData(rangeAddress));
+                    console.log("getHeaderCellPropsListData : ", getHeaderCellPropsListData(rangeAddress))
                 }
-            } catch (_) {
-                // no-op
+                
             }
 
             recomputeTable2Headers();
@@ -568,7 +468,6 @@ export default function JspreadSheet() {
             const inst = spreadsheet?.current?.[0];
             const selectedCell = inst?.selectedContainer;
             if (!Array.isArray(selectedCell) || selectedCell.length < 2) return;
-
             const startCol = Number(selectedCell[0]);
             const startRow = Number(selectedCell[1]);
             const endCol = Number(selectedCell[2]);
@@ -577,30 +476,38 @@ export default function JspreadSheet() {
             const address = getAddress(headers, startCol, startRow, endCol, endRow);
             setSelectedPos({ startCol, startRow, endCol, endRow });
             setSelectedCellAddress(address);
+            // 선택한 셀(좌상단) 값으로 formData.header 동기화
+            const raw = inst.getData();
+            const selectedHeaderVal = raw?.[startRow]?.[startCol] ?? "";
+            console.log("selectedHeaderVal : ", selectedHeaderVal)
             const headerList = headerCellPropsListRef.current;
             const existing = headerList.find((x:any) => x.address === address);
-            if (existing) {  
+
+            console.log("headerList : ", headerList, existing)
+            // 기존 설정이 있으면 나머지 필드는 유지하고 header만 현재 선택 셀 값으로 변경
+            if (existing) {
                 setFormData({
                     accessorKey: existing.props.accessorKey ?? "",
-                    header: existing.props.header ?? "",
-                    type: existing.props.type ?? "input",
+                    header: String(selectedHeaderVal ?? ""),
+                    type: (existing.props.type as any) ?? "input",
                     editable: existing.props.editable ?? true,
                     width: existing.props.width ?? undefined,
-                    // draggable: existing.props.draggable ?? false,
-                    // resizable: existing.props.resizable ?? true,
-                    align: existing.props.align ?? "left",
+                    align: (existing.props.align as any) ?? "left",
                     required: existing.props.required ?? false,
                     isParent: existing.props.isParent ?? false,
+                    selectItems: existing.props.selectItems ?? undefined,
                 });
             } else {
                 setFormData({
                     accessorKey: "",
-                    header: "",
+                    header: String(selectedHeaderVal ?? ""),
                     type: "input",
                     editable: true,
                     align: "left",
+                    width: "",
                     required: false,
                     isParent: false,
+                    // width: undefined,
                 });
             }
         }
@@ -609,6 +516,7 @@ export default function JspreadSheet() {
 
     useEffect(() => {
         headerCellPropsListRef.current = headerCellPropsList;
+        console.log("headerCellPropsList useEffect : ", headerCellPropsList)
     }, [headerCellPropsList]);
 
     const importData = () => {
@@ -731,7 +639,6 @@ export default function JspreadSheet() {
         // jspreadsheet-ce 인스턴스에 데이터 주입
         const inst = spreadsheet?.current?.[0];
         const ws = result?.worksheets?.[0];
-        console.log("ws : ", ws);
         if (inst && ws) {
             inst.setData(ws.data ?? []);
             const merge = ws.mergeCells ?? {};
@@ -830,6 +737,64 @@ export default function JspreadSheet() {
                                 input.onchange = load;
                                 input.click();
                             }}>엑셀 불러오기</Button>
+                            <Button variant="contained" size="small" sx={{width:"200px"}} onClick={() => {
+                            // 더미 데이터 정의
+                            const dummyHeaders = [
+                                { header: "A" },
+                                { header: "B" },
+                                { header: "C" },
+                                { header: "D" },
+                                { header: "E" },
+                            ];
+                            const dummyData = [
+                                ["이름", "부서", "직급", "입사일", "근무상태"],
+                            ];
+
+                            // 더미 셀 설정 값 예시 (type, selectItems 등)
+                            const dummyHeaderCellPropsList: HeaderCellConfig[] = [
+                                {
+                                    address: "D1:D1",
+                                    startCol: 3,
+                                    startRow: 0,
+                                    endCol: 3,
+                                    endRow: 0,
+                                    props: { header: "입사일", type: "datePicker"}
+                                },
+                                {
+                                    address: "E1:E1",
+                                    startCol: 4,
+                                    startRow: 0,
+                                    endCol: 4,
+                                    endRow: 0,
+                                    props: { header: "근무상태", type: "select", selectItems: [
+                                        { label: "재직", value: "재직" },
+                                        { label: "퇴사", value: "퇴사" },
+                                    ] }
+                                }
+                            ];
+
+                            // 1. sheet에 실제 데이터 집어넣기
+                            const inst = spreadsheet?.current?.[0];
+                            if (inst) {
+                                // 헤더 입력
+                                dummyHeaders.forEach((h, colIdx) => {
+                                    inst.setHeader(colIdx, h.header);
+                                });
+                                // 데이터 입력
+                                for (let row = 0; row < dummyData.length; row++) {
+                                    for (let col = 0; col < dummyData[row].length; col++) {
+                                        inst.setValueFromCoords(col, row, dummyData[row][col]);
+                                    }
+                                }
+                            }
+
+                            // 2. headerCellPropsList도 반영
+                            setHeaderCellPropsList(dummyHeaderCellPropsList);
+
+                            // 3. Table2 용 헤더도 재생성
+                            recomputeTable2Headers();
+
+                            }}>더미 데이터 넣기</Button>
                         </div>
                     </div>
                     {/* 셀 설정 영역 */}
@@ -842,7 +807,7 @@ export default function JspreadSheet() {
                 title="예시 테이블"
                 dialogContent={
                     <Box sx={{width:"100%", minHeight:"400px", padding: "20px 5px"}}>
-                        <Table2 title={title} columns={table2Headers as any} data={[]} checkbox={checkbox} No={noDisplay} isTotal={totalDisplay} 
+                        <Table2 isEditView={false} title={title} columns={table2Headers as any} data={[]} checkbox={checkbox} No={noDisplay} isTotal={totalDisplay} 
                             isPlusButton={plusButtonDisplay}
                             pagination={paginationDisplay ? { page: 1, size: 10, totalElements: 100, totalPages: 10, onPageChange: (page) => { console.log(page); } } : undefined}
                         />

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { TableSettingStore } from "../interface/type";
+import { HeaderCellProps, TableSettingStore } from "../interface/type";
 import { persist } from "@/shared/lib/store-util";
 import { immer } from "zustand/middleware/immer";
 import { cloneDeep, omitBy, includes } from "lodash-es";
@@ -19,7 +19,7 @@ const defaultValue: Pick<TableSettingStore, 'checkbox' | 'noDisplay' | 'paginati
         editable: true,
         required: false,
         align: "left",
-        selectItems: [],
+        width: "",
         isParent: false, // 부모 셀인지 여부 (true: 부모 셀, false: 자식 셀)
     },
     headerCellPropsList: [],
@@ -79,3 +79,26 @@ export const useTableSettingStore = create<TableSettingStore & { actions: TableS
 );
 
 export const useTableSettingActions = () => useTableSettingStore(state => state.actions);
+
+
+export const getHeaderCellPropsListData = (address: string): HeaderCellConfig[] => {
+    const { headerCellPropsList, selectedPos, formData } = useTableSettingStore.getState();
+    const prev = headerCellPropsList ?? [];
+    if (!selectedPos) return prev;
+    console.log("formData : ", formData)
+    const idx = prev.findIndex((x) => x.address === address);
+    const next: HeaderCellConfig = {
+        address,
+        startCol: selectedPos.startCol,
+        startRow: selectedPos.startRow,
+        endCol: selectedPos.endCol,
+        endRow: selectedPos.endRow,
+        props: { ...formData },
+    };
+    if (idx >= 0) {
+        const copy = prev.slice();
+        copy[idx] = next;
+        return copy;
+    }
+    return [...prev, next];
+}
