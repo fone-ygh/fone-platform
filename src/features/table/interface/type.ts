@@ -14,7 +14,7 @@ export interface TableSettingStore {
 export type FormData = {
     accessorKey: string;
     header: string;
-    type: "input" | "number" | "button" | "date" | "select" | "radio" | "checkbox";
+    type: "input" | "number" | "button" | "date" | "select" | "radio" | "checkbox" | "datePicker";
     editable: boolean;
     width?: number | string;
     draggable?: boolean;
@@ -28,7 +28,7 @@ export type FormData = {
 export type HeaderCellProps = {
     accessorKey?: string;
     header?: string;
-    type?: "input" | "number" | "button" | "date" | "select" | "radio" | "checkbox";
+    type?: "input" | "number" | "button" | "date" | "select" | "radio" | "checkbox" | "datePicker";
     editable?: boolean;
     width?: number | string;
     draggable?: boolean;

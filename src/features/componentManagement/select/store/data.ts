@@ -138,13 +138,13 @@ const useDataStore = create<State>(set => ({
   commonCodeData: [],
   apiData: [
     {
-      groupName: "사용여부",
       groupCode: "CT0001",
+      groupName: "/options/use-yn",
       groupDescription: "컴포넌트의 사용여부를 나타냄",
     },
     {
-      groupName: "직책유형",
       groupCode: "CT0002",
+      groupName: "/options/position",
       groupDescription: "조직 내 직책을 나타냄",
     },
   ],
