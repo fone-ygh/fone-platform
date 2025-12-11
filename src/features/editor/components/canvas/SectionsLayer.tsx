@@ -118,6 +118,7 @@ export default function SectionsLayer(props: SectionsLayerProps) {
   //   () => sections.slice().sort((a, b) => (a.z ?? 0) - (b.z ?? 0)),
   //   [sections],
   // );
+  const scopeKey = scopeContainer ? scopeContainer.id : "root";
 
   return (
     <>
@@ -131,7 +132,7 @@ export default function SectionsLayer(props: SectionsLayerProps) {
 
         return (
           <ResizeContainer
-            key={s.id}
+            key={`${scopeKey}-${s.id}`}
             id={s.id}
             active={isLocked ? false : isActive}
             onActiveChange={act => {
