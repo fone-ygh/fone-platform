@@ -14,6 +14,7 @@ export default function ApiTable() {
       accessorKey: "groupCode",
       header: "API코드",
       width: "16%",
+      align: "center",
     },
     {
       accessorKey: "groupName",
