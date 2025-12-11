@@ -13,7 +13,9 @@ export default function Input({ register }: InputProps) {
 
   return (
     <InputStyle>
-      <span>{dataType === "commonCode" ? "그룹명" : "API명"}</span>
+      <span>
+        {dataType === "commonCode" ? "그룹코드 / 그룹명" : "API코드 / API명"}
+      </span>
       <TextField2 sx={{ height: 30 }} {...register("name")} defaultValue="" />
     </InputStyle>
   );
