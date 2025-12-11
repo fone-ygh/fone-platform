@@ -27,12 +27,12 @@ export default function Page({
     setReset();
 
     if (routeId === "new") {
-      // 🔥 새 화면: patternId 기반으로 레이아웃 생성
+      // 새 화면: patternId 기반으로 레이아웃 생성
       const pid = originPatternId ?? "blank";
       const sections = createSectionsForPattern(pid);
       setSections(sections);
     } else {
-      // 🔥 기존 화면: id 기반으로 저장된 레이아웃 불러오기 (TODO)
+      // 기존 화면: id 기반으로 저장된 레이아웃 불러오기 (TODO)
       // 예시:
       // fetch(`/api/editor/${id}`)
       //   .then(res => res.json())

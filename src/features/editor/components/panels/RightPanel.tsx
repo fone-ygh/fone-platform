@@ -20,6 +20,7 @@ import {
   usePatternStore,
 } from "@/shared/store/pattern/store";
 
+import useCurrentAreaSection from "../../hooks/useCurrentAreaSection";
 import { useCurrentPatternMeta } from "../../hooks/useCurrentPatternMeta";
 import { LayoutCard } from "./right/LayoutCard";
 
@@ -103,6 +104,7 @@ function SavePatternDialog({
 /* ---------------- RightPanel ---------------- */
 
 export default function RightPanel() {
+  const { areaSection, areaType, isDetailMode } = useCurrentAreaSection();
   /* -------- router / url params -------- */
   const router = useRouter();
   const params = useParams();
@@ -262,6 +264,14 @@ export default function RightPanel() {
     setPageTitle,
   ]);
 
+  // 영역 타입에 따라 다른 UI
+  let areaLabel = "전체 화면 편집";
+  if (isDetailMode && areaSection) {
+    if (areaType === "search") areaLabel = "Search 영역 편집";
+    if (areaType === "grid") areaLabel = "Grid 영역 편집";
+    if (areaType === "single") areaLabel = "Single 영역 편집";
+    if (areaType === "tab") areaLabel = "Tab 영역 편집";
+  }
   return (
     <Aside position="right" defaultWidth={340} minWidth={0} maxWidth={560}>
       <div
@@ -297,39 +307,58 @@ export default function RightPanel() {
           </div>
         </>
       )}
+      {areaType === null && (
+        <>
+          {/* layout card */}
+          <LayoutCard
+            selectedCount={selectedIds.length}
+            hasSelection={hasSelection}
+            sectionsLength={sections.length}
+            insertTool={insertTool}
+            setInsertTool={setInsertTool}
+            onDuplicateSelected={setDuplicateSelected}
+            onDeleteSelected={handleDeleteSelected}
+            onClearAll={handleClearAll}
+            onImportFile={importJsonFile}
+            onDownloadJsonFile={downloadJsonFile}
+          />
 
-      {/* layout card */}
-      <LayoutCard
-        selectedCount={selectedIds.length}
-        hasSelection={hasSelection}
-        sectionsLength={sections.length}
-        insertTool={insertTool}
-        setInsertTool={setInsertTool}
-        onDuplicateSelected={setDuplicateSelected}
-        onDeleteSelected={handleDeleteSelected}
-        onClearAll={handleClearAll}
-        onImportFile={importJsonFile}
-        onDownloadJsonFile={downloadJsonFile}
-      />
+          {/* save */}
+          <div style={{ display: "flex", gap: 8, padding: "10px 0" }}>
+            <Button
+              variant="contained"
+              onClick={openSaveModal}
+              style={{ flex: 1 }}
+            >
+              저장
+            </Button>
+          </div>
 
-      {/* save */}
-      <div style={{ display: "flex", gap: 8, padding: "10px 0" }}>
-        <Button variant="contained" onClick={openSaveModal} style={{ flex: 1 }}>
-          저장
-        </Button>
-      </div>
+          {/* dialogs */}
+          <SavePatternDialog
+            open={saveOpen}
+            title={title}
+            description={description}
+            error={saveError}
+            onChangeTitle={setTitle}
+            onChangeDescription={setDescription}
+            onClose={closeSaveModal}
+            onSave={handleSave}
+          />
+        </>
+      )}
 
-      {/* dialogs */}
-      <SavePatternDialog
-        open={saveOpen}
-        title={title}
-        description={description}
-        error={saveError}
-        onChangeTitle={setTitle}
-        onChangeDescription={setDescription}
-        onClose={closeSaveModal}
-        onSave={handleSave}
-      />
+      {/* search 영역일 때만 보이는 설정 */}
+      {areaType === "search" && <div>검색 영역 전용 옵션들...</div>}
+
+      {/* grid 영역일 때만 보이는 설정 */}
+      {areaType === "grid" && <div>그리드 영역 전용 옵션들...</div>}
+
+      {/* single 영역일 때만 보이는 설정 */}
+      {areaType === "single" && <div>싱글 영역 전용 옵션들...</div>}
+
+      {/* tab 영역일 때만 보이는 설정 */}
+      {areaType === "tab" && <div>싱글 영역 전용 옵션들...</div>}
     </Aside>
   );
 }
