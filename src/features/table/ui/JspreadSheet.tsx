@@ -112,8 +112,9 @@ export default function JspreadSheet() {
     function toCellPropsMap(headers: { header: string; width?: number | string }[], list: HeaderCellConfig[]) {
         const map: Record<string, Partial<HeaderCellProps>> = {};
         for (const item of list) {
+            console.log("item : ", item, headers)
             const addr = getAddressFromHeader(headers, item.startCol, item.startRow);
-            map[addr] = { ...map[addr], ...item.props, width: headers[item.startCol].width };
+            map[addr] = { ...map[addr], ...item.props, width: Number(item.props.width) };
         }
         return map;
     }
@@ -210,21 +211,15 @@ export default function JspreadSheet() {
           } else if (level < headerDepth - 1) {
             // 하위 레벨이 있지만 그룹 조건을 만족하지 않으므로, 현재 레벨에서 바로 리프 처리
             const leafOverride = overrideProps;
+            console.log("leafOverride : ", leafOverride, headers[col].width)
             if (hasOverrideHeader || hasNameHere) {
               nodes.push({
                 key: (leafOverride?.accessorKey && String(leafOverride.accessorKey).trim() !== "") ? String(leafOverride.accessorKey) : headers[col].header,
                 accessorKey: (leafOverride?.accessorKey && String(leafOverride.accessorKey).trim() !== "") ? String(leafOverride.accessorKey) : headers[col].header,
                 header: hasOverrideHeader ? String(overrideProps?.header) : String(nameHere),
                 type: (leafOverride?.type as ColumnNode["type"]) || inferType(rowDatas, headerDepth, col),
-                component:React.createElement(() => {
-                    return (
-                        <div>
-                            asd;akjsd
-                        </div>
-                    )
-                }),
                 editable: leafOverride?.editable ?? true,
-                width: headers[col].width ?? undefined,
+                width: headers[col]?.width !== undefined ? Number(headers[col]?.width) : (leafOverride?.width !== undefined ? Number(leafOverride?.width) : undefined),
                 // draggable: leafOverride?.draggable ?? false,
                 resizable: leafOverride?.resizable ?? true,
                 align: (leafOverride?.align as any) ?? "left",
@@ -238,11 +233,12 @@ export default function JspreadSheet() {
             // 리프 노드들
             for (let c = col; c < col + spanCols; c++) {
               const leafOverride = getPropsForCell(cellPropsMap, headers, c, level);
+              console.log("leafOverride : ", leafOverride, cellPropsMap, c)
               const hasLeafOverrideHeader = !!(leafOverride?.header && String(leafOverride.header).trim() !== "");
               const cellVal = rowDatas[level]?.[c];
               const hasLeafNameHere = !!(cellVal !== null && cellVal !== undefined && String(cellVal).trim() !== "");
               const leafName = hasLeafOverrideHeader ? String(leafOverride.header) : (hasLeafNameHere ? String(cellVal) : "");
-
+              console.log("leafName : ", leafName, "headers[c].width : ", headers[c].width, "headers : ", headers)
                 if (hasLeafOverrideHeader || hasLeafNameHere) {
                     nodes.push({
                         key: (leafOverride?.accessorKey && String(leafOverride.accessorKey).trim() !== "") ? String(leafOverride.accessorKey) : headers[c].header,
@@ -250,7 +246,7 @@ export default function JspreadSheet() {
                         header: leafName,
                         type: (leafOverride?.type === "button" ? "custom" : leafOverride?.type as ColumnNode["type"]) || inferType(rowDatas, headerDepth, c),
                         editable: leafOverride?.editable ?? true,
-                        width: headers[c].width ?? undefined,
+                        width: headers[c]?.width !== undefined ? Number(headers[c]?.width) : (leafOverride?.width !== undefined ? Number(leafOverride?.width) : undefined),
 
                         // type이 custom이여야 component를 사용할 수 있음
                         component:React.createElement(() => {
@@ -362,6 +358,7 @@ export default function JspreadSheet() {
         });
         const mergeData = inst.getMerge();
         const cellPropsMap = toCellPropsMapRef.current(headers, headerCellPropsListRef.current);
+        console.log("cellPropsMap : ", cellPropsMap, headerCellPropsListRef.current)
         const resultHeaders = buildColumnsFromJSSRef.current(headers, rawData, mergeData, undefined, cellPropsMap);
         console.log("resultHeaders : ", resultHeaders)
         setTable2Headers(resultHeaders as ColumnNode[]);
@@ -383,7 +380,6 @@ export default function JspreadSheet() {
         if(eventName === "onresizecolumn") { 
             const inst = spreadsheet?.current?.[0];
             const selectedCell = inst?.selectedContainer;
-              ;
             if (!Array.isArray(selectedCell) || selectedCell.length < 2) return;
             const startCol = Number(selectedCell[0]);
             const startRow = Number(selectedCell[1]);
@@ -401,18 +397,10 @@ export default function JspreadSheet() {
             const width = headers?.[startCol]?.width ?? undefined;
             const headerList = headerCellPropsListRef.current;
             const existing = headerList.find((x:any) => x.address === address);
-            console.log("existing : ", existing, address, headerList)
+            console.log("existing : ", existing,  formData)
             if (existing) {
                 setFormData({
-                    accessorKey: existing.props.accessorKey ?? "",
-                    header: existing.props.header ?? "",
-                    type: existing.props.type ?? "input",
-                    editable: existing.props.editable ?? true,
-                    // draggable: existing.props.draggable ?? false,
-                    // resizable: existing.props.resizable ?? true,
-                    align: existing.props.align ?? "left",
-                    required: existing.props.required ?? false,
-                    isParent: existing.props.isParent ?? false,
+                    ...(getHeaderCellPropsListData(address)[0].props as any),
                     width: width ?? existing.props.width ?? undefined,
                 });
                 setHeaderCellPropsList(getHeaderCellPropsListData(address));
@@ -479,7 +467,7 @@ export default function JspreadSheet() {
             // 선택한 셀(좌상단) 값으로 formData.header 동기화
             const raw = inst.getData();
             const selectedHeaderVal = raw?.[startRow]?.[startCol] ?? "";
-            console.log("selectedHeaderVal : ", selectedHeaderVal)
+            console.log("selectedHeaderVal : ", selectedHeaderVal, raw)
             const headerList = headerCellPropsListRef.current;
             const existing = headerList.find((x:any) => x.address === address);
 
@@ -491,7 +479,7 @@ export default function JspreadSheet() {
                     header: String(selectedHeaderVal ?? ""),
                     type: (existing.props.type as any) ?? "input",
                     editable: existing.props.editable ?? true,
-                    width: existing.props.width ?? undefined,
+                    width: existing.props.width ?? "",
                     align: (existing.props.align as any) ?? "left",
                     required: existing.props.required ?? false,
                     isParent: existing.props.isParent ?? false,
@@ -807,7 +795,7 @@ export default function JspreadSheet() {
                 title="예시 테이블"
                 dialogContent={
                     <Box sx={{width:"100%", minHeight:"400px", padding: "20px 5px"}}>
-                        <Table2 isEditView={false} title={title} columns={table2Headers as any} data={[]} checkbox={checkbox} No={noDisplay} isTotal={totalDisplay} 
+                        <Table2 isEditView={false} title={title} columns={table2Headers as any} data={[{},{},{},{},{}]} checkbox={checkbox} No={noDisplay} isTotal={totalDisplay} 
                             isPlusButton={plusButtonDisplay}
                             pagination={paginationDisplay ? { page: 1, size: 10, totalElements: 100, totalPages: 10, onPageChange: (page) => { console.log(page); } } : undefined}
                         />
