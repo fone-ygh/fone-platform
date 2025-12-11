@@ -1,9 +1,4 @@
-// 화면 패턴 메타
-export interface ScreenPattern {
-  id: string;
-  title?: string;
-  description?: string;
-}
+import { ScreenPattern } from "./type";
 
 // 실제 패턴 목록
 export const SCREEN_PATTERNS: ScreenPattern[] = [

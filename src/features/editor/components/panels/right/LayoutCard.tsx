@@ -18,7 +18,6 @@ interface LayoutCardProps {
   onClearAll: () => void;
   onImportFile: () => void;
   onDownloadJsonFile: () => void;
-  onOpenJsonModal: () => void;
 }
 
 export const LayoutCard: React.FC<LayoutCardProps> = props => {
@@ -33,7 +32,6 @@ export const LayoutCard: React.FC<LayoutCardProps> = props => {
     onClearAll,
     onImportFile,
     onDownloadJsonFile,
-    onOpenJsonModal,
   } = props;
 
   return (
