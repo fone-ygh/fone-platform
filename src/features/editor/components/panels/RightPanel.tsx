@@ -264,51 +264,45 @@ export default function RightPanel() {
     setPageTitle,
   ]);
 
-  // 영역 타입에 따라 다른 UI
-  let areaLabel = "전체 화면 편집";
-  if (isDetailMode && areaSection) {
-    if (areaType === "search") areaLabel = "Search 영역 편집";
-    if (areaType === "grid") areaLabel = "Grid 영역 편집";
-    if (areaType === "single") areaLabel = "Single 영역 편집";
-    if (areaType === "tab") areaLabel = "Tab 영역 편집";
-  }
   return (
     <Aside position="right" defaultWidth={340} minWidth={0} maxWidth={560}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          marginBottom: "10px",
-        }}
-      >
-        <label htmlFor="" style={{ flexShrink: 0 }}>
-          페이지명 :
-        </label>
-        <TextField
-          size="small"
-          value={pageTitle}
-          onChange={e => setPageTitle(e.target.value)} // ★ 여기가 포인트
-          sx={{ "& input": { fontWeight: "bold" } }}
-        />
-      </div>
-      {/* selection lock */}
-      {selectedOne && (
+      {isDetailMode === false && (
         <>
-          <h3 style={{ margin: "12px 0 6px" }}>{selectedOne.title}</h3>
-          <div className="card-body">
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <Label>Lock</Label>
-              <Switch
-                checked={!!selectedOne.lock}
-                onChange={(e: any) => setLock(selectedOne.id, e.target.checked)}
-              />
-            </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              marginBottom: "10px",
+            }}
+          >
+            <label htmlFor="" style={{ flexShrink: 0 }}>
+              페이지명 :
+            </label>
+            <TextField
+              size="small"
+              value={pageTitle}
+              onChange={e => setPageTitle(e.target.value)} // ★ 여기가 포인트
+              sx={{ "& input": { fontWeight: "bold" } }}
+            />
           </div>
-        </>
-      )}
-      {areaType === null && (
-        <>
+          {/* selection lock */}
+          {selectedOne && (
+            <>
+              <h3 style={{ margin: "12px 0 6px" }}>{selectedOne.title}</h3>
+              <div className="card-body">
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <Label>Lock</Label>
+                  <Switch
+                    checked={!!selectedOne.lock}
+                    onChange={(e: any) =>
+                      setLock(selectedOne.id, e.target.checked)
+                    }
+                  />
+                </div>
+              </div>
+            </>
+          )}
           {/* layout card */}
           <LayoutCard
             selectedCount={selectedIds.length}
@@ -349,16 +343,24 @@ export default function RightPanel() {
       )}
 
       {/* search 영역일 때만 보이는 설정 */}
-      {areaType === "search" && <div>검색 영역 전용 옵션들...</div>}
+      {isDetailMode && areaType === "search" && (
+        <div>검색 영역 전용 옵션들...</div>
+      )}
 
       {/* grid 영역일 때만 보이는 설정 */}
-      {areaType === "grid" && <div>그리드 영역 전용 옵션들...</div>}
+      {isDetailMode && areaType === "grid" && (
+        <div>그리드 영역 전용 옵션들...</div>
+      )}
 
       {/* single 영역일 때만 보이는 설정 */}
-      {areaType === "single" && <div>싱글 영역 전용 옵션들...</div>}
+      {isDetailMode && areaType === "single" && (
+        <div>싱글 영역 전용 옵션들...</div>
+      )}
 
       {/* tab 영역일 때만 보이는 설정 */}
-      {areaType === "tab" && <div>싱글 영역 전용 옵션들...</div>}
+      {isDetailMode && areaType === "tab" && (
+        <div>싱글 영역 전용 옵션들...</div>
+      )}
     </Aside>
   );
 }
