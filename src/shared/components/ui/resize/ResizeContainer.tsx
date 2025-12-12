@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import styled from "@emotion/styled";
 import Moveable from "react-moveable";
 
@@ -147,6 +147,17 @@ export default function ResizeContainer({
       y: propY || 0,
     });
   }, [id, propWidth, propHeight, propX, propY, setResize]);
+
+  useLayoutEffect(() => {
+    if (!targetRef.current) return;
+
+    targetRef.current.style.left = `${x}px`;
+    targetRef.current.style.top = `${y}px`;
+    targetRef.current.style.width = `${width}px`;
+    targetRef.current.style.height = `${height}px`;
+
+    moveableRef.current?.updateRect();
+  }, [x, y, width, height, zoom, containerEl]);
 
   // resize anchor state (for N/W handles)
   const resizeStartRef = useRef<{
