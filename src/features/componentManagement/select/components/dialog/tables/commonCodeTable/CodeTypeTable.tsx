@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Table2 } from "fone-design-system_v1";
 
 import useCodeTypeStore from "@/features/componentManagement/select/store/codeType";
@@ -5,6 +6,7 @@ import useDataStore from "@/features/componentManagement/select/store/data";
 import useDialogStore from "@/features/componentManagement/select/store/dialog";
 
 export default function CodeTypeTable() {
+  const [idx, setIdx] = useState(0);
   const { codeTypeData, setCodeTypeData, setCommonCodeData } = useDataStore();
   const { setCheckedRows, setSelectedCheckedRows } = useCodeTypeStore();
   const { setIsOpen } = useDialogStore();
@@ -34,7 +36,7 @@ export default function CodeTypeTable() {
     },
   ];
 
-  const onSaveHandler = (rows: any[]) => {
+  const onSaveHandler = (rows: any[], allData: any[]) => {
     const newData = rows.map(item => {
       return {
         groupCode: item.groupCode,
@@ -48,7 +50,13 @@ export default function CodeTypeTable() {
       return !rows.find(row => row.groupCode === item.groupCode);
     });
 
+    const rowIdx = allData.findIndex(
+      item => item.groupCode === rows[0].groupCode,
+    );
+
     setCodeTypeData([...newData, ...updatedData]);
+    setSelectedCheckedRows(rows);
+    setIdx(rowIdx);
   };
 
   const onDeleteHandler = (rows: any[]) => {
@@ -59,9 +67,10 @@ export default function CodeTypeTable() {
     setCodeTypeData(newData);
   };
 
-  const onRowClickHandler = (row: any) => {
+  const onRowClickHandler = (row: any, index: number) => {
     setCommonCodeData(row.commonCodeData || []);
     setSelectedCheckedRows([row]);
+    setIdx(index);
   };
 
   const onRowDoubleClickHandler = (row: any) => {
@@ -83,7 +92,7 @@ export default function CodeTypeTable() {
       onDelete={onDeleteHandler}
       onRowClick={onRowClickHandler}
       onRowDoubleClick={onRowDoubleClickHandler}
-      rowClickTriggerIdx={0}
+      rowClickTriggerIdx={idx}
       onChecked={onCheckedHandler}
       checkbox
     />

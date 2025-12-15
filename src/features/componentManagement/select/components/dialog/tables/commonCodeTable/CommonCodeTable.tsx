@@ -50,8 +50,6 @@ export default function CommonCodeTable() {
       return !rows.find(row => row.code === item.code);
     });
 
-    console.log(selectedCheckedRows);
-
     const updatedCodeTypeData = codeTypeData.map(ctd => {
       if (ctd.groupCode === selectedCheckedRows[0].groupCode) {
         return {
