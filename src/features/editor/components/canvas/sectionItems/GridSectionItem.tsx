@@ -4,6 +4,7 @@
 import React from "react";
 
 import type { GridSection } from "@/shared/store";
+import JspreadSheet from "@/features/table/ui/JspreadSheet";
 
 type Props = {
   item: GridSection;
@@ -19,6 +20,7 @@ export default function GridSectionItem({ item }: Props) {
       }}
     >
       {/* Grid 영역 내용 */}
+      <JspreadSheet />
     </div>
   );
 }
