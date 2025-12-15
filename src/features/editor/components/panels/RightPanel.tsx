@@ -23,6 +23,7 @@ import {
 import useCurrentAreaSection from "../../hooks/useCurrentAreaSection";
 import { useCurrentPatternMeta } from "../../hooks/useCurrentPatternMeta";
 import { LayoutCard } from "./right/LayoutCard";
+import CellSettingArea from "@/features/table/components/CellSettingArea";
 
 function buildEditorUrl(
   editorId: string,
@@ -316,7 +317,7 @@ export default function RightPanel() {
             onImportFile={importJsonFile}
             onDownloadJsonFile={downloadJsonFile}
           />
-
+          
           {/* save */}
           <div style={{ display: "flex", gap: 8, padding: "10px 0" }}>
             <Button
@@ -349,7 +350,11 @@ export default function RightPanel() {
 
       {/* grid 영역일 때만 보이는 설정 */}
       {isDetailMode && areaType === "grid" && (
-        <div>그리드 영역 전용 옵션들...</div>
+        <div>
+          <div>그리드 영역 전용 옵션들...</div>
+          {/* 셀 설정 영역 */}
+          {/* <CellSettingArea spreadsheet={spreadsheet} /> */}
+        </div>
       )}
 
       {/* single 영역일 때만 보이는 설정 */}

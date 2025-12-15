@@ -11,6 +11,8 @@ export interface TableSettingStore {
     title?: string;
 }
 
+import type { ReactNode } from "react";
+
 export type FormData = {
     accessorKey: string;
     header: string;
@@ -23,6 +25,7 @@ export type FormData = {
     selectItems?: any[];
     align: "left" | "center" | "right";
     isParent?: boolean; // 부모 셀인지 여부 (true: 부모 셀, false: 자식 셀)
+    
 };
 
 export type HeaderCellProps = {
@@ -46,5 +49,34 @@ export type HeaderCellConfig = {
     endCol: number;
     endRow: number;
     props: Partial<HeaderCellProps>;
+};
+
+export type ColumnNode = {
+    accessorKey?: string;
+    key: string;
+    header?: string;
+    name?: string;
+    type?:
+        | "input"
+        | "number"
+        | "button"
+        | "date"
+        | "select"
+        | "radio"
+        | "checkbox"
+        | "custom";
+	component?: ReactNode;
+    children?: ColumnNode[];
+    editable?: boolean;
+    width?: number | string;
+    draggable?: boolean;
+    resizable?: boolean;
+    align?: "left" | "center" | "right";
+    required?: boolean;
+    selectItems?: any[];
+    columns?: ColumnNode[];
+    role?: "group" | "leaf";
+    disabled?: boolean;
+    readonly?: boolean;
 };
 
