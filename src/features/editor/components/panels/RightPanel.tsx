@@ -283,7 +283,7 @@ export default function RightPanel() {
             <TextField
               size="small"
               value={pageTitle}
-              onChange={e => setPageTitle(e.target.value)} // ★ 여기가 포인트
+              onChange={e => setPageTitle(e.target.value)}
               sx={{ "& input": { fontWeight: "bold" } }}
             />
           </div>
@@ -363,9 +363,7 @@ export default function RightPanel() {
       )}
 
       {/* tab 영역일 때만 보이는 설정 */}
-      {isDetailMode && areaType === "tab" && (
-        <div>싱글 영역 전용 옵션들...</div>
-      )}
+      {isDetailMode && areaType === "tab" && <div>탭 영역 전용 옵션들...</div>}
     </Aside>
   );
 }
