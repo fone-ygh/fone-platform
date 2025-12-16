@@ -1,7 +1,6 @@
 // src/shared/store/control/types.ts
+import { InsertTool } from "../layout";
 import { EditorMode } from "./editorMode";
-
-export type InsertTool = "search" | "single" | "grid" | "tab";
 
 export type EditorActions = {
   setCanvasWidth: (w: number) => void;
