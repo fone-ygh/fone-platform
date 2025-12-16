@@ -386,7 +386,7 @@ interface StyledContainerProps {
 }
 
 const StyledContainer = styled.div<StyledContainerProps>`
-  position: ${({ draggable }) => (draggable ? "absolute" : "static")};
+  position: absolute;
   left: ${({ x }) => `${x ?? 0}px`};
   top: ${({ y }) => `${y ?? 0}px`};
   width: ${({ width }) => (typeof width === "number" ? `${width}px` : width)};
