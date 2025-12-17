@@ -15,7 +15,7 @@ import {
 
 import { SCREEN_PATTERNS } from "@/shared/store/pattern/default";
 import { usePatternStore } from "@/shared/store/pattern/store";
-import { CustomPattern } from "@/shared/store/pattern/type";
+import { CustomPattern } from "@/shared/store/pattern/types";
 
 import PatternCard from "./PatternCard";
 

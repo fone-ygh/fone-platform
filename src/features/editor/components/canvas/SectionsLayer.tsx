@@ -4,6 +4,7 @@
 import React from "react";
 
 import ResizeContainer from "@/shared/components/ui/resize/ResizeContainer";
+import { useEDITORStore } from "@/shared/store/control";
 import type { AnySection, Section } from "@/shared/store/layout/types";
 
 import type { Rect } from "../../hooks/collision";
@@ -101,7 +102,7 @@ export default function SectionsLayer(props: SectionsLayerProps) {
     setCanvasZoom: _setCanvasZoom,
     setPan: _setPan,
   } = props;
-
+  const { editorMode } = useEDITORStore();
   /** 로컬 좌표(rect)를 전역 좌표로 변환하는 헬퍼 */
   const toWorldRect = (local: Rect): Rect => {
     if (!scopeContainer) return local; // 루트이면 그대로
@@ -119,9 +120,40 @@ export default function SectionsLayer(props: SectionsLayerProps) {
   //   [sections],
   // );
   const scopeKey = scopeContainer ? scopeContainer.id : "root";
+  const blockDrag =
+    editorMode.kind === "contentEdit" &&
+    scopeContainer &&
+    scopeContainer.id !== null &&
+    editorMode.sectionId === scopeContainer.id;
+  console.log("scopeContainer : ", scopeContainer);
 
   return (
     <>
+      {scopeContainer && (
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            zIndex: 10,
+            width: scopeContainer.width,
+            height: scopeContainer.height,
+            border: "1px solid rgba(99,102,241,0.35)",
+            background: scopeContainer.bg,
+            // pointerEvents: "none",
+            boxSizing: "border-box",
+          }}
+        >
+          <SectionItemView
+            item={scopeContainer}
+            selected={true}
+            onRequestSelect={multi => {
+              // shift/meta 선택 멀티 셀렉션
+              setSelectedIds([scopeContainer.id]);
+            }}
+          />
+        </div>
+      )}
       {sections.map(section => {
         const isSelected = selectedIds.includes(section.id);
         const isActive = activeId === section.id;
@@ -145,7 +177,7 @@ export default function SectionsLayer(props: SectionsLayerProps) {
             height={s.height}
             x={s.x}
             y={s.y}
-            draggable
+            draggable={isActive && !blockDrag}
             resizable
             containerEl={containerEl as any}
             targets={selectedEls.length > 1 ? selectedEls : undefined}
@@ -153,6 +185,12 @@ export default function SectionsLayer(props: SectionsLayerProps) {
             snapGridWidth={snapGridSize}
             snapGridHeight={snapGridSize}
             elementGuidelines={guidelineEls}
+            onDragStart={e => {
+              if (blockDrag) {
+                e.stop?.();
+                return;
+              }
+            }}
             /* ===== 드래그 중 (move) ===== */
             onDrag={(e: any) => {
               if (isPanning || isLocked) return;

@@ -31,7 +31,7 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
     ref,
   ) {
     const [hovered, setHovered] = useState(false);
-
+    console.log("item : ", item);
     const bg = item.bg;
     const textColor = item.color;
     const isLocked = !!item.lock;
@@ -92,7 +92,6 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
       onRequestSelect?.(e.shiftKey || e.metaKey || e.ctrlKey);
     };
 
-    // ---- 타입별 렌더링 ----
     const renderContent = () => {
       switch (item.type) {
         case "search":
@@ -107,7 +106,6 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
           return <div style={{ padding: 8, color: "#6b7280", fontSize: 12 }} />;
       }
     };
-
     return (
       <div
         ref={ref}
