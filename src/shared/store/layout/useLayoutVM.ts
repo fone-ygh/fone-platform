@@ -31,7 +31,8 @@ export function useLayoutVM() {
   const scopedSections = useMemo<AnySection[]>(() => {
     if (!scopeParentId) return sections as AnySection[];
     return (sections as AnySection[]).filter(
-      s => s.id === scopeParentId || (s.parentId ?? null) === scopeParentId,
+      // s => s.id === scopeParentId || (s.parentId ?? null) === scopeParentId,
+      s => (s.parentId ?? null) === scopeParentId,
     );
   }, [sections, scopeParentId]);
 

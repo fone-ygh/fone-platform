@@ -1,5 +1,4 @@
 // src/shared/store/control/types.ts
-import { InsertTool } from "../layout";
 import { EditorMode } from "./editorMode";
 
 export type EditorActions = {

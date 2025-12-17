@@ -2,8 +2,6 @@ import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import styled from "@emotion/styled";
 import Moveable from "react-moveable";
 
-import useResizeStore from "@/shared/store/resize";
-
 type TargetsType = (HTMLElement | SVGElement)[] | undefined;
 
 interface Props {
@@ -90,11 +88,11 @@ export default function ResizeContainer({
   minHeight = 0,
   maxHeight = Infinity,
 
-  // initial layout
-  width: propWidth,
-  height: propHeight,
-  x: propX = 0,
-  y: propY = 0,
+  // controlled layout
+  width,
+  height,
+  x,
+  y,
   rotate = 0,
 
   // coords
@@ -132,22 +130,11 @@ export default function ResizeContainer({
   const [internalActive, setInternalActive] = useState(defaultActive);
   const isActive = active ?? internalActive;
 
-  // layout cache (zustand)
-  const { resize, setResize } = useResizeStore();
-  const width = resize[id]?.width ?? propWidth;
-  const height = resize[id]?.height ?? propHeight;
-  const x = resize[id]?.x ?? propX ?? 0;
-  const y = resize[id]?.y ?? propY ?? 0;
-
-  useEffect(() => {
-    setResize(id, {
-      width: propWidth || 0,
-      height: propHeight || 0,
-      x: propX || 0,
-      y: propY || 0,
-    });
-  }, [id, propWidth, propHeight, propX, propY, setResize]);
-
+  /**
+   * props(x/y/w/h)가 바뀌면 DOM에 반영
+   * - 드래그 중에는 부모 props가 안 바뀌는 게 보통이라 (=end에서만 커밋)
+   *   이 effect가 드래그 DOM을 덮어쓰지 않음
+   */
   useLayoutEffect(() => {
     if (!targetRef.current) return;
 
@@ -156,10 +143,12 @@ export default function ResizeContainer({
     targetRef.current.style.width = `${width}px`;
     targetRef.current.style.height = `${height}px`;
 
+    // Moveable 컨트롤 박스 sync
+    // (컨테이너/줌 바뀔 때도 rect 갱신 필요)
     moveableRef.current?.updateRect();
   }, [x, y, width, height, zoom, containerEl]);
 
-  // resize anchor state (for N/W handles)
+  // resize anchor state (N/W 핸들에서 좌표 보정용)
   const resizeStartRef = useRef<{
     width: number;
     height: number;
@@ -252,11 +241,16 @@ export default function ResizeContainer({
         onDragStart={e => onDragStart?.(e)}
         onDrag={e => {
           const el = e.target as HTMLElement;
+
+          // 드래그 중은 DOM만 변경 (부모 state는 end에서 커밋)
           el.style.left = `${e.left}px`;
           el.style.top = `${e.top}px`;
           onDrag?.(e);
         }}
-        onDragEnd={e => onDragEnd?.(e)}
+        onDragEnd={e =>
+          // 커밋은 바깥(SectionsLayer)에서 setUpdateFrame으로 처리
+          onDragEnd?.(e)
+        }
         /* ----- Drag (group) ----- */
         onDragGroupStart={e => onDragGroupStart?.(e)}
         onDragGroup={e => {
@@ -277,6 +271,7 @@ export default function ResizeContainer({
           const startLeft = parseFloat(cs.left) || 0;
           const startTop = parseFloat(cs.top) || 0;
           const [dirX, dirY] = (e.direction as number[]) || [0, 0];
+
           resizeStartRef.current = {
             width: startWidth,
             height: startHeight,
@@ -309,25 +304,8 @@ export default function ResizeContainer({
           onResize?.(e);
         }}
         onResizeEnd={e => {
-          const target = e.target as HTMLElement;
-          const cs = getComputedStyle(target);
-
-          const finalLeft = parseFloat(cs.left) || x || 0;
-          const finalTop = parseFloat(cs.top) || y || 0;
-          const finalW =
-            (e?.lastEvent?.width as number) ??
-            (parseFloat(cs.width) || width || 0);
-          const finalH =
-            (e?.lastEvent?.height as number) ??
-            (parseFloat(cs.height) || height || 0);
-
-          setResize(id, {
-            width: finalW,
-            height: finalH,
-            x: draggable ? finalLeft : x,
-            y: draggable ? finalTop : y,
-          });
           resizeStartRef.current = null;
+          // 커밋은 바깥에서 처리
           onResizeEnd?.(e);
         }}
         /* ----- Resize (group) ----- */
@@ -361,11 +339,6 @@ export default function ResizeContainer({
         id={id}
         ref={targetRef}
         onPointerDownCapture={handlePointerDownCapture}
-        width={width || "auto"}
-        height={height || "auto"}
-        x={x}
-        y={y}
-        draggable={draggable}
         style={{
           transform: rotate ? `rotate(${rotate}deg)` : "none",
           transformOrigin: "left top",
@@ -377,19 +350,9 @@ export default function ResizeContainer({
   );
 }
 
-interface StyledContainerProps {
-  width?: number | string;
-  height?: number | string;
-  x?: number;
-  y?: number;
-  draggable?: boolean;
-}
-
-const StyledContainer = styled.div<StyledContainerProps>`
+const StyledContainer = styled.div`
   position: absolute;
-  left: ${({ x }) => `${x ?? 0}px`};
-  top: ${({ y }) => `${y ?? 0}px`};
-  width: ${({ width }) => (typeof width === "number" ? `${width}px` : width)};
-  height: ${({ height }) =>
-    typeof height === "number" ? `${height}px` : height};
+  left: 0;
+  top: 0;
+  /* width/height/left/top은 useLayoutEffect에서 inline style로 넣음 */
 `;

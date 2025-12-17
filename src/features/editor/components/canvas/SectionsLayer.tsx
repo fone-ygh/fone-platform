@@ -120,14 +120,40 @@ export default function SectionsLayer(props: SectionsLayerProps) {
   //   [sections],
   // );
   const scopeKey = scopeContainer ? scopeContainer.id : "root";
-  const blockDrag = editorMode.kind === "contentEdit";
-  //   &&
-  //   scopeContainer &&
-  //   scopeContainer.id !== null &&
-  //   editorMode.sectionId === scopeContainer.id;
+  const blockDrag =
+    editorMode.kind === "contentEdit" &&
+    scopeContainer &&
+    scopeContainer.id !== null &&
+    editorMode.sectionId === scopeContainer.id;
+  console.log("scopeContainer : ", scopeContainer);
 
   return (
     <>
+      {scopeContainer && (
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            zIndex: 10,
+            width: scopeContainer.width,
+            height: scopeContainer.height,
+            border: "1px solid rgba(99,102,241,0.35)",
+            background: scopeContainer.bg,
+            // pointerEvents: "none",
+            boxSizing: "border-box",
+          }}
+        >
+          <SectionItemView
+            item={scopeContainer}
+            selected={true}
+            onRequestSelect={multi => {
+              // shift/meta 선택 멀티 셀렉션
+              setSelectedIds([scopeContainer.id]);
+            }}
+          />
+        </div>
+      )}
       {sections.map(section => {
         const isSelected = selectedIds.includes(section.id);
         const isActive = activeId === section.id;
