@@ -1,24 +1,10 @@
 'use client';
 
 import styled from "@emotion/styled";
-import React, { useEffect } from "react";
+import React from "react";
 import JspreadSheet from "./JspreadSheet";
 
 const TablePage = () => {
-
-	useEffect(() => {
-		const blockKeys = (e: any) => {
-		  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
-			e.preventDefault();
-			e.stopImmediatePropagation();
-		  }
-		};
-	  
-		window.addEventListener("keydown", blockKeys, { capture: true });
-		return () => {
-		  window.removeEventListener("keydown", blockKeys, { capture: true });
-		};
-	  }, []);
 
     return (
         <TableContainer>

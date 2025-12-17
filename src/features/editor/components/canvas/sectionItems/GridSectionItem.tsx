@@ -16,8 +16,6 @@ export default function GridSectionItem({ item }: Props) {
 
   const { scopeParentId } = useLayoutStore();
   const { title, checkbox, noDisplay, totalDisplay, plusButtonDisplay, paginationDisplay, tableHeaders } = useTableSettingStore();
-  
-  console.log("scopeParentId : ", scopeParentId);
 
   return (
     <div
@@ -34,9 +32,9 @@ export default function GridSectionItem({ item }: Props) {
       )}
       {!scopeParentId && (
         <Table2 isEditView={false} title={title ?? ""} columns={tableHeaders as any} data={[{},{},{},{},{}]} checkbox={checkbox} No={noDisplay} isTotal={totalDisplay} 
-        isPlusButton={plusButtonDisplay}
-        pagination={paginationDisplay ? { page: 1, size: 10, totalElements: 100, totalPages: 10, onPageChange: (page) => { console.log(page); } } : undefined}
-    />
+          isPlusButton={plusButtonDisplay}
+          pagination={paginationDisplay ? { page: 1, size: 10, totalElements: 100, totalPages: 10, onPageChange: (page) => { console.log(page); } } : undefined}
+        />
       )}
     </div>
   );
