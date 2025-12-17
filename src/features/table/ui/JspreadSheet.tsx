@@ -365,13 +365,27 @@ export default function JspreadSheet() {
         recomputeTable2Headers();
     }, [headerCellPropsList, recomputeTable2Headers, setSpreadsheet]);
 
+    useEffect(() => {
+		const blockKeys = (e: any) => {
+		  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+			e.preventDefault();
+			e.stopImmediatePropagation();
+		  }
+		};
+	  
+		window.addEventListener("keydown", blockKeys, { capture: true });
+		return () => {
+		  window.removeEventListener("keydown", blockKeys, { capture: true });
+		};
+	  }, []);
+
     return (
         <div style={{display:"flex", flexDirection:"column", gap:"10px"}}>
             <div>
                 <div style={{width:"100%", height:"100%", display:"flex", alignItems:"start", gap:"40px" }}>
                     <div style={{display:"flex", flexDirection:"column", gap:"40px", }}>
                         <div style={{display:"flex", flexDirection:"column", gap:"10px",}}>
-                            <div style={{display:"flex", gap:"10px", marginTop:"10px"}}>
+                            {/* <div style={{display:"flex", gap:"10px", marginTop:"10px"}}>
                                 <Button variant="contained" size="small" sx={{width:"200px" }} onClick={() => {
 
                                     // setMerge가 동작 중 selected 영역이 엘리먼트가 아니라 값일 때 에러가 날 수 있으므로, 
@@ -418,7 +432,7 @@ export default function JspreadSheet() {
                                 }}>
                                     선택 영역 병합 해제
                                 </Button>
-                            </div>
+                            </div> */}
                             <Spreadsheet onload={(instance: Spreadsheet) => {
                                     // ✅ 이게 "진짜 jspreadsheet 인스턴스"
                                     setSpreadsheet(instance);

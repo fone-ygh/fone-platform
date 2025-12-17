@@ -29,6 +29,8 @@ import { Spreadsheet } from "@jspreadsheet-ce/react";
 import { useJspreadSheetStore } from "@/features/table/store/jspreadSheetStore";
 import { AccordionCard } from "@/shared/components/ui/cardAccordion/CardAccordion";
 import TableSettingArea from "@/features/table/components/TableSettingArea";
+import MergeButtonArea from "@/features/table/components/MergeButtonArea";
+import ExtraButtonArea from "@/features/table/components/ExtraButtonArea";
 
 function buildEditorUrl(
   editorId: string,
@@ -363,24 +365,34 @@ console.log("spreadsheet : ", spreadsheet);
           {/* 셀 설정 영역 */}
           {spreadsheet && 
            <AccordionCard
-           title="Cell Setting"
-           allowMultiple
-           defaultOpenAll
-           hideControls
-           items={[
-             {
-               id: "cell-setting",
-               title: "선택 셀 설정",
-               content: <CellSettingArea spreadsheet={spreadsheet as unknown as React.RefObject<Spreadsheet>} />,
-             },
-             {
-               id: "table-setting",
-               title: "테이블 설정",
-               content: <TableSettingArea />,
-             },
-             
-           ]}
-         />}
+            title="Cell Setting"
+            allowMultiple
+            defaultOpenAll
+            hideControls
+            items={[
+              {
+                id: "cell-setting",
+                title: "선택 셀 설정",
+                content: <CellSettingArea spreadsheet={spreadsheet as unknown as React.RefObject<Spreadsheet>} />,
+              },
+              {
+                id: "table-setting",
+                title: "테이블 설정",
+                content: <TableSettingArea />,
+              },
+              {
+                id: "table-merge-setting",
+                title: "셀 병합 설정",
+                content: <MergeButtonArea />,
+              },
+              {
+                id: "extra-button-area",
+                title: "추가 버튼 영역",
+                content: <ExtraButtonArea />,
+              },
+            ]}
+          />
+          }
         </div>
       )}
 
