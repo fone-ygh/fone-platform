@@ -1,4 +1,4 @@
-import { ScreenPattern } from "./type";
+import { ScreenPattern } from "./types";
 
 // 실제 패턴 목록
 export const SCREEN_PATTERNS: ScreenPattern[] = [

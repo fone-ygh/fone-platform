@@ -25,14 +25,20 @@ export default function SearchForm() {
   const onSubmit = (data: any) => {
     if (dataType === "commonCode") {
       const filteredCodeTypeData = initialCodeTypeData.filter(ctd => {
-        return ctd.groupName.includes(data.name);
+        return (
+          ctd.groupName.includes(data.name) ||
+          ctd.groupCode.includes(data.name.toUpperCase())
+        );
       });
 
       setCodeTypeData(filteredCodeTypeData);
       setCommonCodeData(filteredCodeTypeData?.[0]?.commonCodeData || []);
     } else {
       const filteredApiData = initialApiData.filter(ad => {
-        return ad.groupName.includes(data.name);
+        return (
+          ad.groupName.includes(data.name) ||
+          ad.groupCode.includes(data.name.toUpperCase())
+        );
       });
       setApiData(filteredApiData);
     }

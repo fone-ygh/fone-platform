@@ -7,7 +7,7 @@ import { immer } from "zustand/middleware/immer";
 import { persist } from "@/shared/lib/store-util";
 import type { Section } from "@/shared/store/layout/types";
 
-import { CustomPattern, PatternMeta, PatternState } from "./type";
+import { CustomPattern, PatternMeta, PatternState } from "./types";
 
 function genCustomId() {
   return `custom_${Date.now().toString(36)}_${Math.random()

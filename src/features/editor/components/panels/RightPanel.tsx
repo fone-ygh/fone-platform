@@ -20,8 +20,15 @@ import {
   usePatternStore,
 } from "@/shared/store/pattern/store";
 
+import useCurrentAreaSection from "../../hooks/useCurrentAreaSection";
 import { useCurrentPatternMeta } from "../../hooks/useCurrentPatternMeta";
 import { LayoutCard } from "./right/LayoutCard";
+import CellSettingArea from "@/features/table/components/CellSettingArea";
+import { useTableSettingStore } from "@/features/table/store/tableSettingStore";
+import { Spreadsheet } from "@jspreadsheet-ce/react";
+import { useJspreadSheetStore } from "@/features/table/store/jspreadSheetStore";
+import { AccordionCard } from "@/shared/components/ui/cardAccordion/CardAccordion";
+import TableSettingArea from "@/features/table/components/TableSettingArea";
 
 function buildEditorUrl(
   editorId: string,
@@ -103,6 +110,7 @@ function SavePatternDialog({
 /* ---------------- RightPanel ---------------- */
 
 export default function RightPanel() {
+  const { areaSection, areaType, isDetailMode } = useCurrentAreaSection();
   /* -------- router / url params -------- */
   const router = useRouter();
   const params = useParams();
@@ -123,6 +131,8 @@ export default function RightPanel() {
     setLock,
   } = useLayoutActions();
 
+  const { spreadsheet } = useJspreadSheetStore();
+console.log("spreadsheet : ", spreadsheet);
   /* -------- patterns (zustand) -------- */
   const { addPattern } = usePatternActions();
 
@@ -264,72 +274,123 @@ export default function RightPanel() {
 
   return (
     <Aside position="right" defaultWidth={340} minWidth={0} maxWidth={560}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          marginBottom: "10px",
-        }}
-      >
-        <label htmlFor="" style={{ flexShrink: 0 }}>
-          페이지명 :
-        </label>
-        <TextField
-          size="small"
-          value={pageTitle}
-          onChange={e => setPageTitle(e.target.value)} // ★ 여기가 포인트
-          sx={{ "& input": { fontWeight: "bold" } }}
-        />
-      </div>
-      {/* selection lock */}
-      {selectedOne && (
+      {isDetailMode === false && (
         <>
-          <h3 style={{ margin: "12px 0 6px" }}>{selectedOne.title}</h3>
-          <div className="card-body">
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <Label>Lock</Label>
-              <Switch
-                checked={!!selectedOne.lock}
-                onChange={(e: any) => setLock(selectedOne.id, e.target.checked)}
-              />
-            </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              marginBottom: "10px",
+            }}
+          >
+            <label htmlFor="" style={{ flexShrink: 0 }}>
+              페이지명 :
+            </label>
+            <TextField
+              size="small"
+              value={pageTitle}
+              onChange={e => setPageTitle(e.target.value)}
+              sx={{ "& input": { fontWeight: "bold" } }}
+            />
           </div>
+          {/* selection lock */}
+          {selectedOne && (
+            <>
+              <h3 style={{ margin: "12px 0 6px" }}>{selectedOne.title}</h3>
+              <div className="card-body">
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <Label>Lock</Label>
+                  <Switch
+                    checked={!!selectedOne.lock}
+                    onChange={(e: any) =>
+                      setLock(selectedOne.id, e.target.checked)
+                    }
+                  />
+                </div>
+              </div>
+            </>
+          )}
+          {/* layout card */}
+          {/* layout card 공통적으로 쓸 수 있게 수정해야함 */}
+          <LayoutCard
+            selectedCount={selectedIds.length}
+            hasSelection={hasSelection}
+            sectionsLength={sections.length}
+            insertTool={insertTool}
+            setInsertTool={setInsertTool}
+            onDuplicateSelected={setDuplicateSelected}
+            onDeleteSelected={handleDeleteSelected}
+            onClearAll={handleClearAll}
+            onImportFile={importJsonFile}
+            onDownloadJsonFile={downloadJsonFile}
+          />
+          
+          {/* save */}
+          <div style={{ display: "flex", gap: 8, padding: "10px 0" }}>
+            <Button
+              variant="contained"
+              onClick={openSaveModal}
+              style={{ flex: 1 }}
+            >
+              저장
+            </Button>
+          </div>
+
+          {/* dialogs */}
+          <SavePatternDialog
+            open={saveOpen}
+            title={title}
+            description={description}
+            error={saveError}
+            onChangeTitle={setTitle}
+            onChangeDescription={setDescription}
+            onClose={closeSaveModal}
+            onSave={handleSave}
+          />
         </>
       )}
 
-      {/* layout card */}
-      <LayoutCard
-        selectedCount={selectedIds.length}
-        hasSelection={hasSelection}
-        sectionsLength={sections.length}
-        insertTool={insertTool}
-        setInsertTool={setInsertTool}
-        onDuplicateSelected={setDuplicateSelected}
-        onDeleteSelected={handleDeleteSelected}
-        onClearAll={handleClearAll}
-        onImportFile={importJsonFile}
-        onDownloadJsonFile={downloadJsonFile}
-      />
+      {/* search 영역일 때만 보이는 설정 */}
+      {isDetailMode && areaType === "search" && (
+        <div>검색 영역 전용 옵션들...</div>
+      )}
 
-      {/* save */}
-      <div style={{ display: "flex", gap: 8, padding: "10px 0" }}>
-        <Button variant="contained" onClick={openSaveModal} style={{ flex: 1 }}>
-          저장
-        </Button>
-      </div>
+      {/* grid 영역일 때만 보이는 설정 */}
+      {isDetailMode && areaType === "grid" && (
+        <div>
+          <div>그리드 영역 전용 옵션들...</div>
+          {/* 셀 설정 영역 */}
+          {spreadsheet && 
+           <AccordionCard
+           title="Cell Setting"
+           allowMultiple
+           defaultOpenAll
+           hideControls
+           items={[
+             {
+               id: "cell-setting",
+               title: "선택 셀 설정",
+               content: <CellSettingArea spreadsheet={spreadsheet as unknown as React.RefObject<Spreadsheet>} />,
+             },
+             {
+               id: "table-setting",
+               title: "테이블 설정",
+               content: <TableSettingArea />,
+             },
+             
+           ]}
+         />}
+        </div>
+      )}
 
-      {/* dialogs */}
-      <SavePatternDialog
-        open={saveOpen}
-        title={title}
-        description={description}
-        error={saveError}
-        onChangeTitle={setTitle}
-        onChangeDescription={setDescription}
-        onClose={closeSaveModal}
-        onSave={handleSave}
-      />
+      {/* single 영역일 때만 보이는 설정 */}
+      {isDetailMode && areaType === "single" && (
+        <div>싱글 영역 전용 옵션들...</div>
+      )}
+
+      {/* tab 영역일 때만 보이는 설정 */}
+      {isDetailMode && areaType === "tab" && <div>탭 영역 전용 옵션들...</div>}
     </Aside>
   );
 }
