@@ -114,7 +114,6 @@ export default function JspreadSheet() {
         if(eventName === "onresizecolumn") { 
             const inst = spreadsheet?.current?.[0];
             const selectedCell = inst?.selectedContainer;
-              ;
             if (!Array.isArray(selectedCell) || selectedCell.length < 2) return;
             const startCol = Number(selectedCell[0]);
             const startRow = Number(selectedCell[1]);
@@ -133,15 +132,7 @@ export default function JspreadSheet() {
             const existing = headerList.find((x:any) => x.address === address);
             if (existing) {
                 setFormData({
-                    accessorKey: existing.props.accessorKey ?? "",
-                    header: existing.props.header ?? "",
-                    type: existing.props.type ?? "input",
-                    editable: existing.props.editable ?? true,
-                    // draggable: existing.props.draggable ?? false,
-                    // resizable: existing.props.resizable ?? true,
-                    align: existing.props.align ?? "left",
-                    required: existing.props.required ?? false,
-                    isParent: existing.props.isParent ?? false,
+                    ...(getHeaderCellPropsListData(address)[0].props as any),
                     width: width ?? existing.props.width ?? undefined,
                 });
                 setHeaderCellPropsList(getHeaderCellPropsListData(address));
@@ -214,7 +205,7 @@ export default function JspreadSheet() {
                     header: String(selectedHeaderVal ?? ""),
                     type: (existing.props.type as any) ?? "input",
                     editable: existing.props.editable ?? true,
-                    width: existing.props.width ?? undefined,
+                    width: existing.props.width ?? "",
                     align: (existing.props.align as any) ?? "left",
                     required: existing.props.required ?? false,
                     isParent: existing.props.isParent ?? false,
