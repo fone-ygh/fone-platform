@@ -24,6 +24,11 @@ import useCurrentAreaSection from "../../hooks/useCurrentAreaSection";
 import { useCurrentPatternMeta } from "../../hooks/useCurrentPatternMeta";
 import { LayoutCard } from "./right/LayoutCard";
 import CellSettingArea from "@/features/table/components/CellSettingArea";
+import { useTableSettingStore } from "@/features/table/store/tableSettingStore";
+import { Spreadsheet } from "@jspreadsheet-ce/react";
+import { useJspreadSheetStore } from "@/features/table/store/jspreadSheetStore";
+import { AccordionCard } from "@/shared/components/ui/cardAccordion/CardAccordion";
+import TableSettingArea from "@/features/table/components/TableSettingArea";
 
 function buildEditorUrl(
   editorId: string,
@@ -126,6 +131,8 @@ export default function RightPanel() {
     setLock,
   } = useLayoutActions();
 
+  const { spreadsheet } = useJspreadSheetStore();
+console.log("spreadsheet : ", spreadsheet);
   /* -------- patterns (zustand) -------- */
   const { addPattern } = usePatternActions();
 
@@ -305,6 +312,7 @@ export default function RightPanel() {
             </>
           )}
           {/* layout card */}
+          {/* layout card 공통적으로 쓸 수 있게 수정해야함 */}
           <LayoutCard
             selectedCount={selectedIds.length}
             hasSelection={hasSelection}
@@ -353,7 +361,26 @@ export default function RightPanel() {
         <div>
           <div>그리드 영역 전용 옵션들...</div>
           {/* 셀 설정 영역 */}
-          {/* <CellSettingArea spreadsheet={spreadsheet} /> */}
+          {spreadsheet && 
+           <AccordionCard
+           title="Cell Setting"
+           allowMultiple
+           defaultOpenAll
+           hideControls
+           items={[
+             {
+               id: "cell-setting",
+               title: "선택 셀 설정",
+               content: <CellSettingArea spreadsheet={spreadsheet as unknown as React.RefObject<Spreadsheet>} />,
+             },
+             {
+               id: "table-setting",
+               title: "테이블 설정",
+               content: <TableSettingArea />,
+             },
+             
+           ]}
+         />}
         </div>
       )}
 

@@ -17,6 +17,7 @@ import {
     stableDetectHeaderDepth,
 } from "../util/tableUtil";
 import { attachDefaultComponents } from "../util/renderers";
+import { useJspreadSheetActions, useJspreadSheetStore } from "../store/jspreadSheetStore";
 
 
 
@@ -24,11 +25,12 @@ export default function JspreadSheet() {
 
     // Spreadsheet array of worksheets
     const spreadsheet = useRef<Spreadsheet>(null);
-
     // Table Setting 값을 담는 store
     const { checkbox, noDisplay, paginationDisplay, totalDisplay, plusButtonDisplay, headerCellPropsList, title, formData } = useTableSettingStore();
-    const { setSelectedCellAddress, setFormData, setSelectedPos, setHeaderCellPropsList } = useTableSettingActions();
+    const { setSelectedCellAddress, setFormData, setSelectedPos, setHeaderCellPropsList, setTableHeaders } = useTableSettingActions();
 
+    const { setSpreadsheet } = useJspreadSheetActions();
+    const { spreadsheet: spreadsheetStore } = useJspreadSheetStore();
 
     const [table2Headers, setTable2Headers] = useState<ColumnNode[]>([]);
 
@@ -41,8 +43,8 @@ export default function JspreadSheet() {
 
 
     const recomputeTable2Headers = useCallback(() => {
+        console.log("recomputeTable2Headers");
         const inst = spreadsheet?.current?.[0];
-
         if (!inst) return;
 
         const rawData = inst.getData();
@@ -92,8 +94,10 @@ export default function JspreadSheet() {
         const hydrated = attachDefaultComponents(resultHeaders, (col) => {
             // 기본 버튼 클릭 핸들러 (필요시 교체 가능)
         });
+        setTableHeaders(hydrated as ColumnNode[]);
         setTable2Headers(hydrated as ColumnNode[]);
-    }, []);
+        console.log("hydrated : ", hydrated);
+    }, [setTableHeaders]);
 
 
     const handleEvent = useCallback((eventName: string, worksheet: Worksheet) => {
@@ -368,14 +372,14 @@ export default function JspreadSheet() {
 
     useEffect(() => {
         recomputeTable2Headers();
-    }, [headerCellPropsList, recomputeTable2Headers]);
+    }, [headerCellPropsList, recomputeTable2Headers, setSpreadsheet]);
 
     return (
         <div style={{display:"flex", flexDirection:"column", gap:"10px"}}>
             <div>
-                <div style={{width:"80%", height:"100%", display:"flex", alignItems:"start", gap:"40px" }}>
-                    <div style={{display:"flex", flexDirection:"column", gap:"40px" }}>
-                        <div style={{display:"flex", flexDirection:"column", gap:"10px"}}>
+                <div style={{width:"100%", height:"100%", display:"flex", alignItems:"start", gap:"40px" }}>
+                    <div style={{display:"flex", flexDirection:"column", gap:"40px", }}>
+                        <div style={{display:"flex", flexDirection:"column", gap:"10px",}}>
                             <div style={{display:"flex", gap:"10px", marginTop:"10px"}}>
                                 <Button variant="contained" size="small" sx={{width:"200px" }} onClick={() => {
 
@@ -424,18 +428,28 @@ export default function JspreadSheet() {
                                     선택 영역 병합 해제
                                 </Button>
                             </div>
-                            <Spreadsheet ref={spreadsheet} onevent={handleEvent} contextMenu={(e: any) => {
-                                console.log("onContextMenu : ", e);
-                                // e.preventDefault();
-                                return false;
-                            }}
+                            <Spreadsheet onload={(instance: Spreadsheet) => {
+                                    // ✅ 이게 "진짜 jspreadsheet 인스턴스"
+                                    setSpreadsheet(instance);
+                                }}
+                                ref={spreadsheet} 
+                                onevent={handleEvent} 
+                                contextMenu={() => {
+                                    // e.preventDefault();
+                                    return false;
+                                }}
                             >
-                                <Worksheet minDimensions={[10,10]} />
+                                <Worksheet 
+                                    minDimensions={[10,10]} 
+                                    defaultColWidth={150} 
+                                    defaultRowHeight={50} 
+                                    selectionCopy={false}
+                                />
                             </Spreadsheet>
                         </div>
 
                         {/* 테이블 설정 영역 */}
-                        <TableSettingArea />
+                        {/* <TableSettingArea /> */}
                         <div style={{display:"flex", gap:"10px"}}>
                             <Button variant="contained" size="small" sx={{width:"200px"}} onClick={() => { 
                                 setDemoTableOpen(true);
@@ -509,7 +523,7 @@ export default function JspreadSheet() {
                         </div>
                     </div>
                     {/* 셀 설정 영역 */}
-                    <CellSettingArea spreadsheet={spreadsheet} />
+                    {/* <CellSettingArea spreadsheet={spreadsheet} /> */}
                 </div>
             </div>
 
@@ -518,7 +532,7 @@ export default function JspreadSheet() {
                 title="예시 테이블"
                 dialogContent={
                     <Box sx={{width:"100%", minHeight:"400px", padding: "20px 5px"}}>
-                        <Table2 isEditView={false} title={title} columns={table2Headers as any} data={[]} checkbox={checkbox} No={noDisplay} isTotal={totalDisplay} 
+                        <Table2 isEditView={false} title={title} columns={table2Headers as any} data={[{},{},{},{},{}]} checkbox={checkbox} No={noDisplay} isTotal={totalDisplay} 
                             isPlusButton={plusButtonDisplay}
                             pagination={paginationDisplay ? { page: 1, size: 10, totalElements: 100, totalPages: 10, onPageChange: (page) => { console.log(page); } } : undefined}
                         />
