@@ -1,4 +1,4 @@
-// src/shared/store/control.ts
+// src/shared/store/control/store.ts
 "use client";
 
 import { create } from "zustand";
@@ -6,62 +6,10 @@ import { immer } from "zustand/middleware/immer";
 
 import { persist } from "@/shared/lib/store-util";
 
+import { EDITOR_MODE, EditorMode } from "./editorMode";
+import type { EditorStore } from "./types";
+
 const clampZoom = (z: number) => Math.min(200, Math.max(25, Math.round(z)));
-
-export type EditorStore = {
-  canvasWidth: number;
-  canvasHeight: number;
-
-  /** (선택) 미사용 */
-  zoom: number;
-
-  /** 캔버스 전용 줌(%) */
-  canvasZoom: number;
-
-  /** 캔버스 전용 팬(px) — zoom-layer에 적용 */
-  panX: number;
-  panY: number;
-
-  showGrid: boolean;
-  gridSize: number;
-  gridColor: string;
-
-  snapToGrid: boolean;
-  snapToGuides: boolean;
-  snapToElements: boolean;
-  snapTolerance: number;
-
-  showRulers: boolean;
-  showGuides: boolean;
-
-  actions: {
-    setCanvasWidth: (w: number) => void;
-    setCanvasHeight: (h: number) => void;
-
-    setZoom: (ext: number | ((prev: number) => number)) => void;
-    setCanvasZoom: (next: number | ((prev: number) => number)) => void;
-    zoomIn: () => void;
-    zoomOut: () => void;
-    zoomReset: () => void;
-
-    /** 팬 제어 */
-    setPan: (x: number, y: number) => void;
-    panBy: (dx: number, dy: number) => void;
-    resetPan: () => void;
-
-    setShowGrid: (show: boolean) => void;
-    setGridSize: (size: number) => void;
-    setGridColor: (color: string) => void;
-
-    setSnapToGrid: (snap: boolean) => void;
-    setSnapToGuides: (snap: boolean) => void;
-    setSnapToElements: (snap: boolean) => void;
-    setSnapTolerance: (tol: number) => void;
-
-    setShowRulers: (show: boolean) => void;
-    setShowGuides: (show: boolean) => void;
-  };
-};
 
 export const useEDITORStore = create<EditorStore>()(
   immer(
@@ -88,6 +36,8 @@ export const useEDITORStore = create<EditorStore>()(
         showRulers: false,
         showGuides: true,
 
+        editorMode: EDITOR_MODE.idle(),
+
         actions: {
           setCanvasWidth: w =>
             set(s => {
@@ -101,7 +51,7 @@ export const useEDITORStore = create<EditorStore>()(
           setZoom: next =>
             set(s => {
               const value = typeof next === "function" ? next(s.zoom) : next;
-              s.zoom = Math.min(200, Math.max(25, Math.round(value)));
+              s.zoom = clampZoom(value);
             }),
           setCanvasZoom: next =>
             set(s => {
@@ -178,11 +128,19 @@ export const useEDITORStore = create<EditorStore>()(
             set(s => {
               s.showGuides = show;
             }),
+
+          setEditorMode: mode =>
+            set(s => {
+              s.editorMode = mode;
+            }),
+          resetEditorMode: () =>
+            set(s => {
+              s.editorMode = EDITOR_MODE.idle();
+            }),
         },
       }),
       {
         name: "EDITOR",
-        // 함수(actions) 직렬화 이슈 회피: 현재는 스토리지에 아무 것도 저장 안 함
         partialize: () => ({}),
       },
     ),

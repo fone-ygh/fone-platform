@@ -8,11 +8,9 @@ import Button from "@/shared/components/ui/button/Button";
 import Select from "@/shared/components/ui/select/Select";
 import TextField from "@/shared/components/ui/textField/TextField";
 import TreeView from "@/shared/components/ui/treeView/TreeView";
-import useResizeStore from "@/shared/store/resize";
 
 export default function ResizePage() {
   const [activeId, setActiveId] = useState<string | null>(null);
-  const { resize } = useResizeStore();
 
   const clearActive = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {

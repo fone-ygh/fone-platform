@@ -1,3 +1,4 @@
+// src/shared/store/pattern/types.ts
 import { Section } from "../layout";
 
 // 화면 패턴 메타

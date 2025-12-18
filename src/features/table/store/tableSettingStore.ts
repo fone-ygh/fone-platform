@@ -1,17 +1,18 @@
 import { create } from "zustand";
-import { HeaderCellProps, TableSettingStore } from "../interface/type";
+import { ColumnNode, HeaderCellProps, TableSettingStore } from "../interface/type";
 import { persist } from "@/shared/lib/store-util";
 import { immer } from "zustand/middleware/immer";
 import { cloneDeep, omitBy, includes } from "lodash-es";
 import { FormData, HeaderCellConfig } from "../interface/type";
 
-const defaultValue: Pick<TableSettingStore, 'checkbox' | 'noDisplay' | 'paginationDisplay' | 'totalDisplay' | 'plusButtonDisplay' | 'selectedCellAddress' | 'formData' | 'headerCellPropsList' | 'selectedPos' | 'title'> = {
+const defaultValue: Pick<TableSettingStore, 'checkbox' | 'noDisplay' | 'paginationDisplay' | 'totalDisplay' | 'plusButtonDisplay' | 'selectedCellAddress' | 'formData' | 'headerCellPropsList' | 'selectedPos' | 'title' | 'tableHeaders'> = {
     checkbox: false,
     noDisplay: false,
     paginationDisplay: false,
     totalDisplay: false,
     plusButtonDisplay: false,
     selectedCellAddress: undefined,
+    tableHeaders: [],
     formData: {
         accessorKey: "",
         header: "",
@@ -28,6 +29,7 @@ const defaultValue: Pick<TableSettingStore, 'checkbox' | 'noDisplay' | 'paginati
 };
 
 interface TableSettingActions {
+    setTableHeaders: (tableHeaders: ColumnNode[]) => void;
     setCheckbox: (checkbox: boolean) => void;
     setNoDisplay: (noDisplay: boolean) => void;
     setPaginationDisplay: (paginationDisplay: boolean) => void;
@@ -45,6 +47,7 @@ export const useTableSettingStore = create<TableSettingStore & { actions: TableS
         immer((set) => ({
             ...cloneDeep(defaultValue),
             actions: {
+                setTableHeaders: (tableHeaders) => set({ tableHeaders }),
                 setCheckbox: (checkbox) => set({ checkbox }),
                 setNoDisplay: (noDisplay) => set({ noDisplay }),
                 setPaginationDisplay: (paginationDisplay) => set({ paginationDisplay }),
@@ -85,7 +88,7 @@ export const getHeaderCellPropsListData = (address: string): HeaderCellConfig[] 
     const { headerCellPropsList, selectedPos, formData } = useTableSettingStore.getState();
     const prev = headerCellPropsList ?? [];
     if (!selectedPos) return prev;
-    console.log("formData : ", formData)
+
     const idx = prev.findIndex((x) => x.address === address);
     const next: HeaderCellConfig = {
         address,
