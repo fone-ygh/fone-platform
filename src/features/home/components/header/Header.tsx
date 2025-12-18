@@ -37,6 +37,11 @@ export default function Header() {
                     label: "Select",
                     href: "/componentManagement/select",
                   },
+                  {
+                    id: "button",
+                    label: "Button",
+                    href: "/componentManagement/button",
+                  },
                 ],
                 onClick: handleClick,
               },
