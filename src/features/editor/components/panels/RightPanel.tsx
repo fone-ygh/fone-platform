@@ -361,7 +361,6 @@ console.log("spreadsheet : ", spreadsheet);
       {/* grid 영역일 때만 보이는 설정 */}
       {isDetailMode && areaType === "grid" && (
         <div>
-          <div>그리드 영역 전용 옵션들...</div>
           {/* 셀 설정 영역 */}
           {spreadsheet && 
            <AccordionCard

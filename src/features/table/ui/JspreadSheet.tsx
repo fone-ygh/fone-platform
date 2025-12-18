@@ -26,15 +26,15 @@ export default function JspreadSheet() {
     // Spreadsheet array of worksheets
     const spreadsheet = useRef<Spreadsheet>(null);
     // Table Setting 값을 담는 store
-    const { checkbox, noDisplay, paginationDisplay, totalDisplay, plusButtonDisplay, headerCellPropsList, title, formData } = useTableSettingStore();
-    const { setSelectedCellAddress, setFormData, setSelectedPos, setHeaderCellPropsList, setTableHeaders } = useTableSettingActions();
+    const { checkbox, noDisplay, paginationDisplay, totalDisplay, plusButtonDisplay, headerCellPropsList, title, formData, demoTableOpen } = useTableSettingStore();
+    const { setSelectedCellAddress, setFormData, setSelectedPos, setHeaderCellPropsList, setTableHeaders, setDemoTableOpen } = useTableSettingActions();
 
     const { setSpreadsheet } = useJspreadSheetActions();
     const { spreadsheet: spreadsheetStore } = useJspreadSheetStore();
 
     const [table2Headers, setTable2Headers] = useState<ColumnNode[]>([]);
 
-    const [demoTableOpen, setDemoTableOpen] = useState(false);
+    // const [demoTableOpen, setDemoTableOpen] = useState(false);
 
     const toCellPropsMapRef = useRef(toCellPropsMap);
     const buildColumnsFromJSSRef = useRef(buildColumnsFromJSS);
@@ -379,6 +379,24 @@ export default function JspreadSheet() {
 		};
 	  }, []);
 
+    // 현재 화면(width 기준)을 n등분해서 각 등분의 px 값을 반환하는 함수
+    const splitScreenWidth = (n: number): number => {
+        if (typeof window === "undefined" || n <= 0) return 0;
+        const screenWidth = window.innerWidth;
+        console.log("screenWidth : ", screenWidth);
+        console.log("screenWidth / n : ", screenWidth / n);
+        return (screenWidth - 50) / n;
+    };
+
+    // 현재 화면(height)을 기준으로 n등분해서 각 등분의 px 값을 반환하는 함수
+    const splitScreenHeight = (n: number): number => {
+        if (typeof window === "undefined" || n <= 0) return 0;
+        const screenHeight = window.innerHeight;
+        console.log("screenHeight : ", screenHeight);
+        console.log("screenHeight / n : ", screenHeight / n);
+        return (screenHeight - 50) / n;
+    };
+
     return (
         <div style={{display:"flex", flexDirection:"column", gap:"10px"}}>
             <div>
@@ -445,9 +463,9 @@ export default function JspreadSheet() {
                                 }}
                             >
                                 <Worksheet 
-                                    minDimensions={[10,10]} 
-                                    defaultColWidth={150} 
-                                    defaultRowHeight={50} 
+                                    minDimensions={[10,15]} 
+                                    defaultColWidth={splitScreenWidth(10)} 
+                                    defaultRowHeight={splitScreenHeight(20)} 
                                     selectionCopy={false}
                                 />
                             </Spreadsheet>
@@ -455,7 +473,7 @@ export default function JspreadSheet() {
 
                         {/* 테이블 설정 영역 */}
                         {/* <TableSettingArea /> */}
-                        <div style={{display:"flex", gap:"10px"}}>
+                        {/* <div style={{display:"flex", gap:"10px"}}>
                             <Button variant="contained" size="small" sx={{width:"200px"}} onClick={() => { 
                                 setDemoTableOpen(true);
                             }}>Demo Table 보기</Button>
@@ -525,7 +543,7 @@ export default function JspreadSheet() {
                             recomputeTable2Headers();
 
                             }}>더미 데이터 넣기</Button>
-                        </div>
+                        </div> */}
                     </div>
                     {/* 셀 설정 영역 */}
                     {/* <CellSettingArea spreadsheet={spreadsheet} /> */}
