@@ -42,6 +42,16 @@ export default function Header() {
                     label: "Button",
                     href: "/componentManagement/button",
                   },
+                  {
+                    id: "input",
+                    label: "Input",
+                    href: "/componentManagement/input",
+                  },
+                  {
+                    id: "checkbox",
+                    label: "Checkbox",
+                    href: "/componentManagement/checkbox",
+                  },
                 ],
                 onClick: handleClick,
               },
