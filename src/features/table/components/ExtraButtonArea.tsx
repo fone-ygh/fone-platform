@@ -7,8 +7,8 @@ import { colIndexToLetter } from '../util/tableUtil';
 import { HeaderCellConfig } from '../interface/type';
 
 const MergeButtonArea = () => {
-    const { checkbox, noDisplay, paginationDisplay, totalDisplay, plusButtonDisplay, title } = useTableSettingStore();
-    const { setCheckbox, setNoDisplay, setPaginationDisplay, setTotalDisplay, setHeaderCellPropsList, setPlusButtonDisplay, setTitle } = useTableSettingActions();
+    // const { demoTableOpen } = useTableSettingStore();
+    const { setDemoTableOpen, setHeaderCellPropsList } = useTableSettingActions();
     const { spreadsheet } = useJspreadSheetStore();
 
     
@@ -119,7 +119,7 @@ const MergeButtonArea = () => {
         const maxLen = rawData.reduce((max: number, row: any[]) => Math.max(max, row.length), 0);
         // 각 row를 maxLen 길이에 맞춰서 slice
         const data = rawData.map((row: any[]) => row.slice(0, maxLen));
-        const mergeData = spreadsheet!.worksheets![0].getMerge(); // 병합정보
+        const mergeData = spreadsheet!.current![0].getMerge(); // 병합정보
 
         const exportObj = { data, mergeData }; // 데이터를 { data, mergeData }형태의 오브젝트로 정리
         // exportObj를 txt로 변환 (JSON 직렬화 사용)
@@ -148,7 +148,7 @@ const MergeButtonArea = () => {
             <FunctionRow >
             <Button variant="contained" size="small" sx={{width:"100%"}} 
                 onClick={() => { 
-                    // setDemoTableOpen(true);
+                    setDemoTableOpen(true);
                 }}
                 >Demo Table 보기</Button>
             </FunctionRow>
