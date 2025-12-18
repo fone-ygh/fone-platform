@@ -22,6 +22,8 @@ export default function GridSectionItem({ item }: Props) {
       style={{
         padding: 8,
         width: "100%",
+        // height: scopeParentId ? "500px" : "100%",
+        height: "500px",
         lineHeight: 1.4,
         pointerEvents: scopeParentId ? "auto" : "none",
       }}

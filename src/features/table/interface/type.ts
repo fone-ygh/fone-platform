@@ -10,6 +10,7 @@ export interface TableSettingStore {
     selectedPos: { startCol: number; startRow: number; endCol: number; endRow: number } | null;
     title?: string;
     tableHeaders: ColumnNode[];
+    demoTableOpen: boolean;
 }
 
 import type { ReactNode } from "react";

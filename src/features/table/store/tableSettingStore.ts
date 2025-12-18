@@ -5,7 +5,7 @@ import { immer } from "zustand/middleware/immer";
 import { cloneDeep, omitBy, includes } from "lodash-es";
 import { FormData, HeaderCellConfig } from "../interface/type";
 
-const defaultValue: Pick<TableSettingStore, 'checkbox' | 'noDisplay' | 'paginationDisplay' | 'totalDisplay' | 'plusButtonDisplay' | 'selectedCellAddress' | 'formData' | 'headerCellPropsList' | 'selectedPos' | 'title' | 'tableHeaders'> = {
+const defaultValue: Pick<TableSettingStore, 'checkbox' | 'noDisplay' | 'paginationDisplay' | 'totalDisplay' | 'plusButtonDisplay' | 'selectedCellAddress' | 'formData' | 'headerCellPropsList' | 'selectedPos' | 'title' | 'tableHeaders' | 'demoTableOpen'> = {
     checkbox: false,
     noDisplay: false,
     paginationDisplay: false,
@@ -26,6 +26,7 @@ const defaultValue: Pick<TableSettingStore, 'checkbox' | 'noDisplay' | 'paginati
     headerCellPropsList: [],
     selectedPos:null,
     title: undefined,
+    demoTableOpen: false,
 };
 
 interface TableSettingActions {
@@ -40,6 +41,7 @@ interface TableSettingActions {
     setHeaderCellPropsList: (headerCellPropsList: HeaderCellConfig[]) => void;
     setSelectedPos: (selectedPos: { startCol: number, startRow: number, endCol: number, endRow: number } | null) => void;
     setTitle: (title: string) => void;
+    setDemoTableOpen: (demoTableOpen: boolean) => void;
 }
 
 export const useTableSettingStore = create<TableSettingStore & { actions: TableSettingActions }>()(
@@ -58,6 +60,7 @@ export const useTableSettingStore = create<TableSettingStore & { actions: TableS
                 setHeaderCellPropsList: (headerCellPropsList) => set({ headerCellPropsList }),
                 setSelectedPos: (selectedPos) => set({ selectedPos }),
                 setTitle: (title) => set({ title }),
+                setDemoTableOpen: (demoTableOpen) => set({ demoTableOpen }),
             }
         })),
         {
