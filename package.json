@@ -21,7 +21,7 @@
     "@types/jspreadsheet-ce": "^4.7.9",
     "@types/lodash-es": "^4.17.12",
     "antd": "^5.29.0",
-    "fone-design-system_v1": "^2.0.12",
+    "fone-design-system_v1": "^2.0.15",
     "immer": "^10.2.0",
     "jspreadsheet-ce": "^5.0.4",
     "lodash-es": "^4.17.21",
