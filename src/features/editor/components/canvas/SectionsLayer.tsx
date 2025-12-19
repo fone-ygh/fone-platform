@@ -158,9 +158,9 @@ export default function SectionsLayer(props: SectionsLayerProps) {
         const isSelected = selectedIds.includes(section.id);
         const isActive = activeId === section.id;
         const isLocked = !!section.lock;
-
         // 가독성을 위해 변수 짧게
         const s = section;
+
 
         return (
           <ResizeContainer

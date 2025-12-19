@@ -1,12 +1,10 @@
 import { Box, Button, Select, TextField2 } from 'fone-design-system_v1';
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import styled from 'styled-components'
-import { HeaderCellConfig } from '../interface/type';
 import { Spreadsheet, Worksheet } from '@jspreadsheet-ce/react';
 import { getHeaderCellPropsListData, useTableSettingActions, useTableSettingStore } from '../store/tableSettingStore';
 
-const CellSettingArea = ({spreadsheet}: {spreadsheet: React.RefObject<Spreadsheet>}) => {
-
+const CellSettingArea = ({spreadsheet}: {spreadsheet: React.RefObject<Spreadsheet> | any}) => {
 
     const { selectedPos, selectedCellAddress, formData, headerCellPropsList } = useTableSettingStore();
     const { setFormData, setHeaderCellPropsList } = useTableSettingActions();
@@ -21,12 +19,12 @@ const CellSettingArea = ({spreadsheet}: {spreadsheet: React.RefObject<Spreadshee
     const selectSettings = [{key: "align", value: ["left", "center", "right"]}, {key: "type", value: ["input", "button", "select", "checkbox", "datePicker"]}]
 
     return (
-        <div style={{width:"50%"}}>
+        <div style={{width:"100%"}}>
             <div>
-                <div style={{fontSize:"20px", fontWeight:"bold"}}>선택 셀 설정 값</div>
+                {/* <div style={{fontSize:"20px", fontWeight:"bold"}}>선택 셀 설정 값</div> */}
                 <div>
                     <Box display="flex" flexDirection="column" gap="15px">
-                        <p>Selected Cell : {selectedCellAddress || "-"}</p>
+                        <p style={{fontSize:"16px", fontWeight:"bold"}}>Selected Cell : {selectedCellAddress || "-"}</p>
                         {formData && 
                             Object.keys(formData).map((key) => {
                                 const value = formData[key as keyof typeof formData];
@@ -106,16 +104,22 @@ const CellSettingArea = ({spreadsheet}: {spreadsheet: React.RefObject<Spreadshee
                             <Button 
                                 variant="contained"
                                 onClick={() => {
-                                    if (!spreadsheet.current) return;
-                                    const headers = spreadsheet.current[0].getHeaders().split(",");
-                                    if (!selectedPos) return;
-                                    // 주소를 단일이더라도 "A1:A1" 형태로 통일
-                                    const address = `${headers[selectedPos.startCol]}${selectedPos.startRow + 1}:${headers[selectedPos.endCol]}${selectedPos.endRow + 1}`;
-                                    console.log("getHeaderCellPropsListData(address) : ", getHeaderCellPropsListData(address))
-                                    console.log("formData.selectItems : ", formData.selectItems)
-                                    setHeaderCellPropsList(getHeaderCellPropsListData(address));
-                                    resetCell(spreadsheet.current![0] as Worksheet, address, formData.header as string);
-                                }}
+                                    if (spreadsheet.current) {
+                                        const headers = spreadsheet.current[0].getHeaders().split(",");
+                                        if (!selectedPos) return;
+                                        // 주소를 단일이더라도 "A1:A1" 형태로 통일
+                                        const address = `${headers[selectedPos.startCol]}${selectedPos.startRow + 1}:${headers[selectedPos.endCol]}${selectedPos.endRow + 1}`;
+                                        setHeaderCellPropsList(getHeaderCellPropsListData(address));
+                                        resetCell(spreadsheet.current![0] as Worksheet, address, formData.header as string);
+                                    }
+                                    if(spreadsheet.worksheets.length > 0) {
+                                        const headers = spreadsheet.worksheets[0].getHeaders().split(",");
+                                        if (!selectedPos) return;
+                                        // 주소를 단일이더라도 "A1:A1" 형태로 통일
+                                        const address = `${headers[selectedPos.startCol]}${selectedPos.startRow + 1}:${headers[selectedPos.endCol]}${selectedPos.endRow + 1}`;
+                                        setHeaderCellPropsList(getHeaderCellPropsListData(address));
+                                        resetCell(spreadsheet.worksheets[0] as Worksheet, address, formData.header as string);
+                                }}}
                             >저장</Button>
                     </Box>
                 </div>
@@ -135,12 +139,4 @@ const SettingRow = styled.div`
 
 const SettingLabel = styled.div`
     width: 100px;
-`;
-
-const SettingInput = styled.input`
-    width: 300px;
-`;
-
-const SettingSelect = styled.select`
-    width: 300px;
 `;

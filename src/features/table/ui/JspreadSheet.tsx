@@ -17,6 +17,7 @@ import {
     stableDetectHeaderDepth,
 } from "../util/tableUtil";
 import { attachDefaultComponents } from "../util/renderers";
+import { useJspreadSheetActions, useJspreadSheetStore } from "../store/jspreadSheetStore";
 
 
 
@@ -24,15 +25,16 @@ export default function JspreadSheet() {
 
     // Spreadsheet array of worksheets
     const spreadsheet = useRef<Spreadsheet>(null);
-
     // Table Setting 값을 담는 store
-    const { checkbox, noDisplay, paginationDisplay, totalDisplay, plusButtonDisplay, headerCellPropsList, title, formData } = useTableSettingStore();
-    const { setSelectedCellAddress, setFormData, setSelectedPos, setHeaderCellPropsList } = useTableSettingActions();
+    const { checkbox, noDisplay, paginationDisplay, totalDisplay, plusButtonDisplay, headerCellPropsList, title, formData, demoTableOpen } = useTableSettingStore();
+    const { setSelectedCellAddress, setFormData, setSelectedPos, setHeaderCellPropsList, setTableHeaders, setDemoTableOpen } = useTableSettingActions();
 
+    const { setSpreadsheet } = useJspreadSheetActions();
+    const { spreadsheet: spreadsheetStore } = useJspreadSheetStore();
 
     const [table2Headers, setTable2Headers] = useState<ColumnNode[]>([]);
 
-    const [demoTableOpen, setDemoTableOpen] = useState(false);
+    // const [demoTableOpen, setDemoTableOpen] = useState(false);
 
     const toCellPropsMapRef = useRef(toCellPropsMap);
     const buildColumnsFromJSSRef = useRef(buildColumnsFromJSS);
@@ -41,8 +43,8 @@ export default function JspreadSheet() {
 
 
     const recomputeTable2Headers = useCallback(() => {
+        console.log("recomputeTable2Headers");
         const inst = spreadsheet?.current?.[0];
-
         if (!inst) return;
 
         const rawData = inst.getData();
@@ -92,8 +94,10 @@ export default function JspreadSheet() {
         const hydrated = attachDefaultComponents(resultHeaders, (col) => {
             // 기본 버튼 클릭 핸들러 (필요시 교체 가능)
         });
+        setTableHeaders(hydrated as ColumnNode[]);
         setTable2Headers(hydrated as ColumnNode[]);
-    }, []);
+        console.log("hydrated : ", hydrated);
+    }, [setTableHeaders]);
 
 
     const handleEvent = useCallback((eventName: string, worksheet: Worksheet) => {
@@ -110,7 +114,6 @@ export default function JspreadSheet() {
         if(eventName === "onresizecolumn") { 
             const inst = spreadsheet?.current?.[0];
             const selectedCell = inst?.selectedContainer;
-              ;
             if (!Array.isArray(selectedCell) || selectedCell.length < 2) return;
             const startCol = Number(selectedCell[0]);
             const startRow = Number(selectedCell[1]);
@@ -129,15 +132,7 @@ export default function JspreadSheet() {
             const existing = headerList.find((x:any) => x.address === address);
             if (existing) {
                 setFormData({
-                    accessorKey: existing.props.accessorKey ?? "",
-                    header: existing.props.header ?? "",
-                    type: existing.props.type ?? "input",
-                    editable: existing.props.editable ?? true,
-                    // draggable: existing.props.draggable ?? false,
-                    // resizable: existing.props.resizable ?? true,
-                    align: existing.props.align ?? "left",
-                    required: existing.props.required ?? false,
-                    isParent: existing.props.isParent ?? false,
+                    ...(getHeaderCellPropsListData(address)[0].props as any),
                     width: width ?? existing.props.width ?? undefined,
                 });
                 setHeaderCellPropsList(getHeaderCellPropsListData(address));
@@ -210,7 +205,7 @@ export default function JspreadSheet() {
                     header: String(selectedHeaderVal ?? ""),
                     type: (existing.props.type as any) ?? "input",
                     editable: existing.props.editable ?? true,
-                    width: existing.props.width ?? undefined,
+                    width: existing.props.width ?? "",
                     align: (existing.props.align as any) ?? "left",
                     required: existing.props.required ?? false,
                     isParent: existing.props.isParent ?? false,
@@ -368,15 +363,47 @@ export default function JspreadSheet() {
 
     useEffect(() => {
         recomputeTable2Headers();
-    }, [headerCellPropsList, recomputeTable2Headers]);
+    }, [headerCellPropsList, recomputeTable2Headers, setSpreadsheet]);
+
+    useEffect(() => {
+		const blockKeys = (e: any) => {
+		  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+			e.preventDefault();
+			e.stopImmediatePropagation();
+		  }
+		};
+	  
+		window.addEventListener("keydown", blockKeys, { capture: true });
+		return () => {
+		  window.removeEventListener("keydown", blockKeys, { capture: true });
+		};
+	  }, []);
+
+    // 현재 화면(width 기준)을 n등분해서 각 등분의 px 값을 반환하는 함수
+    const splitScreenWidth = (n: number): number => {
+        if (typeof window === "undefined" || n <= 0) return 0;
+        const screenWidth = window.innerWidth;
+        console.log("screenWidth : ", screenWidth);
+        console.log("screenWidth / n : ", screenWidth / n);
+        return (screenWidth - 50) / n;
+    };
+
+    // 현재 화면(height)을 기준으로 n등분해서 각 등분의 px 값을 반환하는 함수
+    const splitScreenHeight = (n: number): number => {
+        if (typeof window === "undefined" || n <= 0) return 0;
+        const screenHeight = window.innerHeight;
+        console.log("screenHeight : ", screenHeight);
+        console.log("screenHeight / n : ", screenHeight / n);
+        return (screenHeight - 50) / n;
+    };
 
     return (
         <div style={{display:"flex", flexDirection:"column", gap:"10px"}}>
             <div>
-                <div style={{width:"80%", height:"100%", display:"flex", alignItems:"start", gap:"40px" }}>
-                    <div style={{display:"flex", flexDirection:"column", gap:"40px" }}>
-                        <div style={{display:"flex", flexDirection:"column", gap:"10px"}}>
-                            <div style={{display:"flex", gap:"10px", marginTop:"10px"}}>
+                <div style={{width:"100%", height:"100%", display:"flex", alignItems:"start", gap:"40px" }}>
+                    <div style={{display:"flex", flexDirection:"column", gap:"40px", }}>
+                        <div style={{display:"flex", flexDirection:"column", gap:"10px",}}>
+                            {/* <div style={{display:"flex", gap:"10px", marginTop:"10px"}}>
                                 <Button variant="contained" size="small" sx={{width:"200px" }} onClick={() => {
 
                                     // setMerge가 동작 중 selected 영역이 엘리먼트가 아니라 값일 때 에러가 날 수 있으므로, 
@@ -423,20 +450,30 @@ export default function JspreadSheet() {
                                 }}>
                                     선택 영역 병합 해제
                                 </Button>
-                            </div>
-                            <Spreadsheet ref={spreadsheet} onevent={handleEvent} contextMenu={(e: any) => {
-                                console.log("onContextMenu : ", e);
-                                // e.preventDefault();
-                                return false;
-                            }}
+                            </div> */}
+                            <Spreadsheet onload={(instance: Spreadsheet) => {
+                                    // ✅ 이게 "진짜 jspreadsheet 인스턴스"
+                                    setSpreadsheet(instance);
+                                }}
+                                ref={spreadsheet} 
+                                onevent={handleEvent} 
+                                contextMenu={() => {
+                                    // e.preventDefault();
+                                    return false;
+                                }}
                             >
-                                <Worksheet minDimensions={[10,10]} />
+                                <Worksheet 
+                                    minDimensions={[10,15]} 
+                                    defaultColWidth={splitScreenWidth(10)} 
+                                    defaultRowHeight={splitScreenHeight(20)} 
+                                    selectionCopy={false}
+                                />
                             </Spreadsheet>
                         </div>
 
                         {/* 테이블 설정 영역 */}
-                        <TableSettingArea />
-                        <div style={{display:"flex", gap:"10px"}}>
+                        {/* <TableSettingArea /> */}
+                        {/* <div style={{display:"flex", gap:"10px"}}>
                             <Button variant="contained" size="small" sx={{width:"200px"}} onClick={() => { 
                                 setDemoTableOpen(true);
                             }}>Demo Table 보기</Button>
@@ -506,10 +543,10 @@ export default function JspreadSheet() {
                             recomputeTable2Headers();
 
                             }}>더미 데이터 넣기</Button>
-                        </div>
+                        </div> */}
                     </div>
                     {/* 셀 설정 영역 */}
-                    <CellSettingArea spreadsheet={spreadsheet} />
+                    {/* <CellSettingArea spreadsheet={spreadsheet} /> */}
                 </div>
             </div>
 
@@ -518,7 +555,7 @@ export default function JspreadSheet() {
                 title="예시 테이블"
                 dialogContent={
                     <Box sx={{width:"100%", minHeight:"400px", padding: "20px 5px"}}>
-                        <Table2 isEditView={false} title={title} columns={table2Headers as any} data={[]} checkbox={checkbox} No={noDisplay} isTotal={totalDisplay} 
+                        <Table2 isEditView={false} title={title} columns={table2Headers as any} data={[{},{},{},{},{}]} checkbox={checkbox} No={noDisplay} isTotal={totalDisplay} 
                             isPlusButton={plusButtonDisplay}
                             pagination={paginationDisplay ? { page: 1, size: 10, totalElements: 100, totalPages: 10, onPageChange: (page) => { console.log(page); } } : undefined}
                         />

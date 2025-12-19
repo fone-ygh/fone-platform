@@ -73,7 +73,7 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
               : "move",
         outline,
         display: "flex",
-        alignItems: "center",
+        // alignItems: "center",
         justifyContent: "center",
         backgroundColor: bg ?? "#fff",
         color: textColor,
@@ -83,6 +83,7 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
     );
 
     const handleMouseDown = (e: React.MouseEvent) => {
+      console.log("handleMouseDown", e.shiftKey , e.metaKey , e.ctrlKey)
       if (preview) return;
       // 잠겨있으면 선택불가
       if (isLocked) return;

@@ -9,6 +9,8 @@ export interface TableSettingStore {
     headerCellPropsList: HeaderCellConfig[];
     selectedPos: { startCol: number; startRow: number; endCol: number; endRow: number } | null;
     title?: string;
+    tableHeaders: ColumnNode[];
+    demoTableOpen: boolean;
 }
 
 import type { ReactNode } from "react";
