@@ -1,75 +1,101 @@
-// src/features/patterns/components/PatternList.tsx
+// src/features/screens/dialogs/SelectPatternDialog.tsx
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import {
   Box,
   Button,
   Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
   Tab,
   Tabs,
   Typography,
 } from "@mui/material";
 
+import PatternCard from "@/features/patterns/components/PatternCard";
 import { SCREEN_PATTERNS } from "@/shared/store/pattern/default";
 import { usePatternStore } from "@/shared/store/pattern/store";
-import { CustomPattern } from "@/shared/store/pattern/types";
-
-import PatternCard from "./PatternCard";
+import type { CustomPattern } from "@/shared/store/pattern/types";
 
 const TAB_BUILTIN = "builtin";
 const TAB_CUSTOM = "custom";
 
-export default function PatternList() {
-  const router = useRouter();
+type Props = {
+  open: boolean;
+  onClose: () => void;
+
+  /** ✅ 선택 즉시 “에디터 진입” (originPatternId로 push) */
+  onSelect: (patternId: string) => void;
+
+  /** (선택) 빈 화면으로 시작 노출 여부 */
+  showBlank?: boolean;
+  onSelectBlank?: () => void;
+};
+
+export default function SelectPatternDialog({
+  open,
+  onClose,
+  onSelect,
+  showBlank = false,
+  onSelectBlank,
+}: Props) {
   const { customPatterns } = usePatternStore();
 
   const [tab, setTab] = React.useState<string>(TAB_BUILTIN);
+  const isBuiltinTab = tab === TAB_BUILTIN;
+  const isCustomTab = tab === TAB_CUSTOM;
 
   const handleChangeTab = (_: React.SyntheticEvent, value: string) => {
     setTab(value);
   };
 
-  const handleOpenScreen = (screen: CustomPattern) => {
-    router.push(`/editor/new?originPatternId=${encodeURIComponent(screen.id)}`);
+  const handlePick = (p: CustomPattern) => {
+    onSelect(p.id);
+    onClose();
   };
-
-  const handleCreateBlank = () => {
-    router.push(`/editor/new?originPatternId=null`); // originPatternId 없음 = blank
-  };
-
-  const isBuiltinTab = tab === TAB_BUILTIN;
-  const isCustomTab = tab === TAB_CUSTOM;
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
-      <Container maxWidth="md" sx={{ py: 6 }}>
-        {/* 헤더 */}
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
+      <DialogTitle sx={{ pb: 0 }}>
         <Box
           sx={{
             display: "flex",
-            flexDirection: { xs: "column", sm: "row" },
             alignItems: { xs: "flex-start", sm: "center" },
             justifyContent: "space-between",
+            flexDirection: { xs: "column", sm: "row" },
             gap: 2,
-            mb: 3,
           }}
         >
           <Box>
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              화면 패턴
+              패턴 선택
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              선택 즉시 에디터로 들어가
             </Typography>
           </Box>
 
-          {/* Blank 시작 버튼 */}
-          <Button variant="outlined" size="small" onClick={handleCreateBlank}>
-            빈 화면으로 시작하기
-          </Button>
+          {showBlank && (
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => {
+                onSelectBlank?.();
+                onClose();
+              }}
+            >
+              빈 화면으로 시작하기
+            </Button>
+          )}
         </Box>
+      </DialogTitle>
 
-        {/* 탭 헤더 */}
+      <DialogContent sx={{ pt: 2 }}>
+        {/* 탭 헤더 (PatternList랑 동일한 느낌) */}
         <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
           <Tabs value={tab} onChange={handleChangeTab} variant="fullWidth">
             <Tab
@@ -88,14 +114,7 @@ export default function PatternList() {
         {/* 기본 패턴 탭 */}
         {isBuiltinTab && (
           <Box>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                mb: 1,
-                gap: 1,
-              }}
-            >
+            <Box sx={{ display: "flex", alignItems: "center", mb: 1, gap: 1 }}>
               <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
                 기본 패턴
               </Typography>
@@ -112,11 +131,11 @@ export default function PatternList() {
                 gap: "20px",
               }}
             >
-              {SCREEN_PATTERNS.map(screen => (
+              {SCREEN_PATTERNS.map(p => (
                 <PatternCard
-                  key={screen.id}
-                  pattern={screen}
-                  onSelect={handleOpenScreen}
+                  key={p.id}
+                  pattern={p as any}
+                  onSelect={handlePick}
                 />
               ))}
             </div>
@@ -126,14 +145,7 @@ export default function PatternList() {
         {/* 사용자 지정 패턴 탭 */}
         {isCustomTab && (
           <Box>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                mb: 1,
-                gap: 1,
-              }}
-            >
+            <Box sx={{ display: "flex", alignItems: "center", mb: 1, gap: 1 }}>
               <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
                 사용자 지정 패턴
               </Typography>
@@ -165,18 +177,24 @@ export default function PatternList() {
                   gap: "20px",
                 }}
               >
-                {customPatterns.map(screen => (
+                {customPatterns.map(p => (
                   <PatternCard
-                    key={screen.id}
-                    pattern={screen}
-                    onSelect={handleOpenScreen}
+                    key={p.id}
+                    pattern={p as any}
+                    onSelect={handlePick}
                   />
                 ))}
               </div>
             )}
           </Box>
         )}
-      </Container>
-    </Box>
+      </DialogContent>
+
+      <DialogActions>
+        <Button variant="text" onClick={onClose}>
+          닫기
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }

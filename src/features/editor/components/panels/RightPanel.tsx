@@ -3,27 +3,18 @@
 
 import * as React from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import {
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { TextField } from "@mui/material";
 import { Button, Label, Switch } from "fone-design-system_v1";
 
 import Aside from "@/shared/components/layout/aside/Aside";
 import { useLayoutActions, useLayoutStore } from "@/shared/store/layout";
-import {
-  usePatternActions,
-  usePatternStore,
-} from "@/shared/store/pattern/store";
+import { usePatternActions } from "@/shared/store/pattern/store";
 
 import useCurrentAreaSection from "../../hooks/useCurrentAreaSection";
 import { useCurrentPatternMeta } from "../../hooks/useCurrentPatternMeta";
 import { LayoutCard } from "./right/LayoutCard";
-import CellSettingArea from "@/features/table/components/CellSettingArea";
+
+// import CellSettingArea from "@/features/table/components/CellSettingArea";
 
 function buildEditorUrl(
   editorId: string,
@@ -37,82 +28,23 @@ function buildEditorUrl(
   return qs ? `/editor/${editorId}?${qs}` : `/editor/${editorId}`;
 }
 
-/* ---------------- Dialogs ---------------- */
-
-type SavePatternDialogProps = {
-  open: boolean;
-  title: string;
-  description: string;
-  error?: string | null;
-  onChangeTitle: (v: string) => void;
-  onChangeDescription: (v: string) => void;
-  onClose: () => void;
-  onSave: () => void;
-};
-
-function SavePatternDialog({
-  open,
-  title,
-  description,
-  error,
-  onChangeTitle,
-  onChangeDescription,
-  onClose,
-  onSave,
-}: SavePatternDialogProps) {
-  return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>새 패턴 저장</DialogTitle>
-
-      <DialogContent sx={{ display: "grid", gap: 1.5, pt: 1 }}>
-        <TextField
-          label="Title"
-          value={title}
-          onChange={e => onChangeTitle(e.target.value)}
-          autoFocus
-          fullWidth
-          size="small"
-        />
-        <TextField
-          label="Description"
-          value={description}
-          onChange={e => onChangeDescription(e.target.value)}
-          fullWidth
-          size="small"
-          multiline
-          minRows={3}
-        />
-
-        {error && (
-          <Typography variant="body2" color="error">
-            {error}
-          </Typography>
-        )}
-      </DialogContent>
-
-      <DialogActions>
-        <Button variant="text" onClick={onClose}>
-          취소
-        </Button>
-        <Button variant="contained" onClick={onSave}>
-          새로 저장
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-}
-
-/* ---------------- RightPanel ---------------- */
-
 export default function RightPanel() {
   const { areaSection, areaType, isDetailMode } = useCurrentAreaSection();
+
   /* -------- router / url params -------- */
   const router = useRouter();
   const params = useParams();
   const editorId = String((params as any)?.id ?? "");
   const searchParams = useSearchParams();
   const originPatternId = searchParams.get("originPatternId"); // string | null
-  const { title: pageTitle, setTitle: setPageTitle } = useCurrentPatternMeta();
+
+  /* -------- meta (title/desc shown in editor header) -------- */
+  const {
+    title: pageTitle,
+    description: pageDesc,
+    setTitle: setPageTitle,
+  } = useCurrentPatternMeta();
+
   /* -------- layout -------- */
   const { selectedIds, sections, insertTool, canvasWidth, canvasHeight } =
     useLayoutStore();
@@ -209,31 +141,17 @@ export default function RightPanel() {
     input.click();
   }, [setSections, setSelectedIds, setCommitAfterTransform]);
 
-  /* -------- Save modal -------- */
-  const [saveOpen, setSaveOpen] = React.useState(false);
-  const [title, setTitle] = React.useState("");
-  const [description, setDescription] = React.useState("");
-  const [saveError, setSaveError] = React.useState<string | null>(null);
-
-  const openSaveModal = React.useCallback(() => {
-    setSaveError(null);
-    setTitle("");
-    setDescription("");
-    setSaveOpen(true);
-  }, []);
-
-  const closeSaveModal = React.useCallback(() => setSaveOpen(false), []);
-
+  /* -------- Save (no modal) -------- */
   const handleSave = React.useCallback(() => {
-    const t = title.trim();
+    const t = (pageTitle ?? "").trim();
     if (!t) {
-      setSaveError("제목(title)을 입력해주세요.");
+      window.alert("페이지명을 입력해주세요.");
       return;
     }
 
     const payload = {
       title: t,
-      description: description.trim(),
+      description: (pageDesc ?? "").trim(),
       canvasWidth,
       canvasHeight,
       sections,
@@ -241,19 +159,15 @@ export default function RightPanel() {
     };
 
     const savedId = addPattern(payload);
-    setPageTitle(t);
-    closeSaveModal();
 
     // 저장 후 URL 갱신 (id = 저장된 커스텀패턴)
     if (editorId) {
-      router.replace(
-        buildEditorUrl(editorId, savedId, payload.originPatternId),
-      );
-      alert("저장되었습니다.");
+      router.replace(buildEditorUrl(editorId, savedId, originPatternId));
+      window.alert("저장되었습니다.");
     }
   }, [
-    title,
-    description,
+    pageTitle,
+    pageDesc,
     canvasWidth,
     canvasHeight,
     sections,
@@ -261,8 +175,6 @@ export default function RightPanel() {
     addPattern,
     editorId,
     router,
-    closeSaveModal,
-    setPageTitle,
   ]);
 
   return (
@@ -287,6 +199,7 @@ export default function RightPanel() {
               sx={{ "& input": { fontWeight: "bold" } }}
             />
           </div>
+
           {/* selection lock */}
           {selectedOne && (
             <>
@@ -304,6 +217,7 @@ export default function RightPanel() {
               </div>
             </>
           )}
+
           {/* layout card */}
           <LayoutCard
             selectedCount={selectedIds.length}
@@ -317,29 +231,17 @@ export default function RightPanel() {
             onImportFile={importJsonFile}
             onDownloadJsonFile={downloadJsonFile}
           />
-          
+
           {/* save */}
           <div style={{ display: "flex", gap: 8, padding: "10px 0" }}>
             <Button
               variant="contained"
-              onClick={openSaveModal}
+              onClick={handleSave}
               style={{ flex: 1 }}
             >
               저장
             </Button>
           </div>
-
-          {/* dialogs */}
-          <SavePatternDialog
-            open={saveOpen}
-            title={title}
-            description={description}
-            error={saveError}
-            onChangeTitle={setTitle}
-            onChangeDescription={setDescription}
-            onClose={closeSaveModal}
-            onSave={handleSave}
-          />
         </>
       )}
 

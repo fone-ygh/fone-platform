@@ -1,11 +1,4 @@
-import type {
-  GridSection,
-  SearchSection,
-  Section,
-  SectionType,
-  SingleSection,
-  TabSection,
-} from "./types";
+import type { Section, SectionType } from "./types";
 
 /** Editor와 일치시키면 혼란이 줄어든다. */
 export const DEFAULT_CANVAS_WIDTH = 1920;

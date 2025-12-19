@@ -3,9 +3,9 @@
 
 import { useEffect } from "react";
 
+import { openPattern } from "@/shared/flows/openPattern";
 import { createSectionsForPattern } from "@/shared/store/layout/defaults";
 import { useLayoutActions } from "@/shared/store/layout/store";
-import type { Section } from "@/shared/store/layout/types";
 
 import EditorShell from "./components/EditorShell";
 
@@ -23,14 +23,10 @@ export default function Page({
   const { setSections, setReset } = useLayoutActions();
 
   useEffect(() => {
-    // 매번 화면 들어올 때 초기화
-    setReset();
-
     if (routeId === "new") {
       // 새 화면: patternId 기반으로 레이아웃 생성
       const pid = originPatternId ?? "blank";
-      const sections = createSectionsForPattern(pid);
-      setSections(sections);
+      openPattern(pid);
     } else {
       // 기존 화면: id 기반으로 저장된 레이아웃 불러오기 (TODO)
       // 예시:
@@ -38,7 +34,7 @@ export default function Page({
       //   .then(res => res.json())
       //   .then(data => setSections(data.sections));
     }
-  }, [routeId, originPatternId, setReset, setSections]);
+  }, [routeId, originPatternId]);
 
   return <EditorShell />;
 }

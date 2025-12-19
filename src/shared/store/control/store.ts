@@ -15,9 +15,6 @@ export const useEDITORStore = create<EditorStore>()(
   immer(
     persist(
       set => ({
-        canvasWidth: 1920,
-        canvasHeight: 2000,
-
         zoom: 0,
         canvasZoom: 60,
 
@@ -39,15 +36,6 @@ export const useEDITORStore = create<EditorStore>()(
         editorMode: EDITOR_MODE.idle(),
 
         actions: {
-          setCanvasWidth: w =>
-            set(s => {
-              s.canvasWidth = w;
-            }),
-          setCanvasHeight: h =>
-            set(s => {
-              s.canvasHeight = h;
-            }),
-
           setZoom: next =>
             set(s => {
               const value = typeof next === "function" ? next(s.zoom) : next;
