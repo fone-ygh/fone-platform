@@ -1,9 +1,9 @@
 import { create } from "zustand";
 
-export interface StyleData {
+interface StyleData {
   width: string;
   color: string;
-  variant: "contained" | "outlined" | "text" | undefined;
+  variant: "contained" | "outlined" | "text" | "";
   icon: File | null;
   iconPosition: string;
 }
@@ -18,43 +18,12 @@ interface Data {
 }
 
 interface State {
-  data: Data[];
   selectedData: Data;
 
-  setData: (Data: Data[]) => void;
   setSelectedData: (selectedData: Data) => void;
 }
 
 const useDataStore = create<State>(set => ({
-  data: [
-    {
-      componentId: "search",
-      name: "조회",
-      title: "조회",
-      style: {
-        width: "200",
-        color: "#1976d2",
-        variant: "contained",
-        icon: null,
-        iconPosition: "",
-      },
-      function: "01",
-    },
-    {
-      componentId: "popup",
-      name: "팝업",
-      title: "팝업",
-      style: {
-        width: "200",
-        color: "#dc004e",
-        variant: "outlined",
-        icon: null,
-        iconPosition: "",
-      },
-      function: "02",
-    },
-  ],
-
   selectedData: {
     componentId: "",
     name: "",
@@ -62,14 +31,13 @@ const useDataStore = create<State>(set => ({
     style: {
       width: "",
       color: "",
-      variant: undefined,
+      variant: "",
       icon: null,
       iconPosition: "",
     },
     function: "",
   },
 
-  setData: (data: Data[]) => set({ data: data }),
   setSelectedData: (selectedData: Data) => set({ selectedData: selectedData }),
 }));
 
