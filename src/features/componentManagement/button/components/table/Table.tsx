@@ -2,7 +2,7 @@ import styled from "@emotion/styled";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import { Button, Table2 } from "fone-design-system_v1";
 
-import useComponentStore from "@/shared/store/components/component";
+import useComponentStore from "@/features/componentManagement/store/component";
 
 import useDataStore from "../../store/data";
 import useDialogStore from "../../store/dialog";
@@ -11,7 +11,7 @@ import useIdxStore from "../../store/idx";
 export default function Table() {
   const { idx, setIdx } = useIdxStore();
   const { buttonData: data, setButtonData: setData } = useComponentStore();
-  const { selectedData, setSelectedData } = useDataStore();
+  const { setSelectedData } = useDataStore();
   const { setIsOpen } = useDialogStore();
 
   const columns = [
@@ -89,13 +89,8 @@ export default function Table() {
 
   const onSaveHandler = (rows: any[], allData: any[]) => {
     const newData = allData.map((item: any) => {
-      return {
-        componentId: item.componentId,
-        name: item.name,
-        title: item.title,
-        style: item.style,
-        function: item.function,
-      };
+      const { crud, ...rest } = item;
+      return rest;
     });
 
     const filteredData = newData.filter(item => item.componentId !== "");

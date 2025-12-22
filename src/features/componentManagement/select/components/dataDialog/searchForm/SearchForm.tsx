@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import styled from "@emotion/styled";
 import { useForm } from "react-hook-form";
 
-import useComponentStore from "@/shared/store/components/component";
+import useComponentStore from "@/features/componentManagement/store/component";
 
 import useCodeTypeStore from "../../../store/codeType";
 import ButtonGroup from "./ButtonGroup";

@@ -2,12 +2,14 @@ import styled from "@emotion/styled";
 import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
 import { VerticalTable } from "fone-design-system_v1";
 
-import { StyleData } from "@/shared/store/components/component";
+import { ButtonStyleData } from "@/features/componentManagement/store/component";
 
 import useDataStore from "../../store/data";
 
 interface DialogContentProps {
-  setStyleData: React.Dispatch<React.SetStateAction<StyleData | undefined>>;
+  setStyleData: React.Dispatch<
+    React.SetStateAction<ButtonStyleData | undefined>
+  >;
 }
 
 export default function DialogContent({ setStyleData }: DialogContentProps) {

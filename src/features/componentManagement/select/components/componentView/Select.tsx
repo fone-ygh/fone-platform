@@ -2,7 +2,7 @@ import { useState } from "react";
 import styled from "@emotion/styled";
 import { Select as FoneSelect } from "fone-design-system_v1";
 
-import useComponentStore from "@/shared/store/components/component";
+import useComponentStore from "@/features/componentManagement/store/component";
 
 import useDataStore from "../../store/data";
 

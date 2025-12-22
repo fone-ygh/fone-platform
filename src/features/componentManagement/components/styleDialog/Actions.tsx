@@ -1,20 +1,18 @@
 import { Button } from "fone-design-system_v1";
 
-import useComponentStore, {
-  ButtonStyleData,
-} from "@/features/componentManagement/store/component";
-
-import useDataStore from "../../store/data";
-import useDialogStore from "../../store/dialog";
-import useIdxStore from "../../store/idx";
+import useDataStore from "../../input/store/data";
+import useDialogStore from "../../input/store/dialog";
+import useIdxStore from "../../input/store/idx";
 
 interface ActionsProps {
-  styleData: ButtonStyleData | undefined;
+  styleData: { [key: string]: any } | undefined;
+  data: any[];
+  setData: (data: any[]) => void;
 }
 
-export default function Actions({ styleData }: ActionsProps) {
+export default function Actions({ styleData, data, setData }: ActionsProps) {
   const { setIsOpen } = useDialogStore();
-  const { buttonData, setButtonData } = useComponentStore();
+
   const { selectedData, setSelectedData } = useDataStore();
   const { idx } = useIdxStore();
 
@@ -25,12 +23,12 @@ export default function Actions({ styleData }: ActionsProps) {
 
     if (
       selectedData.crud === "C" &&
-      buttonData.find(data => data.componentId === selectedData.componentId) ===
+      data.find(data => data.componentId === selectedData.componentId) ===
         undefined
     ) {
-      updatedData = [{ ...selectedData, style: styleData }, ...buttonData];
+      updatedData = [{ ...selectedData, style: styleData }, ...data];
     } else {
-      updatedData = buttonData.map((data, index) => {
+      updatedData = data.map((data, index) => {
         if (index === idx) {
           return {
             ...selectedData,
@@ -42,8 +40,8 @@ export default function Actions({ styleData }: ActionsProps) {
       });
     }
 
-    setButtonData(updatedData);
-    setSelectedData({ ...selectedData, style: styleData });
+    setData(updatedData as any);
+    setSelectedData({ ...selectedData, style: styleData as any });
     setIsOpen(false);
   };
 

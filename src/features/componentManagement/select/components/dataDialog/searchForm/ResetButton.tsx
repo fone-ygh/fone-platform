@@ -3,7 +3,7 @@ import AutorenewIcon from "@mui/icons-material/Autorenew";
 import { Button } from "fone-design-system_v1";
 import { FieldValues, UseFormReset } from "react-hook-form";
 
-import useComponentStore from "@/shared/store/components/component";
+import useComponentStore from "@/features/componentManagement/store/component";
 
 import useCodeTypeStore from "../../../store/codeType";
 
