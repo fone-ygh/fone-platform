@@ -56,6 +56,7 @@ interface ButtonData {
 }
 
 export interface InputData {
+  crud?: string;
   componentId: string;
   name: string;
   title: string;
