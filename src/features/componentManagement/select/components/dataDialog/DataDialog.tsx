@@ -4,7 +4,7 @@ import useDialogStore from "../../store/dialog";
 import Actions from "./Actions";
 import DialogContent from "./DialogContent";
 
-export default function Dialog() {
+export default function DataDialog() {
   const { isOpen, setIsOpen } = useDialogStore();
 
   return (

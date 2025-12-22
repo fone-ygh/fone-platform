@@ -1,6 +1,8 @@
 import styled from "@emotion/styled";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import { IconButton, Table2 } from "fone-design-system_v1";
+import { Button, Table2 } from "fone-design-system_v1";
+
+import useComponentStore from "@/shared/store/components/component";
 
 import useDataStore from "../../store/data";
 import useDialogStore from "../../store/dialog";
@@ -8,7 +10,8 @@ import useIdxStore from "../../store/idx";
 
 export default function Table() {
   const { idx, setIdx } = useIdxStore();
-  const { data, setData, setSelectedData } = useDataStore();
+  const { buttonData: data, setButtonData: setData } = useComponentStore();
+  const { selectedData, setSelectedData } = useDataStore();
   const { setIsOpen } = useDialogStore();
 
   const columns = [
@@ -47,9 +50,9 @@ export default function Table() {
             alignItems: "center",
           }}
         >
-          <IconButton onClick={() => setIsOpen(true)}>
+          <Button onClick={() => setIsOpen(true)} size="sm" fullWidth>
             <AddCircleOutlineIcon sx={{ fontSize: 18, color: "#4D4D4D" }} />
-          </IconButton>
+          </Button>
         </div>
       ),
     },
@@ -102,7 +105,6 @@ export default function Table() {
     );
 
     setData(filteredData);
-    setSelectedData(rows[0]);
     setIdx(rowIdx);
   };
 
@@ -115,8 +117,22 @@ export default function Table() {
   };
 
   const onRowClickHandler = (row: any, index: number) => {
-    setSelectedData(row);
+    const safeRow = {
+      ...row,
+      style: {
+        width: row.style?.width || "",
+        color: row.style?.color || "",
+        variant: row.style?.variant || "",
+        icon: row.style?.icon || null,
+        iconPosition: row.style?.iconPosition || "",
+      },
+    };
+    setSelectedData(safeRow);
     setIdx(index);
+  };
+
+  const onCheckedHandler = (rows: any[], index: number, allRows: any[]) => {
+    setSelectedData(allRows[idx]);
   };
 
   return (
@@ -130,6 +146,7 @@ export default function Table() {
         onDelete={onDeleteHandler}
         onRowClick={onRowClickHandler}
         rowClickTriggerIdx={idx}
+        onChecked={onCheckedHandler}
       />
     </TableContainerStyle>
   );

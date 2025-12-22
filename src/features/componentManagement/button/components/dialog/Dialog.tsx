@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Dialog as FoneDialog } from "fone-design-system_v1";
 
-import { StyleData } from "../../store/data";
+import { StyleData } from "@/shared/store/components/component";
+
 import useDialogStore from "../../store/dialog";
 import Actions from "./Actions";
 import DialogContent from "./DialogContent";

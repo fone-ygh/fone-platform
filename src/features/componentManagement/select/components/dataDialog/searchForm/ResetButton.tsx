@@ -3,8 +3,9 @@ import AutorenewIcon from "@mui/icons-material/Autorenew";
 import { Button } from "fone-design-system_v1";
 import { FieldValues, UseFormReset } from "react-hook-form";
 
+import useComponentStore from "@/shared/store/components/component";
+
 import useCodeTypeStore from "../../../store/codeType";
-import useDataStore from "../../../store/data";
 
 interface ResetButtonProps {
   reset: UseFormReset<FieldValues>;
@@ -12,7 +13,8 @@ interface ResetButtonProps {
 
 export default function ResetButton({ reset }: ResetButtonProps) {
   const { dataType } = useCodeTypeStore();
-  const { codeTypeData, apiData, setCodeTypeData, setApiData } = useDataStore();
+  const { codeTypeData, apiData, setCodeTypeData, setApiData } =
+    useComponentStore();
   const initialCodeTypeData = useMemo(() => codeTypeData, []);
   const initialApiData = useMemo(() => apiData, []);
 
