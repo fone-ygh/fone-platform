@@ -2,9 +2,6 @@
 import { EditorMode } from "./editorMode";
 
 export type EditorActions = {
-  setCanvasWidth: (w: number) => void;
-  setCanvasHeight: (h: number) => void;
-
   setZoom: (ext: number | ((prev: number) => number)) => void;
   setCanvasZoom: (next: number | ((prev: number) => number)) => void;
   zoomIn: () => void;
@@ -32,9 +29,6 @@ export type EditorActions = {
 };
 
 export type EditorStore = {
-  canvasWidth: number;
-  canvasHeight: number;
-
   /** (선택) 미사용 */
   zoom: number;
 

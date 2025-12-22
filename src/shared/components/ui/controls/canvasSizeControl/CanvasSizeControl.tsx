@@ -2,22 +2,21 @@
 
 import { Button, Flex, TextField2 } from "fone-design-system_v1";
 
-import { useEDITORActions, useEDITORStore } from "@/shared/store/control";
+import { useLayoutActions, useLayoutStore } from "@/shared/store";
 
 export default function CanvasSizeControl() {
-  const { setCanvasWidth, setCanvasHeight } = useEDITORActions();
-  const { canvasWidth, canvasHeight } = useEDITORStore();
+  const { setCanvasSize } = useLayoutActions();
+  const { canvasWidth, canvasHeight } = useLayoutStore();
 
   /* Canvas */
   const handleCanvasW = (v: number) => {
-    setCanvasWidth(v);
+    setCanvasSize(v, canvasHeight);
   };
   const handleCanvasH = (v: number) => {
-    setCanvasHeight(v);
+    setCanvasSize(canvasWidth, v);
   };
   const resetCanvas = () => {
-    setCanvasWidth(1200);
-    setCanvasHeight(800);
+    setCanvasSize(1200, 800);
   };
 
   return (

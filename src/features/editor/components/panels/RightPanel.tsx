@@ -3,34 +3,24 @@
 
 import * as React from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import {
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Spreadsheet } from "@jspreadsheet-ce/react";
+import { TextField } from "@mui/material";
 import { Button, Label, Switch } from "fone-design-system_v1";
 
+import CellSettingArea from "@/features/table/components/CellSettingArea";
+import ExtraButtonArea from "@/features/table/components/ExtraButtonArea";
+import MergeButtonArea from "@/features/table/components/MergeButtonArea";
+import TableSettingArea from "@/features/table/components/TableSettingArea";
+import { useJspreadSheetStore } from "@/features/table/store/jspreadSheetStore";
+import { useTableSettingStore } from "@/features/table/store/tableSettingStore";
 import Aside from "@/shared/components/layout/aside/Aside";
+import { AccordionCard } from "@/shared/components/ui/cardAccordion/CardAccordion";
 import { useLayoutActions, useLayoutStore } from "@/shared/store/layout";
-import {
-  usePatternActions,
-  usePatternStore,
-} from "@/shared/store/pattern/store";
+import { usePatternActions } from "@/shared/store/pattern/store";
 
 import useCurrentAreaSection from "../../hooks/useCurrentAreaSection";
 import { useCurrentPatternMeta } from "../../hooks/useCurrentPatternMeta";
 import { LayoutCard } from "./right/LayoutCard";
-import CellSettingArea from "@/features/table/components/CellSettingArea";
-import { useTableSettingStore } from "@/features/table/store/tableSettingStore";
-import { Spreadsheet } from "@jspreadsheet-ce/react";
-import { useJspreadSheetStore } from "@/features/table/store/jspreadSheetStore";
-import { AccordionCard } from "@/shared/components/ui/cardAccordion/CardAccordion";
-import TableSettingArea from "@/features/table/components/TableSettingArea";
-import MergeButtonArea from "@/features/table/components/MergeButtonArea";
-import ExtraButtonArea from "@/features/table/components/ExtraButtonArea";
 
 function buildEditorUrl(
   editorId: string,
@@ -44,82 +34,23 @@ function buildEditorUrl(
   return qs ? `/editor/${editorId}?${qs}` : `/editor/${editorId}`;
 }
 
-/* ---------------- Dialogs ---------------- */
-
-type SavePatternDialogProps = {
-  open: boolean;
-  title: string;
-  description: string;
-  error?: string | null;
-  onChangeTitle: (v: string) => void;
-  onChangeDescription: (v: string) => void;
-  onClose: () => void;
-  onSave: () => void;
-};
-
-function SavePatternDialog({
-  open,
-  title,
-  description,
-  error,
-  onChangeTitle,
-  onChangeDescription,
-  onClose,
-  onSave,
-}: SavePatternDialogProps) {
-  return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>새 패턴 저장</DialogTitle>
-
-      <DialogContent sx={{ display: "grid", gap: 1.5, pt: 1 }}>
-        <TextField
-          label="Title"
-          value={title}
-          onChange={e => onChangeTitle(e.target.value)}
-          autoFocus
-          fullWidth
-          size="small"
-        />
-        <TextField
-          label="Description"
-          value={description}
-          onChange={e => onChangeDescription(e.target.value)}
-          fullWidth
-          size="small"
-          multiline
-          minRows={3}
-        />
-
-        {error && (
-          <Typography variant="body2" color="error">
-            {error}
-          </Typography>
-        )}
-      </DialogContent>
-
-      <DialogActions>
-        <Button variant="text" onClick={onClose}>
-          취소
-        </Button>
-        <Button variant="contained" onClick={onSave}>
-          새로 저장
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-}
-
-/* ---------------- RightPanel ---------------- */
-
 export default function RightPanel() {
   const { areaSection, areaType, isDetailMode } = useCurrentAreaSection();
+
   /* -------- router / url params -------- */
   const router = useRouter();
   const params = useParams();
   const editorId = String((params as any)?.id ?? "");
   const searchParams = useSearchParams();
   const originPatternId = searchParams.get("originPatternId"); // string | null
-  const { title: pageTitle, setTitle: setPageTitle } = useCurrentPatternMeta();
+
+  /* -------- meta (title/desc shown in editor header) -------- */
+  const {
+    title: pageTitle,
+    description: pageDesc,
+    setTitle: setPageTitle,
+  } = useCurrentPatternMeta();
+
   /* -------- layout -------- */
   const { selectedIds, sections, insertTool, canvasWidth, canvasHeight } =
     useLayoutStore();
@@ -134,7 +65,7 @@ export default function RightPanel() {
   } = useLayoutActions();
 
   const { spreadsheet } = useJspreadSheetStore();
-console.log("spreadsheet : ", spreadsheet);
+  console.log("spreadsheet : ", spreadsheet);
   /* -------- patterns (zustand) -------- */
   const { addPattern } = usePatternActions();
 
@@ -218,31 +149,17 @@ console.log("spreadsheet : ", spreadsheet);
     input.click();
   }, [setSections, setSelectedIds, setCommitAfterTransform]);
 
-  /* -------- Save modal -------- */
-  const [saveOpen, setSaveOpen] = React.useState(false);
-  const [title, setTitle] = React.useState("");
-  const [description, setDescription] = React.useState("");
-  const [saveError, setSaveError] = React.useState<string | null>(null);
-
-  const openSaveModal = React.useCallback(() => {
-    setSaveError(null);
-    setTitle("");
-    setDescription("");
-    setSaveOpen(true);
-  }, []);
-
-  const closeSaveModal = React.useCallback(() => setSaveOpen(false), []);
-
+  /* -------- Save (no modal) -------- */
   const handleSave = React.useCallback(() => {
-    const t = title.trim();
+    const t = (pageTitle ?? "").trim();
     if (!t) {
-      setSaveError("제목(title)을 입력해주세요.");
+      window.alert("페이지명을 입력해주세요.");
       return;
     }
 
     const payload = {
       title: t,
-      description: description.trim(),
+      description: (pageDesc ?? "").trim(),
       canvasWidth,
       canvasHeight,
       sections,
@@ -250,19 +167,15 @@ console.log("spreadsheet : ", spreadsheet);
     };
 
     const savedId = addPattern(payload);
-    setPageTitle(t);
-    closeSaveModal();
 
     // 저장 후 URL 갱신 (id = 저장된 커스텀패턴)
     if (editorId) {
-      router.replace(
-        buildEditorUrl(editorId, savedId, payload.originPatternId),
-      );
-      alert("저장되었습니다.");
+      router.replace(buildEditorUrl(editorId, savedId, originPatternId));
+      window.alert("저장되었습니다.");
     }
   }, [
-    title,
-    description,
+    pageTitle,
+    pageDesc,
     canvasWidth,
     canvasHeight,
     sections,
@@ -270,8 +183,6 @@ console.log("spreadsheet : ", spreadsheet);
     addPattern,
     editorId,
     router,
-    closeSaveModal,
-    setPageTitle,
   ]);
 
   return (
@@ -296,6 +207,7 @@ console.log("spreadsheet : ", spreadsheet);
               sx={{ "& input": { fontWeight: "bold" } }}
             />
           </div>
+
           {/* selection lock */}
           {selectedOne && (
             <>
@@ -313,6 +225,7 @@ console.log("spreadsheet : ", spreadsheet);
               </div>
             </>
           )}
+
           {/* layout card */}
           {/* layout card 공통적으로 쓸 수 있게 수정해야함 */}
           <LayoutCard
@@ -327,29 +240,17 @@ console.log("spreadsheet : ", spreadsheet);
             onImportFile={importJsonFile}
             onDownloadJsonFile={downloadJsonFile}
           />
-          
+
           {/* save */}
           <div style={{ display: "flex", gap: 8, padding: "10px 0" }}>
             <Button
               variant="contained"
-              onClick={openSaveModal}
+              onClick={handleSave}
               style={{ flex: 1 }}
             >
               저장
             </Button>
           </div>
-
-          {/* dialogs */}
-          <SavePatternDialog
-            open={saveOpen}
-            title={title}
-            description={description}
-            error={saveError}
-            onChangeTitle={setTitle}
-            onChangeDescription={setDescription}
-            onClose={closeSaveModal}
-            onSave={handleSave}
-          />
         </>
       )}
 
@@ -362,36 +263,42 @@ console.log("spreadsheet : ", spreadsheet);
       {isDetailMode && areaType === "grid" && (
         <div>
           {/* 셀 설정 영역 */}
-          {spreadsheet && 
-           <AccordionCard
-            title="Cell Setting"
-            allowMultiple
-            defaultOpenAll
-            hideControls
-            items={[
-              {
-                id: "cell-setting",
-                title: "선택 셀 설정",
-                content: <CellSettingArea spreadsheet={spreadsheet as unknown as React.RefObject<Spreadsheet>} />,
-              },
-              {
-                id: "table-setting",
-                title: "테이블 설정",
-                content: <TableSettingArea />,
-              },
-              {
-                id: "table-merge-setting",
-                title: "셀 병합 설정",
-                content: <MergeButtonArea />,
-              },
-              {
-                id: "extra-button-area",
-                title: "추가 버튼 영역",
-                content: <ExtraButtonArea />,
-              },
-            ]}
-          />
-          }
+          {spreadsheet && (
+            <AccordionCard
+              title="Cell Setting"
+              allowMultiple
+              defaultOpenAll
+              hideControls
+              items={[
+                {
+                  id: "cell-setting",
+                  title: "선택 셀 설정",
+                  content: (
+                    <CellSettingArea
+                      spreadsheet={
+                        spreadsheet as unknown as React.RefObject<Spreadsheet>
+                      }
+                    />
+                  ),
+                },
+                {
+                  id: "table-setting",
+                  title: "테이블 설정",
+                  content: <TableSettingArea />,
+                },
+                {
+                  id: "table-merge-setting",
+                  title: "셀 병합 설정",
+                  content: <MergeButtonArea />,
+                },
+                {
+                  id: "extra-button-area",
+                  title: "추가 버튼 영역",
+                  content: <ExtraButtonArea />,
+                },
+              ]}
+            />
+          )}
         </div>
       )}
 

@@ -21,7 +21,7 @@ export function useCurrentPatternMeta() {
 
   React.useEffect(() => {
     // 이미 메타 타이틀이 있으면 재초기화 안 함
-    // if (meta.title) return;
+    if (meta.title) return;
 
     // 1) URL의 id로 커스텀 패턴 찾기
     if (urlPatternId) {
