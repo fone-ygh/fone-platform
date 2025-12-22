@@ -4,11 +4,11 @@ import useDataStore from "../../store/data";
 import Select from "./Select";
 
 export default function ComponentView() {
-  const { selectedSelectData } = useDataStore();
+  const { selectedData } = useDataStore();
 
   return (
     <ComponentViewStyle>
-      <span className="name">{selectedSelectData?.name}</span>
+      <span className="name">{selectedData?.name}</span>
       <Select />
     </ComponentViewStyle>
   );

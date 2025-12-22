@@ -21,6 +21,9 @@ export default function ComponentView() {
     };
   }, [iconUrl]);
 
+  const rawVariant = selectedData?.style.variant;
+  const buttonVariant = rawVariant === "" ? undefined : rawVariant;
+
   const iconNode = iconUrl ? (
     <Image
       src={iconUrl}
@@ -29,9 +32,7 @@ export default function ComponentView() {
       height={16}
       style={{
         filter:
-          selectedData?.style.variant === "contained"
-            ? "brightness(0) invert(1)"
-            : undefined,
+          buttonVariant === "contained" ? "brightness(0) invert(1)" : undefined,
       }}
       unoptimized
     />
@@ -48,7 +49,7 @@ export default function ComponentView() {
       <Button
         startIcon={startIcon}
         endIcon={endIcon}
-        variant={selectedData?.style.variant}
+        variant={buttonVariant}
         color={selectedData?.style.color}
         sx={{
           width: selectedData?.style.width

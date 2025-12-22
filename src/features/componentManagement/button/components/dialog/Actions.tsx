@@ -1,6 +1,10 @@
 import { Button } from "fone-design-system_v1";
 
-import useDataStore, { StyleData } from "../../store/data";
+import useComponentStore, {
+  StyleData,
+} from "@/shared/store/components/component";
+
+import useDataStore from "../../store/data";
 import useDialogStore from "../../store/dialog";
 import useIdxStore from "../../store/idx";
 
@@ -10,21 +14,38 @@ interface ActionsProps {
 
 export default function Actions({ styleData }: ActionsProps) {
   const { setIsOpen } = useDialogStore();
-  const { data, setData } = useDataStore();
+  const { buttonData, setButtonData } = useComponentStore();
+  const { selectedData, setSelectedData } = useDataStore();
   const { idx } = useIdxStore();
 
+  console.log(selectedData);
+
   const selectedHandler = () => {
-    setData(
-      data.map((item, index) => {
+    if (!styleData || !selectedData) return;
+
+    let updatedData = [];
+
+    if (
+      selectedData.crud === "C" &&
+      buttonData.find(data => data.componentId === selectedData.componentId) ===
+        undefined
+    ) {
+      updatedData = [{ ...selectedData, style: styleData }, ...buttonData];
+    } else {
+      updatedData = buttonData.map((data, index) => {
         if (index === idx) {
           return {
-            ...item,
-            style: styleData || item.style,
+            ...selectedData,
+            style: styleData,
           };
         }
-        return item;
-      }),
-    );
+
+        return data;
+      });
+    }
+
+    setButtonData(updatedData);
+    setSelectedData({ ...selectedData, style: styleData });
     setIsOpen(false);
   };
 
