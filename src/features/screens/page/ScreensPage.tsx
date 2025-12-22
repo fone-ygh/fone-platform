@@ -68,10 +68,6 @@ function formatDate(iso: string) {
   return `${yy}.${mm}.${dd}`;
 }
 
-function statusLabel(s: ScreenStatus) {
-  return s === "draft" ? "초안" : "배포";
-}
-
 export default function ScreensPage() {
   const router = useRouter();
 
@@ -144,7 +140,7 @@ export default function ScreensPage() {
               value={TAB_ALL}
               sx={{ fontSize: 13, fontWeight: 600 }}
             />
-            <Tab
+            {/* <Tab
               label="초안"
               value={TAB_DRAFT}
               sx={{ fontSize: 13, fontWeight: 600 }}
@@ -153,7 +149,7 @@ export default function ScreensPage() {
               label="배포"
               value={TAB_PUBLISHED}
               sx={{ fontSize: 13, fontWeight: 600 }}
-            />
+            /> */}
           </Tabs>
         </Box>
 
@@ -163,7 +159,7 @@ export default function ScreensPage() {
             스크린 목록
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            클릭하면 에디터로 열려
+            클릭하면 에디터로 열립니다.
           </Typography>
         </Box>
         <Divider sx={{ mb: 2 }} />
@@ -227,12 +223,6 @@ export default function ScreensPage() {
                       >
                         {s.title}
                       </Typography>
-
-                      <Chip
-                        size="small"
-                        label={statusLabel(s.status)}
-                        variant="outlined"
-                      />
                     </Box>
 
                     {/* 중간: 메타 */}

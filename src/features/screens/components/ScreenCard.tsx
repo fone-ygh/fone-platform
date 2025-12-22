@@ -24,12 +24,6 @@ function formatDate(iso: string) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-function statusLabel(s: Screen["status"]) {
-  if (s === "draft") return "초안";
-  if (s === "published") return "배포";
-  return "보관";
-}
-
 export default function ScreenCard({ screen, onOpen }: Props) {
   return (
     <Card variant="outlined" sx={{ borderRadius: 2 }}>
@@ -52,7 +46,6 @@ export default function ScreenCard({ screen, onOpen }: Props) {
             >
               {screen.title}
             </Typography>
-            <Chip size="small" label={statusLabel(screen.status)} />
           </Box>
 
           <Typography variant="caption" color="text.secondary">
