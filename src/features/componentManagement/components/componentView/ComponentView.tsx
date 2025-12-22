@@ -1,15 +1,20 @@
+"use client";
+
 import styled from "@emotion/styled";
 
-import useDataStore from "../../store/data";
-import Select from "./Select";
+import useDataStore from "../../input/store/data";
 
-export default function ComponentView() {
+interface ComponentViewProps {
+  children: React.ReactNode;
+}
+
+export default function ComponentView({ children }: ComponentViewProps) {
   const { selectedData } = useDataStore();
 
   return (
     <ComponentViewStyle>
       <span className="name">{selectedData?.name}</span>
-      <Select />
+      {children}
     </ComponentViewStyle>
   );
 }

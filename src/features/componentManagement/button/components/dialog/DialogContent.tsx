@@ -2,16 +2,18 @@ import styled from "@emotion/styled";
 import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
 import { VerticalTable } from "fone-design-system_v1";
 
-import useDataStore, { StyleData } from "../../store/data";
-import useIdxStore from "../../store/idx";
+import { ButtonStyleData } from "@/features/componentManagement/store/component";
+
+import useDataStore from "../../store/data";
 
 interface DialogContentProps {
-  setStyleData: React.Dispatch<React.SetStateAction<StyleData | undefined>>;
+  setStyleData: React.Dispatch<
+    React.SetStateAction<ButtonStyleData | undefined>
+  >;
 }
 
 export default function DialogContent({ setStyleData }: DialogContentProps) {
-  const { idx } = useIdxStore();
-  const { data } = useDataStore();
+  const { selectedData } = useDataStore();
 
   const columns = [
     {
@@ -80,7 +82,7 @@ export default function DialogContent({ setStyleData }: DialogContentProps) {
         items={columns}
         totalColumns={2}
         colGroup={colGroup}
-        data={data[idx]?.style}
+        data={selectedData.style}
         onTableChange={data => setStyleData(data)}
       />
     </DialogContentStyle>

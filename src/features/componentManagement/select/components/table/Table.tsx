@@ -2,6 +2,8 @@ import { useState } from "react";
 import styled from "@emotion/styled";
 import { Dialog, Table2 } from "fone-design-system_v1";
 
+import useComponentStore from "@/features/componentManagement/store/component";
+
 import useCodeTypeStore from "../../store/codeType";
 import useDataStore from "../../store/data";
 import useDialogStore from "../../store/dialog";
@@ -11,7 +13,8 @@ export default function Table() {
   const { idx, setIdx } = useIdxStore();
   const [isWarningOpen, setIsWarningOpen] = useState(false);
   const { setIsOpen } = useDialogStore();
-  const { selectData, setSelectData, setSelectedSelectData } = useDataStore();
+  const { selectData, setSelectData } = useComponentStore();
+  const { setSelectedData } = useDataStore();
   const { checkedRows, setCheckedRows, setDataType } = useCodeTypeStore();
 
   const columns = [
@@ -41,7 +44,8 @@ export default function Table() {
       accessorKey: "style",
       header: "스타일",
       editable: true,
-      type: "input",
+      type: "text",
+      align: "center",
     },
     {
       accessorKey: "required",
@@ -101,7 +105,7 @@ export default function Table() {
         componentId: item.componentId,
         name: item.name,
         label: item.label,
-        style: item.style,
+        style: "default",
         required: item.required,
         all: item.all,
         defaultValue: item.defaultValue,
@@ -118,7 +122,6 @@ export default function Table() {
     );
 
     setSelectData(filteredData);
-    setSelectedSelectData(rows[0]);
     setIdx(rowIdx);
   };
 
@@ -131,8 +134,12 @@ export default function Table() {
   };
 
   const onRowClickHandler = (row: any, index: number) => {
-    setSelectedSelectData(row);
+    setSelectedData(row);
     setIdx(index);
+  };
+
+  const onCheckedHandler = (rows: any[], index: number, allRows: any[]) => {
+    setSelectedData(allRows[idx]);
   };
 
   return (
@@ -145,6 +152,7 @@ export default function Table() {
         onSave={onSaveHandler}
         onDelete={onDeleteHandler}
         onRowClick={onRowClickHandler}
+        onChecked={onCheckedHandler}
         rowClickTriggerIdx={idx}
         modalData={{
           dataSourceNm: checkedRows[0]?.groupName,

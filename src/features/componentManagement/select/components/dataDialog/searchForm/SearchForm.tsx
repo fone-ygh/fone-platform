@@ -2,8 +2,9 @@ import { useMemo } from "react";
 import styled from "@emotion/styled";
 import { useForm } from "react-hook-form";
 
+import useComponentStore from "@/features/componentManagement/store/component";
+
 import useCodeTypeStore from "../../../store/codeType";
-import useDataStore from "../../../store/data";
 import ButtonGroup from "./ButtonGroup";
 import Input from "./Input";
 
@@ -11,13 +12,8 @@ export default function SearchForm() {
   const { handleSubmit, register, reset } = useForm();
 
   const { dataType } = useCodeTypeStore();
-  const {
-    codeTypeData,
-    apiData,
-    setCodeTypeData,
-    setCommonCodeData,
-    setApiData,
-  } = useDataStore();
+  const { codeTypeData, apiData, setCodeTypeData, setApiData } =
+    useComponentStore();
 
   const initialCodeTypeData = useMemo(() => codeTypeData, []);
   const initialApiData = useMemo(() => apiData, []);
@@ -32,7 +28,6 @@ export default function SearchForm() {
       });
 
       setCodeTypeData(filteredCodeTypeData);
-      setCommonCodeData(filteredCodeTypeData?.[0]?.commonCodeData || []);
     } else {
       const filteredApiData = initialApiData.filter(ad => {
         return (

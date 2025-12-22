@@ -3,7 +3,7 @@
 import styled from "@emotion/styled";
 
 import ComponentView from "../components/componentView/ComponentView";
-import Dialog from "../components/dialog/Dialog";
+import DataDialog from "../components/dataDialog/DataDialog";
 import Table from "../components/table/Table";
 
 export default function SelectPage() {
@@ -11,7 +11,7 @@ export default function SelectPage() {
     <SelectPageStyle>
       <Table />
       <ComponentView />
-      <Dialog />
+      <DataDialog />
     </SelectPageStyle>
   );
 }

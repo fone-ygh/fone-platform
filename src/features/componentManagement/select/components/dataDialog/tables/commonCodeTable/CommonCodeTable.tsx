@@ -1,16 +1,13 @@
 import { Table2 } from "fone-design-system_v1";
 
 import useCodeTypeStore from "@/features/componentManagement/select/store/codeType";
-import useDataStore from "@/features/componentManagement/select/store/data";
+import useIdxStore from "@/features/componentManagement/select/store/idx";
+import useComponentStore from "@/features/componentManagement/store/component";
 
 export default function CommonCodeTable() {
+  const { dialogIdx: idx } = useIdxStore();
   const { selectedCheckedRows } = useCodeTypeStore();
-  const {
-    commonCodeData: data,
-    codeTypeData,
-    setCodeTypeData,
-    setCommonCodeData,
-  } = useDataStore();
+  const { codeTypeData, setCodeTypeData } = useComponentStore();
 
   const columns = [
     {
@@ -46,7 +43,7 @@ export default function CommonCodeTable() {
       };
     });
 
-    const updatedData = data.filter(item => {
+    const updatedData = codeTypeData[idx].commonCodeData.filter(item => {
       return !rows.find(row => row.code === item.code);
     });
 
@@ -62,11 +59,10 @@ export default function CommonCodeTable() {
     });
 
     setCodeTypeData(updatedCodeTypeData);
-    setCommonCodeData([...newData, ...updatedData]);
   };
 
   const onDeleteHandler = (rows: any[]) => {
-    const newData = data.filter(item => {
+    const newData = codeTypeData[idx].commonCodeData.filter(item => {
       return !rows.find(row => row.code === item.code);
     });
 
@@ -81,7 +77,6 @@ export default function CommonCodeTable() {
     });
 
     setCodeTypeData(updatedCodeTypeData);
-    setCommonCodeData(newData);
   };
 
   return (
@@ -89,7 +84,7 @@ export default function CommonCodeTable() {
       title="공통코드"
       // @ts-ignore
       columns={columns}
-      data={data}
+      data={codeTypeData[idx].commonCodeData}
       onSave={onSaveHandler}
       onDelete={onDeleteHandler}
       checkbox

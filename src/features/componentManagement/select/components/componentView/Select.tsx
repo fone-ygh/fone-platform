@@ -2,14 +2,17 @@ import { useState } from "react";
 import styled from "@emotion/styled";
 import { Select as FoneSelect } from "fone-design-system_v1";
 
+import useComponentStore from "@/features/componentManagement/store/component";
+
 import useDataStore from "../../store/data";
 
 export default function Select() {
   const [value, setValue] = useState("");
 
-  const { selectedSelectData, codeTypeData } = useDataStore();
+  const { selectedData } = useDataStore();
+  const { codeTypeData } = useComponentStore();
   const commonCode = codeTypeData.find(
-    ct => ct.groupCode === selectedSelectData?.dataSourceCd,
+    ct => ct.groupCode === selectedData?.dataSourceCd,
   )?.commonCodeData;
 
   const menuItems = commonCode?.map(code => ({
@@ -20,15 +23,13 @@ export default function Select() {
   return (
     <InputStyle>
       <div className="label">
-        <span>{selectedSelectData.label}</span>
-        {selectedSelectData.required === "Y" && (
-          <div className="required">*</div>
-        )}
+        <span>{selectedData.label}</span>
+        {selectedData.required === "Y" && <div className="required">*</div>}
       </div>
 
       <FoneSelect
         sx={{ width: 200 }}
-        all={selectedSelectData.all === "Y"}
+        all={selectedData.all === "Y"}
         MenuItems={menuItems}
         value={value}
         onChange={e => setValue(e.target.value)}
