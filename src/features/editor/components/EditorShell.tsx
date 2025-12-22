@@ -1,4 +1,6 @@
 // src/features/editor/components/EditorShell.tsx
+"use client";
+
 import { Flex } from "fone-design-system_v1";
 
 import CanvasStage from "./canvas/CanvasStage";

@@ -20,6 +20,38 @@ import PatternCard from "./PatternCard";
 const TAB_BUILTIN = "builtin";
 const TAB_CUSTOM = "custom";
 
+/** ✅ 썸네일 색상 설명(legend) */
+function PatternColorLegend() {
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
+      <LegendItem label="Search" dotSx={{ bgcolor: "primary.light" }} />
+      <LegendItem label="Single" dotSx={{ bgcolor: "success.light" }} />
+      <LegendItem label="Grid" dotSx={{ bgcolor: "warning.light" }} />
+      <LegendItem label="Tab" dotSx={{ bgcolor: "secondary.light" }} />
+    </Box>
+  );
+}
+
+function LegendItem({ label, dotSx }: { label: string; dotSx: any }) {
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 0.6 }}>
+      <Box
+        sx={{
+          width: 10,
+          height: 10,
+          borderRadius: "50%",
+          border: "1px solid",
+          borderColor: "divider",
+          ...dotSx,
+        }}
+      />
+      <Typography variant="caption" color="text.secondary">
+        {label}
+      </Typography>
+    </Box>
+  );
+}
+
 type PatternListProps = {
   title?: string;
 
@@ -106,14 +138,28 @@ export default function PatternList({
         {/* 기본 패턴 탭 */}
         {isBuiltinTab && (
           <Box>
-            <Box sx={{ display: "flex", alignItems: "center", mb: 1, gap: 1 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                기본 패턴
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                제품에서 제공하는 고정 레이아웃
-              </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between", // ✅ 오른쪽에 legend
+                mb: 1,
+                gap: 1,
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                  기본 패턴
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  제품에서 제공하는 고정 레이아웃
+                </Typography>
+              </Box>
+
+              {/* ✅ 색상 설명 */}
+              <PatternColorLegend />
             </Box>
+
             <Divider sx={{ mb: 2 }} />
 
             <div
@@ -137,14 +183,28 @@ export default function PatternList({
         {/* 사용자 지정 패턴 탭 */}
         {isCustomTab && (
           <Box>
-            <Box sx={{ display: "flex", alignItems: "center", mb: 1, gap: 1 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                사용자 지정 패턴
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                레이아웃 편집기에서 저장한 나만의 패턴
-              </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between", // ✅ 오른쪽에 legend
+                mb: 1,
+                gap: 1,
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                  사용자 지정 패턴
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  레이아웃 편집기에서 저장한 나만의 패턴
+                </Typography>
+              </Box>
+
+              {/* ✅ 색상 설명 */}
+              <PatternColorLegend />
             </Box>
+
             <Divider sx={{ mb: 2 }} />
 
             {customPatterns.length === 0 ? (
