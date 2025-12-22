@@ -2,7 +2,7 @@ import { Table2 } from "fone-design-system_v1";
 
 import useCodeTypeStore from "@/features/componentManagement/select/store/codeType";
 import useDialogStore from "@/features/componentManagement/select/store/dialog";
-import useComponentStore from "@/shared/store/components/component";
+import useComponentStore from "@/features/componentManagement/store/component";
 
 export default function ApiTable() {
   const { apiData: data } = useComponentStore();
