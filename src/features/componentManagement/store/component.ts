@@ -1,35 +1,5 @@
 import { create } from "zustand";
 
-interface SelectData {
-  crud?: string;
-  componentId: string;
-  name: string;
-  label: string;
-  style: string;
-  required: string;
-  all: string;
-  dataType: string;
-  dataSourceCd: string;
-  dataSourceNm: string;
-}
-
-export interface StyleData {
-  width: string;
-  color: string;
-  variant: "contained" | "outlined" | "text" | "";
-  icon: File | null;
-  iconPosition: string;
-}
-
-interface ButtonData {
-  crud?: string;
-  componentId: string;
-  name: string;
-  title: string;
-  style: StyleData;
-  function: string;
-}
-
 interface CommonCodeData {
   code: string;
   codeName: string;
@@ -49,21 +19,99 @@ interface ApiData {
   groupDescription: string;
 }
 
+export interface ButtonStyleData {
+  width: string;
+  color: string;
+  variant: "contained" | "outlined" | "text" | "";
+  icon: File | null;
+  iconPosition: string;
+}
+
+export interface InputStyleData {
+  width: string;
+  icon: File | null;
+  iconPosition: string;
+}
+
+interface SelectData {
+  crud?: string;
+  componentId: string;
+  name: string;
+  label: string;
+  style: string;
+  required: string;
+  all: string;
+  dataType: string;
+  dataSourceCd: string;
+  dataSourceNm: string;
+}
+
+interface ButtonData {
+  crud?: string;
+  componentId: string;
+  name: string;
+  title: string;
+  style: ButtonStyleData;
+  function: string;
+}
+
+export interface InputData {
+  crud?: string;
+  componentId: string;
+  name: string;
+  title: string;
+  style: InputStyleData;
+  required: string;
+  type: string;
+  placeholder: string;
+}
+
 interface State {
   buttonData: ButtonData[];
   selectData: SelectData[];
+  inputData: InputData[];
 
   codeTypeData: CodeTypeData[];
   apiData: ApiData[];
 
   setButtonData: (buttonData: ButtonData[]) => void;
   setSelectData: (selectData: SelectData[]) => void;
+  setInputData: (inputData: InputData[]) => void;
 
   setCodeTypeData: (codeTypeData: CodeTypeData[]) => void;
   setApiData: (apiData: ApiData[]) => void;
 }
 
 const useComponentStore = create<State>(set => ({
+  inputData: [
+    {
+      componentId: "username",
+      name: "아이디",
+      title: "아이디",
+      style: {
+        width: "250",
+        icon: null,
+        iconPosition: "",
+      },
+      required: "Y",
+      type: "text",
+      placeholder: "아이디를 입력하세요",
+    },
+    {
+      componentId: "password",
+      name: "비밀번호",
+      title: "비밀번호",
+      style: {
+        width: "250",
+        icon: null,
+        iconPosition: "",
+      },
+      required: "Y",
+      type: "password",
+      placeholder: "비밀번호를 입력하세요",
+    },
+  ],
+
   buttonData: [
     {
       componentId: "search",
@@ -185,9 +233,10 @@ const useComponentStore = create<State>(set => ({
 
   setButtonData: (buttonData: ButtonData[]) => set({ buttonData: buttonData }),
   setSelectData: (selectData: SelectData[]) => set({ selectData: selectData }),
+  setInputData: (inputData: InputData[]) => set({ inputData: inputData }),
+
   setCodeTypeData: (codeTypeData: CodeTypeData[]) =>
     set({ codeTypeData: codeTypeData }),
-
   setApiData: (apiData: ApiData[]) => set({ apiData: apiData }),
 }));
 
