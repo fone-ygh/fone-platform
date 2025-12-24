@@ -4,8 +4,7 @@
 import React from "react";
 import ReplayIcon from "@mui/icons-material/Replay";
 import SearchIcon from "@mui/icons-material/Search";
-import { Button, Box as MuiBox } from "@mui/material";
-import { Box, Label, TextField2 } from "fone-design-system_v1";
+import { Box, Button, Flex, Label, TextField2 } from "fone-design-system_v1";
 
 import type { SearchSection } from "@/shared/store";
 
@@ -25,8 +24,7 @@ export default function SearchSectionItem({ item }: Props) {
         alignItems: "center",
       }}
     >
-      {/* ✅ 좌(필드들) / 우(버튼들) 양쪽 끝 정렬 */}
-      <MuiBox
+      <Box
         sx={{
           width: "100%",
           display: "flex",
@@ -36,29 +34,34 @@ export default function SearchSectionItem({ item }: Props) {
         }}
       >
         {/* ✅ 왼쪽: 라벨+인풋들 */}
-        <MuiBox
-          sx={{
-            flex: 1,
-            minWidth: 0,
-            display: "grid",
-            gridTemplateColumns:
-              "auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr)",
-            gap: "1.2rem",
-            alignItems: "center",
-          }}
-        >
-          <Label size="medium">주문번호</Label>
-          <TextField2 placeholder="주문번호" />
+        <Flex spacing={5}>
+          <Flex spacing={2}>
+            <Label size="medium">주문번호</Label>
+            <TextField2 placeholder="주문번호" />
+          </Flex>
 
-          <Label size="medium">고객명</Label>
-          <TextField2 placeholder="예) 홍길동" />
+          <Flex spacing={2}>
+            <Label size="medium">고객명</Label>
+            <TextField2 placeholder="예) 홍길동" />
+          </Flex>
 
-          <Label size="medium">상태</Label>
-          <TextField2 placeholder="진행중" />
-        </MuiBox>
+          <Flex spacing={2}>
+            <Label size="medium">상태</Label>
+            <TextField2 placeholder="진행중" />
+          </Flex>
 
-        {/* ✅ 오른쪽: 버튼들 (끝에 딱 붙게) */}
-        <MuiBox
+          <Flex spacing={2}>
+            <Label size="medium">상태</Label>
+            <TextField2 placeholder="진행중" />
+          </Flex>
+
+          <Flex spacing={2}>
+            <Label size="medium">상태</Label>
+            <TextField2 placeholder="진행중" />
+          </Flex>
+        </Flex>
+
+        <Box
           sx={{
             display: "flex",
             alignItems: "center",
@@ -67,40 +70,16 @@ export default function SearchSectionItem({ item }: Props) {
             flexShrink: 0,
           }}
         >
-          {/* 초기화 버튼 (아이콘만) */}
-          <Button
-            variant="outlined"
-            startIcon={<ReplayIcon />}
-            sx={{
-              height: "5.6rem",
-              minWidth: "5.6rem",
-              width: "5.6rem",
-              px: 0,
-              fontSize: "1.8rem",
-              fontWeight: 900,
-              borderRadius: "1.2rem",
-              whiteSpace: "nowrap",
-              "& .MuiButton-startIcon": { m: 0 },
-              "& svg": { fontSize: "2.4rem" },
-            }}
-          />
+          <Button iconOnly variant="outlined">
+            {" "}
+            <ReplayIcon />
+          </Button>
 
-          <Button
-            variant="contained"
-            startIcon={<SearchIcon />}
-            sx={{
-              height: "5.6rem",
-              px: "2.2rem",
-              fontSize: "1.8rem",
-              fontWeight: 900,
-              borderRadius: "1.2rem",
-              whiteSpace: "nowrap",
-            }}
-          >
+          <Button variant="contained" startIcon={<SearchIcon />}>
             검색
           </Button>
-        </MuiBox>
-      </MuiBox>
+        </Box>
+      </Box>
     </Box>
   );
 }

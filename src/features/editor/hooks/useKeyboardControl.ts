@@ -3,12 +3,13 @@ import { useEffect } from "react";
 import { useLayoutActions, useLayoutStore } from "@/shared/store";
 
 export function useKeyboardControl() {
-  const { selectedIds } = useLayoutStore();
+  const { selectedIds, sections } = useLayoutStore();
   const { setDeleteSelected, setSelectedIds } = useLayoutActions();
 
   useEffect(() => {
+    const isLock = sections.filter(item => item.lock === true);
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Delete") {
+      if (!isLock && e.key === "Delete") {
         e.preventDefault();
         setDeleteSelected();
       }
@@ -24,5 +25,5 @@ export function useKeyboardControl() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [setDeleteSelected, setSelectedIds, selectedIds]);
+  }, [setDeleteSelected, setSelectedIds, selectedIds, sections]);
 }
