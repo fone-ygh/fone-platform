@@ -1,7 +1,7 @@
 import {
   AnySection,
   useContentLayoutStore,
-} from "@/shared/store/contentLayout";
+} from "@/shared/store/editor/contentLayout";
 
 export default function useCurrentAreaSection() {
   const { sections, scopeParentId, selectedIds } = useContentLayoutStore();

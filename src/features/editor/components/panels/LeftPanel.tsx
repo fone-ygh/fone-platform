@@ -9,11 +9,11 @@ import { RichTreeView } from "@mui/x-tree-view/RichTreeView";
 
 import Aside from "@/shared/components/layout/aside/Aside";
 import { useContentLayoutStore } from "@/shared/store";
-import { useContentLayoutActions } from "@/shared/store/contentLayout/store";
+import { useContentLayoutActions } from "@/shared/store/editor/contentLayout/store";
 import type {
   AnySection,
   SectionType,
-} from "@/shared/store/contentLayout/types";
+} from "@/shared/store/editor/contentLayout/types";
 
 import { useCurrentPatternMeta } from "../../hooks/useCurrentPatternMeta";
 import { EditableTreeItem } from "./left/CustomItemTree";

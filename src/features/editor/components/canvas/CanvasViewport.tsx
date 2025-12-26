@@ -3,8 +3,8 @@
 
 import * as React from "react";
 
-import { useContentLayoutStore } from "@/shared/store/contentLayout";
-import { useEDITORActions } from "@/shared/store/control";
+import { useContentLayoutStore } from "@/shared/store/editor/contentLayout";
+import { useEDITORActions } from "@/shared/store/editor/control";
 
 export default function CanvasViewport({
   children,

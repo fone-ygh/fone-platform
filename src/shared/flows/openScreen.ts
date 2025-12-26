@@ -1,7 +1,7 @@
 // src/features/editor/flows/openScreen.ts
 "use client";
 
-import { useContentLayoutStore } from "@/shared/store/contentLayout/store";
+import { useContentLayoutStore } from "@/shared/store/editor/contentLayout/store";
 
 import { getScreenById } from "../store/screen/store";
 

@@ -1,7 +1,7 @@
 // src/shared/store/control/editorMode.ts
 
-import type { InsertTool } from "@/shared/store/contentLayout/types";
-import type { FrameRegion } from "@/shared/store/frame/types"; // ✅ 추가
+import type { InsertTool } from "../contentLayout";
+import type { FrameRegion } from "../frameLayout";
 
 export type EditorMode =
   | { kind: "idle" }

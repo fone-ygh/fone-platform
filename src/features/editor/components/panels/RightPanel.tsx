@@ -18,7 +18,7 @@ import { AccordionCard } from "@/shared/components/ui/cardAccordion/CardAccordio
 import {
   useContentLayoutActions,
   useContentLayoutStore,
-} from "@/shared/store/contentLayout";
+} from "@/shared/store/editor/contentLayout";
 import { usePatternActions } from "@/shared/store/pattern/store";
 
 import useCurrentAreaSection from "../../hooks/useCurrentAreaSection";

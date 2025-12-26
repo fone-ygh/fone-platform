@@ -5,7 +5,7 @@ import React from "react";
 import { Button, Flex } from "fone-design-system_v1";
 
 import { AccordionCard } from "@/shared/components/ui/cardAccordion/CardAccordion";
-import type { InsertTool } from "@/shared/store/contentLayout/types";
+import type { InsertTool } from "@/shared/store/editor/contentLayout/types";
 
 interface LayoutCardProps {
   selectedCount: number;

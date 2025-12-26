@@ -1,7 +1,7 @@
 // src/shared/store/frame/types.ts
 
 /** frame이 관리하는 영역 */
-export type FrameRegion = "header" | "nav" | "mdi" | "content";
+export type FrameRegion = "header" | "sider" | "mdi" | "content";
 
 export type InsertTool = FrameRegion | null;
 
@@ -32,8 +32,8 @@ export interface HeaderRegion extends Frame {
 }
 
 // Single
-export interface NavRegion extends Frame {
-  type: "nav";
+export interface SiderRegion extends Frame {
+  type: "sider";
 }
 
 // Grid
@@ -45,7 +45,7 @@ export interface contentRegion extends Frame {
   type: "content";
 }
 
-export type AnyRegion = HeaderRegion | NavRegion | MdiRegion | contentRegion;
+export type AnyRegion = HeaderRegion | SiderRegion | MdiRegion | contentRegion;
 
 export type Size = {
   width: number;

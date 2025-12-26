@@ -9,7 +9,7 @@ import type {
   Section,
   SingleSection,
   TabSection,
-} from "@/shared/store/contentLayout/types";
+} from "@/shared/store/editor/contentLayout/types";
 
 import SectionItemView from "../canvas/SectionItemView";
 

@@ -4,8 +4,11 @@
 import React from "react";
 
 import ResizeContainer from "@/shared/components/ui/resize/ResizeContainer";
-import type { AnySection, Section } from "@/shared/store/contentLayout/types";
-import { useEDITORStore } from "@/shared/store/control";
+import type {
+  AnySection,
+  Section,
+} from "@/shared/store/editor/contentLayout/types";
+import { useEDITORStore } from "@/shared/store/editor/control";
 
 import type { Rect } from "../../hooks/collision";
 import SectionItemView from "./SectionItemView";

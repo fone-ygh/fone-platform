@@ -4,8 +4,8 @@
 import { useEffect } from "react";
 
 import { openPattern } from "@/shared/flows/openPattern";
-import { createSectionsForPattern } from "@/shared/store/contentLayout/defaults";
-import { useContentLayoutActions } from "@/shared/store/contentLayout/store";
+import { createSectionsForPattern } from "@/shared/store/editor/contentLayout/defaults";
+import { useContentLayoutActions } from "@/shared/store/editor/contentLayout/store";
 
 import EditorShell from "./components/EditorShell";
 

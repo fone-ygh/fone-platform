@@ -9,7 +9,7 @@ import { TreeItem } from "@mui/x-tree-view/TreeItem";
 import {
   useContentLayoutActions,
   useContentLayoutStore,
-} from "@/shared/store/contentLayout";
+} from "@/shared/store/editor/contentLayout";
 
 type EditableTreeItemProps = React.ComponentProps<typeof TreeItem>;
 
