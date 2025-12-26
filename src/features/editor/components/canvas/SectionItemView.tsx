@@ -10,7 +10,7 @@ import type {
   SingleSection,
   TabSection,
 } from "@/shared/store";
-import { useLayoutStore } from "@/shared/store";
+import { useContentLayoutStore } from "@/shared/store";
 
 import GridSectionItem from "./sectionItems/GridSectionItem";
 import SearchSectionItem from "./sectionItems/SearchSectionItem";
@@ -36,7 +36,7 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
     const textColor = item.color;
     const isLocked = !!item.lock;
 
-    const { insertTool } = useLayoutStore();
+    const { insertTool } = useContentLayoutStore();
 
     /** 테두리 스타일: lock 상태까지 반영 */
     const outline = useMemo(() => {
@@ -83,7 +83,7 @@ const SectionItemView = forwardRef<HTMLDivElement, Props>(
     );
 
     const handleMouseDown = (e: React.MouseEvent) => {
-      console.log("handleMouseDown", e.shiftKey , e.metaKey , e.ctrlKey)
+      console.log("handleMouseDown", e.shiftKey, e.metaKey, e.ctrlKey);
       if (preview) return;
       // 잠겨있으면 선택불가
       if (isLocked) return;

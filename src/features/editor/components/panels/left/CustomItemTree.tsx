@@ -6,15 +6,18 @@ import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { TreeItem } from "@mui/x-tree-view/TreeItem";
 
-import { useLayoutActions, useLayoutStore } from "@/shared/store/layout";
+import {
+  useContentLayoutActions,
+  useContentLayoutStore,
+} from "@/shared/store/contentLayout";
 
 type EditableTreeItemProps = React.ComponentProps<typeof TreeItem>;
 
 export function EditableTreeItem(props: EditableTreeItemProps) {
   const { itemId, label, ...rest } = props;
 
-  const { sections } = useLayoutStore();
-  const { setPatchSection, setLock } = useLayoutActions();
+  const { sections } = useContentLayoutStore();
+  const { setPatchSection, setLock } = useContentLayoutActions();
 
   // 이 TreeItem이 실제 섹션인지(root "Page"는 해당 없음)
   const sec = sections.find(s => s.id === itemId);

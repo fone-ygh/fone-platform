@@ -8,9 +8,12 @@ import type { TreeViewBaseItem } from "@mui/x-tree-view";
 import { RichTreeView } from "@mui/x-tree-view/RichTreeView";
 
 import Aside from "@/shared/components/layout/aside/Aside";
-import { useLayoutStore } from "@/shared/store";
-import { useLayoutActions } from "@/shared/store/layout/store";
-import type { AnySection, SectionType } from "@/shared/store/layout/types";
+import { useContentLayoutStore } from "@/shared/store";
+import { useContentLayoutActions } from "@/shared/store/contentLayout/store";
+import type {
+  AnySection,
+  SectionType,
+} from "@/shared/store/contentLayout/types";
 
 import { useCurrentPatternMeta } from "../../hooks/useCurrentPatternMeta";
 import { EditableTreeItem } from "./left/CustomItemTree";
@@ -94,8 +97,8 @@ function collectAncestors(id: string, parentById: Map<string, string | null>) {
 }
 
 export default function LeftPanel() {
-  const { sections, selectedIds, scopeParentId } = useLayoutStore();
-  const { setSelectedIds, setScopeParentId } = useLayoutActions();
+  const { sections, selectedIds, scopeParentId } = useContentLayoutStore();
+  const { setSelectedIds, setScopeParentId } = useContentLayoutActions();
   const { title: pageTitle } = useCurrentPatternMeta();
 
   const { items, parentById } = React.useMemo(

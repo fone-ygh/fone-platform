@@ -1,7 +1,10 @@
-import { AnySection, useLayoutStore } from "@/shared/store/layout";
+import {
+  AnySection,
+  useContentLayoutStore,
+} from "@/shared/store/contentLayout";
 
 export default function useCurrentAreaSection() {
-  const { sections, scopeParentId, selectedIds } = useLayoutStore();
+  const { sections, scopeParentId, selectedIds } = useContentLayoutStore();
   console.log("sections : ", sections);
   let target: AnySection | null = null;
 

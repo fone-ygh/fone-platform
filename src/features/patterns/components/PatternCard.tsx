@@ -10,7 +10,7 @@ import {
   Typography,
 } from "@mui/material";
 
-import { createSectionsForPattern } from "@/shared/store/layout/defaults";
+import { createSectionsForPattern } from "@/shared/store/contentLayout/defaults";
 import { CustomPattern } from "@/shared/store/pattern/types";
 
 import LayoutThumbnail from "./LayoutThumbnail"; // Section[] 축소해서 그리는 컴포넌트

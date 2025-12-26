@@ -1,7 +1,7 @@
 // src/shared/store/control/editorMode.ts
-// (경로는 네가 정한 control 폴더 구조에 맞춰서)
 
-import type { InsertTool } from "@/shared/store/layout/types";
+import type { InsertTool } from "@/shared/store/contentLayout/types";
+import type { FrameRegion } from "@/shared/store/frame/types"; // ✅ 추가
 
 export type EditorMode =
   | { kind: "idle" }
@@ -14,7 +14,13 @@ export type EditorMode =
       surface: "sheet" | "text" | "custom";
       reason?: "dblclick" | "enter" | "toolbar";
     }
-  | { kind: "drilldown"; parentId: string; reason?: "dblclick" | "breadcrumb" };
+  | { kind: "drilldown"; parentId: string; reason?: "dblclick" | "breadcrumb" }
+  // ✅ 프레임 편집 모드 추가
+  | {
+      kind: "frameEdit";
+      region?: FrameRegion; // 선택적으로 "현재 편집 포커스"
+      reason?: "toolbar" | "shortcut" | "dblclick";
+    };
 
 export const EDITOR_MODE = {
   idle: (): EditorMode => ({ kind: "idle" }),
@@ -52,6 +58,16 @@ export const EDITOR_MODE = {
   ): EditorMode => ({
     kind: "drilldown",
     parentId,
+    reason,
+  }),
+
+  // ✅ 추가
+  frameEdit: (
+    region?: FrameRegion,
+    reason?: "toolbar" | "shortcut" | "dblclick",
+  ): EditorMode => ({
+    kind: "frameEdit",
+    region,
     reason,
   }),
 } as const;

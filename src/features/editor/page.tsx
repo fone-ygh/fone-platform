@@ -4,8 +4,8 @@
 import { useEffect } from "react";
 
 import { openPattern } from "@/shared/flows/openPattern";
-import { createSectionsForPattern } from "@/shared/store/layout/defaults";
-import { useLayoutActions } from "@/shared/store/layout/store";
+import { createSectionsForPattern } from "@/shared/store/contentLayout/defaults";
+import { useContentLayoutActions } from "@/shared/store/contentLayout/store";
 
 import EditorShell from "./components/EditorShell";
 
@@ -20,7 +20,7 @@ export default function Page({
   id,
   originPatternId,
 }: EditorFeaturePageProps) {
-  const { setSections, setReset } = useLayoutActions();
+  const { setSections, setReset } = useContentLayoutActions();
 
   useEffect(() => {
     if (routeId === "new") {

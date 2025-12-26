@@ -1,10 +1,10 @@
 import { useEffect } from "react";
 
-import { useLayoutActions, useLayoutStore } from "@/shared/store";
+import { useContentLayoutActions, useContentLayoutStore } from "@/shared/store";
 
 export function useKeyboardControl() {
-  const { selectedIds, sections } = useLayoutStore();
-  const { setDeleteSelected, setSelectedIds } = useLayoutActions();
+  const { selectedIds, sections } = useContentLayoutStore();
+  const { setDeleteSelected, setSelectedIds } = useContentLayoutActions();
 
   useEffect(() => {
     const isLock = sections.filter(item => item.lock === true);

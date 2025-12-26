@@ -15,7 +15,10 @@ import { useJspreadSheetStore } from "@/features/table/store/jspreadSheetStore";
 import { useTableSettingStore } from "@/features/table/store/tableSettingStore";
 import Aside from "@/shared/components/layout/aside/Aside";
 import { AccordionCard } from "@/shared/components/ui/cardAccordion/CardAccordion";
-import { useLayoutActions, useLayoutStore } from "@/shared/store/layout";
+import {
+  useContentLayoutActions,
+  useContentLayoutStore,
+} from "@/shared/store/contentLayout";
 import { usePatternActions } from "@/shared/store/pattern/store";
 
 import useCurrentAreaSection from "../../hooks/useCurrentAreaSection";
@@ -53,7 +56,7 @@ export default function RightPanel() {
 
   /* -------- layout -------- */
   const { selectedIds, sections, insertTool, canvasWidth, canvasHeight } =
-    useLayoutStore();
+    useContentLayoutStore();
   const {
     setInsertTool,
     setDeleteSelected,
@@ -62,7 +65,7 @@ export default function RightPanel() {
     setSelectedIds,
     setSections,
     setLock,
-  } = useLayoutActions();
+  } = useContentLayoutActions();
 
   const { spreadsheet } = useJspreadSheetStore();
   console.log("spreadsheet : ", spreadsheet);

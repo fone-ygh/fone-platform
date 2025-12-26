@@ -5,7 +5,7 @@ import React from "react";
 import { Label, Switch, TextField2 } from "fone-design-system_v1";
 
 import { AccordionCard } from "@/shared/components/ui/cardAccordion/CardAccordion";
-import type { AnySection, Section } from "@/shared/store/layout/types";
+import type { AnySection, Section } from "@/shared/store/contentLayout/types";
 
 interface InspectorCardProps {
   selectedSection: AnySection | null;

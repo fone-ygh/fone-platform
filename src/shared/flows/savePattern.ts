@@ -1,6 +1,6 @@
 // src/shared/flows/savePattern.ts
 
-import { useLayoutStore, usePatternStore } from "../store";
+import { useContentLayoutStore, usePatternStore } from "../store";
 import type { CustomPattern } from "../store";
 
 type SavePatternOptions = {

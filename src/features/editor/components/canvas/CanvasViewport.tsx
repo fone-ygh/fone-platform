@@ -3,8 +3,8 @@
 
 import * as React from "react";
 
+import { useContentLayoutStore } from "@/shared/store/contentLayout";
 import { useEDITORActions } from "@/shared/store/control";
-import { useLayoutStore } from "@/shared/store/layout";
 
 export default function CanvasViewport({
   children,
@@ -15,7 +15,7 @@ export default function CanvasViewport({
 
   // 레이아웃 스토어에서 scopeParentId & sections 도 같이 읽기
   const { canvasWidth, canvasHeight, sections, scopeParentId } =
-    useLayoutStore();
+    useContentLayoutStore();
   const { setCanvasZoom, setPan } = useEDITORActions();
 
   // 지금 화면에 실제로 보여야 하는 "뷰 크기" (root or 드릴다운)
