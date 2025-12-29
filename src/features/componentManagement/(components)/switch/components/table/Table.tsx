@@ -9,7 +9,7 @@ import useDialogStore from "../../store/dialog";
 import useIdxStore from "../../store/idx";
 
 export default function Table() {
-  const { inputData, setInputData } = useComponentStore();
+  const { switchData: data, setSwitchData: setData } = useComponentStore();
   const { setIsOpen } = useDialogStore();
   const { idx, setIdx } = useIdxStore();
   const { setSelectedData } = useDataStore();
@@ -26,16 +26,16 @@ export default function Table() {
       item => item.componentId === rows[0].componentId,
     );
 
-    setInputData(filteredData);
+    setData(filteredData);
     setIdx(rowIdx);
   };
 
   const onDeleteHandler = (rows: any[]) => {
-    const newData = inputData.filter(
+    const newData = data.filter(
       item => !rows.find((row: any) => row.componentId === item.componentId),
     );
 
-    setInputData(newData);
+    setData(newData);
   };
 
   const onRowClickHandler = (row: any, index: number) => {
@@ -56,7 +56,6 @@ export default function Table() {
   const onCheckedHandler = (rows: any[], index: number, allRows: any[]) => {
     setSelectedData(allRows[idx]);
   };
-
   const columns = [
     {
       accessorKey: "componentId",
@@ -108,23 +107,15 @@ export default function Table() {
       defaultChecked: false,
     },
     {
-      accessorKey: "type",
-      header: "타입",
+      accessorKey: "defaultChecked",
+      header: "defaultChecked",
       editable: true,
       type: "select",
       required: true,
       selectItems: [
-        { value: "text", label: "텍스트" },
-        { value: "number", label: "숫자" },
-        { value: "password", label: "비밀번호" },
-        { value: "email", label: "이메일" },
+        { value: "Y", label: "checked" },
+        { value: "N", label: "unchecked" },
       ],
-    },
-    {
-      accessorKey: "placeholder",
-      header: "placeholder",
-      editable: true,
-      type: "input",
     },
   ];
 
@@ -133,7 +124,7 @@ export default function Table() {
       <Table2
         // @ts-ignore
         columns={columns}
-        data={inputData}
+        data={data}
         checkbox
         onSave={onSaveHandler}
         onDelete={onDeleteHandler}

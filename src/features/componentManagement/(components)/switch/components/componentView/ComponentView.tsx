@@ -1,7 +1,7 @@
 "use client";
 
 import styled from "@emotion/styled";
-import { Checkbox } from "fone-design-system_v1";
+import { Switch } from "fone-design-system_v1";
 
 import useDataStore from "../../store/data";
 
@@ -11,13 +11,22 @@ export default function ComponentView() {
   return (
     <ComponentViewStyle>
       <span className="name">{selectedData?.name}</span>
-      <CheckboxStyle>
+      <InputStyle>
         <div className="label">
           <span>{selectedData.title}</span>
           {selectedData.required === "Y" && <div className="required">*</div>}
         </div>
-        <Checkbox
-          color={selectedData.style?.color}
+        <Switch
+          color={
+            selectedData.style?.color as
+              | "primary"
+              | "secondary"
+              | "error"
+              | "info"
+              | "success"
+              | "warning"
+              | "default"
+          }
           checked={selectedData.defaultChecked === "Y"}
           onChange={() =>
             setSelectedData({
@@ -26,7 +35,7 @@ export default function ComponentView() {
             })
           }
         />
-      </CheckboxStyle>
+      </InputStyle>
     </ComponentViewStyle>
   );
 }
@@ -52,7 +61,7 @@ const ComponentViewStyle = styled.div`
   }
 `;
 
-const CheckboxStyle = styled.div`
+const InputStyle = styled.div`
   position: relative;
   gap: 0.6rem;
   display: flex;
@@ -62,7 +71,7 @@ const CheckboxStyle = styled.div`
     position: absolute;
     width: 200px;
     top: -2.3rem;
-    left: -0.5rem;
+    left: 1rem;
     display: flex;
     gap: 0.2rem;
     span {

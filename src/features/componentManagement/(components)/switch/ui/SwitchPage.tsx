@@ -6,17 +6,17 @@ import ComponentView from "../components/componentView/ComponentView";
 import StyleDialog from "../components/styleDialog/StyleDialog";
 import Table from "../components/table/Table";
 
-export default function CheckboxPage() {
+export default function SwitchPage() {
   return (
-    <CheckboxPageStyle>
+    <SwitchPageStyle>
       <Table />
       <ComponentView />
       <StyleDialog />
-    </CheckboxPageStyle>
+    </SwitchPageStyle>
   );
 }
 
-const CheckboxPageStyle = styled.div`
+const SwitchPageStyle = styled.div`
   width: 100%;
   height: 100%;
   padding: 1.6rem;
