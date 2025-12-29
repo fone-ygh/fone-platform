@@ -1,77 +1,93 @@
-// src/shared/store/frame/types.ts
+// src/shared/store/frameLayout/types.ts
 
-/** frame이 관리하는 영역 */
+/** frameLayout이 관리하는 영역(노드) */
 export type FrameRegion = "header" | "sider" | "mdi" | "content";
 
-export type InsertTool = FrameRegion | null;
-
-export interface Frame {
-  id: string;
-  parentId: string | null;
+/**
+ * 추천2: 프레임의 각 영역을 “섹션처럼” 노드로 관리
+ * - region은 4개로 고정이라 nodes를 Record로 두는 게 가장 안정적
+ */
+export interface FrameNode {
+  /** 중복 방지: id = region */
+  id: FrameRegion;
   type: FrameRegion;
+
   x: number;
   y: number;
   width: number;
   height: number;
+
   z: number;
   lock: boolean;
 
   rotate?: number;
   radius?: number;
-  shaddow?: number;
+  shadow?: number;
 
   title?: string;
-
   bg?: string;
-  color: string;
+  color?: string;
 }
 
-// Search
-export interface HeaderRegion extends Frame {
-  type: "header";
-}
+/** region별로 1개씩만 존재 */
+export type FrameNodes = Record<FrameRegion, FrameNode>;
 
-// Single
-export interface SiderRegion extends Frame {
-  type: "sider";
-}
+export type FrameLayoutActions = {
+  /* ---------------- Frame(Preview) Size ---------------- */
+  setFrameSize: (w: number, h: number) => void;
 
-// Grid
-export interface MdiRegion extends Frame {
-  type: "mdi";
-}
+  /* ---------------- Selection ---------------- */
+  setSelectedIds: (ids: FrameRegion[]) => void;
 
-export interface contentRegion extends Frame {
-  type: "content";
-}
+  /* ---------------- Nodes ---------------- */
+  setNodes: (next: FrameNodes) => void;
 
-export type AnyRegion = HeaderRegion | SiderRegion | MdiRegion | contentRegion;
+  setPatchNode: (
+    id: FrameRegion,
+    patch: Partial<Omit<FrameNode, "id" | "type">>,
+  ) => void;
 
-export type Size = {
-  width: number;
-  height: number;
+  setUpdateFrame: (
+    id: FrameRegion,
+    patch: Partial<Pick<FrameNode, "x" | "y" | "width" | "height" | "rotate">>,
+  ) => void;
+
+  /* ---------------- Z-Order ---------------- */
+  setSendToFront: () => void;
+  setSendToBack: () => void;
+  setBringForward: () => void;
+  setSendBackward: () => void;
+
+  /* ---------------- Appearance ---------------- */
+  setApplyColorToSelection: (color: string, target: "bg" | "text") => void;
+
+  /* ---------------- Lock ---------------- */
+  setLock: (id: FrameRegion, lock: boolean) => void;
+
+  /* ---------------- Commit ---------------- */
+  setCommitAfterTransform: () => void;
+
+  /* ---------------- Reset ---------------- */
+  /** 현재 frameSize 기준으로 기본 배치로 재배치 */
+  setResetLayout: () => void;
+
+  /** frameSize까지 포함해서 전체 초기화 */
+  setReset: () => void;
 };
 
-export type FrameSizes = Record<FrameRegion, Size>;
+export interface FrameLayoutState {
+  /** ✅ B안(프리뷰 프레임)처럼 유저가 직접 정하는 “프레임 전체 크기(px)” */
+  frameWidth: number;
+  frameHeight: number;
 
-export type ViewportSize = { width: number; height: number };
+  /** 4개 노드(header/sider/mdi/content) */
+  nodes: FrameNodes;
 
-export type FrameActions = {
-  setSize: (region: FrameRegion, size: Size) => void;
-  patchSize: (region: FrameRegion, patch: Partial<Size>) => void;
+  /** 선택 */
+  selectedIds: FrameRegion[];
 
-  setWidth: (region: FrameRegion, width: number) => void;
-  setHeight: (region: FrameRegion, height: number) => void;
+  /** transform commit 트리거 */
+  version: number;
 
-  setSizes: (sizes: FrameSizes) => void;
-
-  /** viewport 기준으로 content 등 파생 사이즈 동기화 */
-  syncDerivedSizes: (viewport: ViewportSize) => void;
-
-  reset: () => void;
-};
-
-export type FrameState = {
-  sizes: FrameSizes;
-  actions: FrameActions;
-};
+  actions: FrameLayoutActions;
+}

@@ -1,101 +1,145 @@
-// src/shared/store/frame/defaults.ts
-import type { FrameSizes, Size, ViewportSize } from "./types";
+// src/shared/store/frameLayout/defaults.ts
+import type { FrameNode, FrameNodes, FrameRegion } from "./types";
 
-/** clamp 유틸 */
+export const DEFAULT_FRAME_WIDTH = 1440;
+export const DEFAULT_FRAME_HEIGHT = 900;
+
+export const DEFAULT_HEADER_H = 56;
+export const DEFAULT_SIDER_W = 240;
+export const DEFAULT_MDI_H = 40;
+
+export const MIN_NODE_W = 60;
+export const MIN_NODE_H = 40;
+
 export const clamp = (v: number, min: number, max: number) =>
   Math.max(min, Math.min(max, v));
 
-/**
- * “사용자가 조절하는 값” 기준 제한
- * - header: height
- * - nav: width
- * - mdi: height
- * - content: derived(직접 조절 X 권장)
- */
-export const FRAME_LIMITS = {
-  headerH: { min: 40, max: 120 },
-  navW: { min: 180, max: 520 },
-  mdiH: { min: 0, max: 80 },
-} as const;
+export function clampNodeToFrame(
+  node: FrameNode,
+  frameW: number,
+  frameH: number,
+): FrameNode {
+  const w = clamp(node.width, MIN_NODE_W, Math.max(MIN_NODE_W, frameW));
+  const h = clamp(node.height, MIN_NODE_H, Math.max(MIN_NODE_H, frameH));
 
-/** 기본값(입력값 중심) */
-export const DEFAULT_FRAME_SIZES: FrameSizes = {
-  header: { width: 0, height: 56 },
-  nav: { width: 240, height: 0 },
-  mdi: { width: 0, height: 40 },
-  content: { width: 0, height: 0 },
-};
+  const x = clamp(node.x, 0, Math.max(0, frameW - w));
+  const y = clamp(node.y, 0, Math.max(0, frameH - h));
 
-/** 입력값 clamp (width/height 중 “의미 있는 축”만 clamp) */
-export function clampFrameInputs(sizes: FrameSizes): FrameSizes {
+  return { ...node, x, y, width: w, height: h };
+}
+
+export function clampNodesToFrame(
+  nodes: FrameNodes,
+  frameW: number,
+  frameH: number,
+): FrameNodes {
   return {
-    ...sizes,
-    header: {
-      ...sizes.header,
-      height: clamp(
-        sizes.header.height,
-        FRAME_LIMITS.headerH.min,
-        FRAME_LIMITS.headerH.max,
-      ),
-    },
-    nav: {
-      ...sizes.nav,
-      width: clamp(
-        sizes.nav.width,
-        FRAME_LIMITS.navW.min,
-        FRAME_LIMITS.navW.max,
-      ),
-    },
-    mdi: {
-      ...sizes.mdi,
-      height: clamp(
-        sizes.mdi.height,
-        FRAME_LIMITS.mdiH.min,
-        FRAME_LIMITS.mdiH.max,
-      ),
-    },
+    header: clampNodeToFrame(nodes.header, frameW, frameH),
+    sider: clampNodeToFrame(nodes.sider, frameW, frameH),
+    mdi: clampNodeToFrame(nodes.mdi, frameW, frameH),
+    content: clampNodeToFrame(nodes.content, frameW, frameH),
   };
 }
 
 /**
- * viewport + 입력값(headerH/navW/mdiH)로
- * header/nav/mdi/content의 최종 Size를 계산
+ * 추천2의 기본 배치(초기값):
+ * - header: 상단
+ * - sider: 좌측
+ * - mdi: content 상단바(가정)
+ * - content: 나머지
  *
- * 가정(가장 흔한 admin shell):
- * - header: viewport 전체 너비를 가짐
- * - nav: header 아래부터 바닥까지(높이 = viewportH - headerH)
- * - mdi: header 아래에 위치하고, nav 오른쪽 영역에 위치(너비 = viewportW - navW)
- * - content: mdi 아래, nav 오른쪽 영역(너비 = viewportW - navW, 높이 = viewportH - headerH - mdiH)
+ * 이후엔 유저가 자유롭게 이동/리사이즈 가능.
  */
-export function deriveFrameSizes(
-  viewport: ViewportSize,
-  raw: FrameSizes,
-): FrameSizes {
-  const sizes = clampFrameInputs(raw);
+export function createDefaultNodes(frameW: number, frameH: number): FrameNodes {
+  const headerH = clamp(DEFAULT_HEADER_H, MIN_NODE_H, frameH);
+  const siderW = clamp(DEFAULT_SIDER_W, MIN_NODE_W, frameW);
+  const mdiH = clamp(DEFAULT_MDI_H, 0, frameH);
 
-  const headerH = sizes.header.height;
-  const navW = sizes.nav.width;
-  const mdiH = sizes.mdi.height;
-
-  const header: Size = {
-    width: Math.max(0, viewport.width),
+  const header: FrameNode = {
+    id: "header",
+    type: "header",
+    x: 0,
+    y: 0,
+    width: frameW,
     height: headerH,
+    z: 3,
+    lock: false,
+    title: "Header",
+    bg: "#ffffff",
+    color: "#111827",
   };
 
-  const nav: Size = {
-    width: navW,
-    height: Math.max(0, viewport.height - headerH),
+  const sider: FrameNode = {
+    id: "sider",
+    type: "sider",
+    x: 0,
+    y: headerH,
+    width: siderW,
+    height: Math.max(MIN_NODE_H, frameH - headerH),
+    z: 1,
+    lock: false,
+    title: "Sider",
+    bg: "#ffffff",
+    color: "#111827",
   };
 
-  const mdi: Size = {
-    width: Math.max(0, viewport.width - navW),
+  const mdi: FrameNode = {
+    id: "mdi",
+    type: "mdi",
+    x: siderW,
+    y: headerH,
+    width: Math.max(MIN_NODE_W, frameW - siderW),
     height: mdiH,
+    z: 2,
+    lock: false,
+    title: "MDI",
+    bg: "#ffffff",
+    color: "#111827",
   };
 
-  const content: Size = {
-    width: Math.max(0, viewport.width - navW),
-    height: Math.max(0, viewport.height - headerH - mdiH),
+  const content: FrameNode = {
+    id: "content",
+    type: "content",
+    x: siderW,
+    y: headerH + mdiH,
+    width: Math.max(MIN_NODE_W, frameW - siderW),
+    height: Math.max(MIN_NODE_H, frameH - headerH - mdiH),
+    z: 0,
+    lock: false,
+    title: "Content",
+    bg: "#ffffff",
+    color: "#111827",
   };
 
-  return { header, nav, mdi, content };
+  return clampNodesToFrame({ header, sider, mdi, content }, frameW, frameH);
+}
+
+/** z 정규화(0..n-1) */
+export function normalizeZ(nodes: FrameNodes): FrameNodes {
+  const arr = Object.values(nodes)
+    .slice()
+    .sort((a, b) => (a.z ?? 0) - (b.z ?? 0));
+
+  const next: FrameNodes = { ...nodes };
+  arr.forEach((n, i) => {
+    next[n.id] = { ...next[n.id], z: i };
+  });
+  return next;
+}
+
+export function maxZ(nodes: FrameNodes): number {
+  return Math.max(...Object.values(nodes).map(n => n.z ?? 0));
+}
+
+export function applyZChange(
+  nodes: FrameNodes,
+  selected: FrameRegion[],
+  change: (z: number) => number,
+): FrameNodes {
+  const next: FrameNodes = { ...nodes };
+  selected.forEach(id => {
+    const cur = next[id];
+    next[id] = { ...cur, z: change(cur.z ?? 0) };
+  });
+  return normalizeZ(next);
 }

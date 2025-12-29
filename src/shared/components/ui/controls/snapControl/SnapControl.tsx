@@ -2,7 +2,7 @@
 
 import { Checkbox, Flex, Label } from "fone-design-system_v1";
 
-import { useEDITORActions, useEDITORStore } from "@/shared/store/control";
+import { useEDITORActions, useEDITORStore } from "@/shared/store";
 import { HrStyle, InputStyle, LabelStyle } from "@/shared/styles/control";
 
 export default function SnapControl() {

@@ -1,5 +1,5 @@
 // src/shared/store/pattern/types.ts
-import { Section } from "../layout";
+import { Section } from "../editor/contentLayout";
 
 // 화면 패턴 메타
 export interface ScreenPattern {

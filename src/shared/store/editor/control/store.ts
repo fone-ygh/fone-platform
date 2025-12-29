@@ -1,4 +1,4 @@
-// src/shared/store/control/store.ts
+// src/shared/store/editor/control/store.ts
 "use client";
 
 import { create } from "zustand";
