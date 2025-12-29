@@ -33,6 +33,10 @@ export interface InputStyleData {
   iconPosition: string;
 }
 
+export interface CheckboxStyleData {
+  color: string;
+}
+
 interface SelectData {
   crud?: string;
   componentId: string;
@@ -66,10 +70,21 @@ export interface InputData {
   placeholder: string;
 }
 
+export interface CheckboxData {
+  crud?: string;
+  componentId: string;
+  name: string;
+  title: string;
+  style: CheckboxStyleData;
+  required: string;
+  defaultChecked: string;
+}
+
 interface State {
   buttonData: ButtonData[];
   selectData: SelectData[];
   inputData: InputData[];
+  checkboxData: CheckboxData[];
 
   codeTypeData: CodeTypeData[];
   apiData: ApiData[];
@@ -77,12 +92,26 @@ interface State {
   setButtonData: (buttonData: ButtonData[]) => void;
   setSelectData: (selectData: SelectData[]) => void;
   setInputData: (inputData: InputData[]) => void;
+  setCheckboxData: (checkboxData: CheckboxData[]) => void;
 
   setCodeTypeData: (codeTypeData: CodeTypeData[]) => void;
   setApiData: (apiData: ApiData[]) => void;
 }
 
 const useComponentStore = create<State>(set => ({
+  checkboxData: [
+    {
+      componentId: "required",
+      name: "필수여부",
+      title: "필수여부",
+      style: {
+        color: "#1976d2",
+      },
+      required: "Y",
+      defaultChecked: "Y",
+    },
+  ],
+
   inputData: [
     {
       componentId: "username",
@@ -234,6 +263,8 @@ const useComponentStore = create<State>(set => ({
   setButtonData: (buttonData: ButtonData[]) => set({ buttonData: buttonData }),
   setSelectData: (selectData: SelectData[]) => set({ selectData: selectData }),
   setInputData: (inputData: InputData[]) => set({ inputData: inputData }),
+  setCheckboxData: (checkboxData: CheckboxData[]) =>
+    set({ checkboxData: checkboxData }),
 
   setCodeTypeData: (codeTypeData: CodeTypeData[]) =>
     set({ codeTypeData: codeTypeData }),
