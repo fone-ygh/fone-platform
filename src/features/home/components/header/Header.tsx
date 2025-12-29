@@ -57,6 +57,16 @@ export default function Header() {
                     label: "Checkbox",
                     href: "/componentManagement/checkbox",
                   },
+                  {
+                    id: "switch",
+                    label: "Switch",
+                    href: "/componentManagement/switch",
+                  },
+                  {
+                    id: "radio",
+                    label: "Radio",
+                    href: "/componentManagement/radio",
+                  },
                 ],
                 onClick: handleClick,
               },

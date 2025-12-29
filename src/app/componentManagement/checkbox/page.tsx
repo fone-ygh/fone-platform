@@ -1,4 +1,4 @@
-import CheckboxPage from "@/features/componentManagement/checkbox/ui/CheckboxPage";
+import CheckboxPage from "@/features/componentManagement/(components)/checkbox/ui/CheckboxPage";
 
 export default function Page() {
   return <CheckboxPage />;

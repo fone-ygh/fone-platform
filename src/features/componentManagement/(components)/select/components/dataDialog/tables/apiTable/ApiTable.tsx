@@ -1,7 +1,7 @@
 import { Table2 } from "fone-design-system_v1";
 
-import useCodeTypeStore from "@/features/componentManagement/select/store/codeType";
-import useDialogStore from "@/features/componentManagement/select/store/dialog";
+import useCodeTypeStore from "@/features/componentManagement/(components)/select/store/codeType";
+import useDialogStore from "@/features/componentManagement/(components)/select/store/dialog";
 import useComponentStore from "@/features/componentManagement/store/component";
 
 export default function ApiTable() {
