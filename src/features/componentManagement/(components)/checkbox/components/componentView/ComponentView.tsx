@@ -11,7 +11,7 @@ export default function ComponentView() {
   return (
     <ComponentViewStyle>
       <span className="name">{selectedData?.name}</span>
-      <InputStyle>
+      <CheckboxStyle>
         <div className="label">
           <span>{selectedData.title}</span>
           {selectedData.required === "Y" && <div className="required">*</div>}
@@ -26,7 +26,7 @@ export default function ComponentView() {
             })
           }
         />
-      </InputStyle>
+      </CheckboxStyle>
     </ComponentViewStyle>
   );
 }
@@ -52,7 +52,7 @@ const ComponentViewStyle = styled.div`
   }
 `;
 
-const InputStyle = styled.div`
+const CheckboxStyle = styled.div`
   position: relative;
   gap: 0.6rem;
   display: flex;
