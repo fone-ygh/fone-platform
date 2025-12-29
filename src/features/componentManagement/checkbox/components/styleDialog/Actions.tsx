@@ -1,18 +1,20 @@
 import { Button } from "fone-design-system_v1";
 
-import useDataStore from "../../input/store/data";
-import useDialogStore from "../../input/store/dialog";
-import useIdxStore from "../../input/store/idx";
+import useComponentStore, {
+  CheckboxStyleData,
+} from "@/features/componentManagement/store/component";
+
+import useDataStore from "../../store/data";
+import useDialogStore from "../../store/dialog";
+import useIdxStore from "../../store/idx";
 
 interface ActionsProps {
-  styleData: { [key: string]: any } | undefined;
-  data: any[];
-  setData: (data: any[]) => void;
+  styleData: CheckboxStyleData | undefined;
 }
 
-export default function Actions({ styleData, data, setData }: ActionsProps) {
+export default function Actions({ styleData }: ActionsProps) {
   const { setIsOpen } = useDialogStore();
-
+  const { checkboxData: data, setCheckboxData: setData } = useComponentStore();
   const { selectedData, setSelectedData } = useDataStore();
   const { idx } = useIdxStore();
 
