@@ -1,7 +1,7 @@
 import { Table2 } from "fone-design-system_v1";
 
-import useCodeTypeStore from "@/features/componentManagement/select/store/codeType";
-import useIdxStore from "@/features/componentManagement/select/store/idx";
+import useCodeTypeStore from "@/features/componentManagement/(components)/select/store/codeType";
+import useIdxStore from "@/features/componentManagement/(components)/select/store/idx";
 import useComponentStore from "@/features/componentManagement/store/component";
 
 export default function CommonCodeTable() {
