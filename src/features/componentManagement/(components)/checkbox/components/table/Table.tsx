@@ -104,6 +104,7 @@ export default function Table() {
       editable: true,
       type: "checkbox",
       required: true,
+      defaultChecked: false,
     },
     {
       accessorKey: "defaultChecked",
