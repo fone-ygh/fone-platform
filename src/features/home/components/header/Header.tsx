@@ -27,10 +27,15 @@ export default function Header() {
             {[
               {
                 id: "pattern",
-                label: "패턴(템플릿)",
+                label: "패턴(컨텐츠)",
                 href: "/pattern",
               },
-              { id: "screens", label: "화면(실체)", href: "/screens" },
+              // { id: "screens", label: "화면(실체)", href: "/screens" },
+              {
+                id: "framePattern",
+                label: "패턴(프레임)",
+                href: "/framePattern",
+              },
               { id: "grid", label: "그리드", href: "/table" },
               { id: "resize", label: "리사이즈", href: "/resize" },
               {

@@ -3,7 +3,7 @@
 
 import { useMemo } from "react";
 
-import { useLayoutStore } from "./store";
+import { useContentLayoutStore } from "./store";
 import type { AnySection, Section } from "./types";
 
 export function useLayoutVM() {
@@ -15,7 +15,7 @@ export function useLayoutVM() {
     insertTool,
     scopeParentId,
     actions,
-  } = useLayoutStore();
+  } = useContentLayoutStore();
 
   const scopeContainer = useMemo<Section | null>(() => {
     if (!scopeParentId) return null;

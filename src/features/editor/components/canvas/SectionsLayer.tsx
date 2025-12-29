@@ -4,8 +4,11 @@
 import React from "react";
 
 import ResizeContainer from "@/shared/components/ui/resize/ResizeContainer";
-import { useEDITORStore } from "@/shared/store/control";
-import type { AnySection, Section } from "@/shared/store/layout/types";
+import type {
+  AnySection,
+  Section,
+} from "@/shared/store/editor/contentLayout/types";
+import { useEDITORStore } from "@/shared/store/editor/control";
 
 import type { Rect } from "../../hooks/collision";
 import SectionItemView from "./SectionItemView";
@@ -125,7 +128,6 @@ export default function SectionsLayer(props: SectionsLayerProps) {
     scopeContainer &&
     scopeContainer.id !== null &&
     editorMode.sectionId === scopeContainer.id;
-  console.log("scopeContainer : ", scopeContainer);
 
   return (
     <>
@@ -160,7 +162,6 @@ export default function SectionsLayer(props: SectionsLayerProps) {
         const isLocked = !!section.lock;
         // 가독성을 위해 변수 짧게
         const s = section;
-
 
         return (
           <ResizeContainer

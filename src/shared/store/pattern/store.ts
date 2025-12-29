@@ -5,7 +5,7 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
 import { persist } from "@/shared/lib/store-util";
-import type { Section } from "@/shared/store/layout/types";
+import type { Section } from "@/shared/store/editor/contentLayout/types";
 
 import { CustomPattern, PatternMeta, PatternState } from "./types";
 

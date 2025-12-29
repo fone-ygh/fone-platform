@@ -1,11 +1,11 @@
 import {
   createSectionsForPattern,
-  useLayoutStore,
+  useContentLayoutStore,
   usePatternStore,
 } from "../store";
 
 export function openPattern(originPatternId: string | null) {
-  const layout = useLayoutStore.getState();
+  const layout = useContentLayoutStore.getState();
   const pattern = usePatternStore.getState();
 
   // 1) 초기화

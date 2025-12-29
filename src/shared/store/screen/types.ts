@@ -1,5 +1,5 @@
 // src/shared/store/screen/types.ts
-import type { AnySection } from "@/shared/store/layout/types";
+import type { AnySection } from "@/shared/store/editor/contentLayout/types";
 
 export type ScreenStatus = "draft" | "published";
 
