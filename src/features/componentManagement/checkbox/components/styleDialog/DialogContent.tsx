@@ -1,22 +1,27 @@
 import styled from "@emotion/styled";
 import { VerticalTable } from "fone-design-system_v1";
 
-import { ButtonStyleData } from "@/features/componentManagement/store/component";
+import { CheckboxStyleData } from "@/features/componentManagement/store/component";
 
-import useDataStore from "../../input/store/data";
+import useDataStore from "../../store/data";
 
 interface DialogContentProps {
   setStyleData: React.Dispatch<
-    React.SetStateAction<ButtonStyleData | undefined>
+    React.SetStateAction<CheckboxStyleData | undefined>
   >;
-  columns: any[];
 }
 
-export default function DialogContent({
-  setStyleData,
-  columns,
-}: DialogContentProps) {
+export default function DialogContent({ setStyleData }: DialogContentProps) {
   const { selectedData } = useDataStore();
+
+  const columns = [
+    {
+      accessorKey: "color",
+      title: "색상",
+      type: "color",
+      required: true,
+    },
+  ];
 
   return (
     <DialogContentStyle>
@@ -33,6 +38,7 @@ export default function DialogContent({
 const colGroup = ["16rem", ""];
 
 const DialogContentStyle = styled.div`
+  height: 40px;
   display: flex;
   flex-direction: column;
   gap: 2.4rem;
