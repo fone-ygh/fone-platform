@@ -37,6 +37,17 @@ export interface CheckboxStyleData {
   color: string;
 }
 
+export interface SwitchStyleData {
+  color:
+    | "primary"
+    | "secondary"
+    | "error"
+    | "info"
+    | "success"
+    | "warning"
+    | "default";
+}
+
 interface SelectData {
   crud?: string;
   componentId: string;
@@ -80,11 +91,22 @@ export interface CheckboxData {
   defaultChecked: string;
 }
 
+export interface SwitchData {
+  crud?: string;
+  componentId: string;
+  name: string;
+  title: string;
+  style: CheckboxStyleData;
+  required: string;
+  defaultChecked: string;
+}
+
 interface State {
   buttonData: ButtonData[];
   selectData: SelectData[];
   inputData: InputData[];
   checkboxData: CheckboxData[];
+  switchData: SwitchData[];
 
   codeTypeData: CodeTypeData[];
   apiData: ApiData[];
@@ -93,12 +115,26 @@ interface State {
   setSelectData: (selectData: SelectData[]) => void;
   setInputData: (inputData: InputData[]) => void;
   setCheckboxData: (checkboxData: CheckboxData[]) => void;
+  setSwitchData: (switchData: SwitchData[]) => void;
 
   setCodeTypeData: (codeTypeData: CodeTypeData[]) => void;
   setApiData: (apiData: ApiData[]) => void;
 }
 
 const useComponentStore = create<State>(set => ({
+  switchData: [
+    {
+      componentId: "darkMode",
+      name: "다크모드",
+      title: "다크모드",
+      style: {
+        color: "primary",
+      },
+      required: "N",
+      defaultChecked: "Y",
+    },
+  ],
+
   checkboxData: [
     {
       componentId: "required",
@@ -265,6 +301,7 @@ const useComponentStore = create<State>(set => ({
   setInputData: (inputData: InputData[]) => set({ inputData: inputData }),
   setCheckboxData: (checkboxData: CheckboxData[]) =>
     set({ checkboxData: checkboxData }),
+  setSwitchData: (switchData: SwitchData[]) => set({ switchData: switchData }),
 
   setCodeTypeData: (codeTypeData: CodeTypeData[]) =>
     set({ codeTypeData: codeTypeData }),
