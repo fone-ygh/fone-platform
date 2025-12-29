@@ -52,6 +52,7 @@ export default function Table() {
       header: "필수여부",
       editable: true,
       type: "checkbox",
+      defaultChecked: false,
     },
     {
       accessorKey: "all",
