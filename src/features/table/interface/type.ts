@@ -11,6 +11,12 @@ export interface TableSettingStore {
     title?: string;
     tableHeaders: ColumnNode[];
     demoTableOpen: boolean;
+    editModeData?: {
+        data: string[][];
+        mergeData: {
+            [key: string]: [number, number];
+        };
+    };
 }
 
 import type { ReactNode } from "react";
