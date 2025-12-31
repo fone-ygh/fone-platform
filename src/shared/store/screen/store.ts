@@ -5,9 +5,9 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
 import { persist } from "@/shared/lib/store-util";
+import { usePatternStore } from "@/shared/store";
 import { createSectionsForPattern } from "@/shared/store/editor/contentLayout/defaults";
 import type { AnySection } from "@/shared/store/editor/contentLayout/types";
-import { usePatternStore } from "@/shared/store/pattern/store";
 
 import type { Screen } from "./types";
 

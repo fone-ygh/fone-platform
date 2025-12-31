@@ -4,11 +4,11 @@
 import React from "react";
 import { useSearchParams } from "next/navigation";
 
-import { SCREEN_PATTERNS } from "@/shared/store/pattern/default";
+import { SCREEN_PATTERNS } from "@/shared/store/patterns/default";
 import {
   usePatternActions,
   usePatternStore,
-} from "@/shared/store/pattern/store";
+} from "@/shared/store/patterns/store";
 
 export function useCurrentPatternMeta() {
   const searchParams = useSearchParams();

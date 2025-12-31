@@ -12,9 +12,9 @@ import {
   Typography,
 } from "@mui/material";
 
-import { FRAME_PATTERNS } from "@/shared/store/framePattern/default";
-import { useFramePatternStore } from "@/shared/store/framePattern/store";
-import type { CustomFramePattern } from "@/shared/store/framePattern/types";
+import { FRAME_PATTERNS } from "@/shared/store/framePatterns/default";
+import { useFramePatternStore } from "@/shared/store/framePatterns/store";
+import type { CustomFramePattern } from "@/shared/store/framePatterns/types";
 
 import PatternCard from "./PatternCard";
 

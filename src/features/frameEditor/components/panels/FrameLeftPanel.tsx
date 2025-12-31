@@ -8,6 +8,7 @@ import type { TreeViewBaseItem } from "@mui/x-tree-view";
 import { RichTreeView } from "@mui/x-tree-view/RichTreeView";
 
 import Aside from "@/shared/components/layout/aside/Aside";
+import { useFramePatternStore } from "@/shared/store";
 import {
   useFrameLayoutActions,
   useFrameLayoutStore,
@@ -16,7 +17,6 @@ import type {
   FrameNode,
   FrameRegion,
 } from "@/shared/store/editor/frameLayout/types";
-import { useFramePatternStore } from "@/shared/store/framePattern/store";
 
 const ROOT_ID = "root";
 

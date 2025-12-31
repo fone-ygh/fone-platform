@@ -26,15 +26,15 @@ export default function Header() {
           <Nav aria-label="주요">
             {[
               {
-                id: "pattern",
+                id: "patterns",
                 label: "패턴(컨텐츠)",
-                href: "/pattern",
+                href: "/patterns",
               },
               // { id: "screens", label: "화면(실체)", href: "/screens" },
               {
-                id: "framePattern",
+                id: "framePatterns",
                 label: "패턴(프레임)",
-                href: "/framePattern",
+                href: "/framePatterns",
               },
               { id: "grid", label: "그리드", href: "/table" },
               { id: "resize", label: "리사이즈", href: "/resize" },

@@ -7,8 +7,8 @@ import type {
   FrameNodes,
   FrameRegion,
 } from "@/shared/store/editor/frameLayout/types";
-import { FRAME_PATTERNS } from "@/shared/store/framePattern/default";
-import { useFramePatternStore } from "@/shared/store/framePattern/store";
+import { FRAME_PATTERNS } from "@/shared/store/framePatterns/default";
+import { useFramePatternStore } from "@/shared/store/framePatterns/store";
 
 /** 프레임 기본값(필요하면 너 프로젝트 기본값으로 바꿔도 됨) */
 const DEFAULT_FRAME_W = 1440;

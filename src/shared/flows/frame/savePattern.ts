@@ -1,8 +1,7 @@
 // src/shared/flows/frame/savePattern.ts
 "use client";
 
-import { useFrameLayoutStore } from "@/shared/store/editor/frameLayout/store";
-import { useFramePatternStore } from "@/shared/store/framePattern/store";
+import { useFrameLayoutStore, useFramePatternStore } from "@/shared/store";
 
 type SavePatternOptions = {
   /** 새 패턴 저장이면 true (id 새로 발급) */
