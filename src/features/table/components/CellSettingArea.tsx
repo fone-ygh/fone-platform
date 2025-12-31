@@ -41,14 +41,14 @@ const CellSettingArea = ({spreadsheet}: {spreadsheet: React.RefObject<Spreadshee
                                 }
                                 switch(typeof value) {
                                     case "string":
-                                        return (
+                                        return key !== "accessorKey" ?(
                                             <SettingRow key={key}>
                                                 <SettingLabel>{key}</SettingLabel>
                                                 <TextField2 type="text" value={value} onChange={(e) => {
                                                     setFormData({ ...formData, [key]: e.target.value })}
                                                     } />
                                             </SettingRow>
-                                        )
+                                        ) : null
                                     case "boolean":
                                         return (
                                             <SettingRow key={key}>

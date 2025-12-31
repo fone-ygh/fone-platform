@@ -1,33 +1,38 @@
-// src/shared/store/pattern/store.ts
+// src/shared/store/editor/framePattern/store.ts
 "use client";
 
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
 import { persist } from "@/shared/lib/store-util";
-import type { Section } from "@/shared/store/layout/types";
 
-import { CustomPattern, PatternMeta, PatternState } from "./types";
+import type {
+  CustomFramePattern,
+  FramePatternMeta,
+  FramePatternState,
+} from "./types";
 
 function genCustomId() {
-  return `custom_${Date.now().toString(36)}_${Math.random()
+  // 프레임 패턴임을 id에서 구분하기 쉽게 prefix를 분리
+  return `frame_custom_${Date.now().toString(36)}_${Math.random()
     .toString(36)
     .slice(2, 6)}`;
 }
 
-const initialMeta: PatternMeta = {
+const initialMeta: FramePatternMeta = {
   title: "",
   description: "",
   patternId: null,
   originPatternId: null,
 };
 
-export const usePatternStore = create<PatternState>()(
+export const useFramePatternStore = create<FramePatternState>()(
   immer(
     persist(
       (set, get) => ({
         customPatterns: [],
         meta: initialMeta,
+
         actions: {
           setMeta: patch =>
             set(s => {
@@ -38,7 +43,7 @@ export const usePatternStore = create<PatternState>()(
             const id = genCustomId();
             const now = new Date().toISOString();
 
-            const newPattern: CustomPattern = {
+            const newPattern: CustomFramePattern = {
               id,
               createdAt: now,
               ...base,
@@ -78,10 +83,10 @@ export const usePatternStore = create<PatternState>()(
         },
       }),
       {
-        name: "PATTERNS",
+        name: "FRAME_PATTERNS",
         partialize: state => ({
           customPatterns: state.customPatterns,
-          // meta는 새로고침 때 초기화되도 상관없으면 저장 안 해도 됨.
+          // meta는 새로고침 때 초기화돼도 되면 저장 안 해도 됨.
           // meta까지 로컬스토리지에 저장하고 싶으면 아래 라인 추가:
           // meta: state.meta,
         }),
@@ -91,4 +96,5 @@ export const usePatternStore = create<PatternState>()(
 );
 
 // actions 헬퍼
-export const usePatternActions = () => usePatternStore(s => s.actions);
+export const useFramePatternActions = () =>
+  useFramePatternStore(s => s.actions);

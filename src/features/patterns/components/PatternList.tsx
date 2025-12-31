@@ -11,9 +11,9 @@ import {
   Typography,
 } from "@mui/material";
 
-import { SCREEN_PATTERNS } from "@/shared/store/pattern/default";
-import { usePatternStore } from "@/shared/store/pattern/store";
-import type { CustomPattern } from "@/shared/store/pattern/types";
+import { SCREEN_PATTERNS } from "@/shared/store/patterns/default";
+import { usePatternStore } from "@/shared/store/patterns/store";
+import type { CustomPattern } from "@/shared/store/patterns/types";
 
 import PatternCard from "./PatternCard";
 

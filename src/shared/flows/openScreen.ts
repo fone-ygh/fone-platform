@@ -1,12 +1,12 @@
 // src/features/editor/flows/openScreen.ts
 "use client";
 
-import { useLayoutStore } from "@/shared/store/layout/store";
+import { useContentLayoutStore } from "@/shared/store/editor/contentLayout/store";
 
 import { getScreenById } from "../store/screen/store";
 
 export function openScreen(screenId: string) {
-  const layout = useLayoutStore.getState();
+  const layout = useContentLayoutStore.getState();
   const screen = getScreenById(screenId);
 
   layout.actions.setReset();

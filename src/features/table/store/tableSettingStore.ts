@@ -5,7 +5,7 @@ import { immer } from "zustand/middleware/immer";
 import { cloneDeep, omitBy, includes } from "lodash-es";
 import { FormData, HeaderCellConfig } from "../interface/type";
 
-const defaultValue: Pick<TableSettingStore, 'checkbox' | 'noDisplay' | 'paginationDisplay' | 'totalDisplay' | 'plusButtonDisplay' | 'selectedCellAddress' | 'formData' | 'headerCellPropsList' | 'selectedPos' | 'title' | 'tableHeaders' | 'demoTableOpen'> = {
+const defaultValue: Pick<TableSettingStore, 'checkbox' | 'noDisplay' | 'paginationDisplay' | 'totalDisplay' | 'plusButtonDisplay' | 'selectedCellAddress' | 'formData' | 'headerCellPropsList' | 'selectedPos' | 'title' | 'tableHeaders' | 'demoTableOpen' | 'editModeData'> = {
     checkbox: false,
     noDisplay: false,
     paginationDisplay: false,
@@ -27,6 +27,11 @@ const defaultValue: Pick<TableSettingStore, 'checkbox' | 'noDisplay' | 'paginati
     selectedPos:null,
     title: undefined,
     demoTableOpen: false,
+    //  editmode에 들어갈 데이터
+    editModeData: {
+        data: [],
+        mergeData: {},
+    },
 };
 
 interface TableSettingActions {
@@ -42,6 +47,7 @@ interface TableSettingActions {
     setSelectedPos: (selectedPos: { startCol: number, startRow: number, endCol: number, endRow: number } | null) => void;
     setTitle: (title: string) => void;
     setDemoTableOpen: (demoTableOpen: boolean) => void;
+    setEditModeData: (editModeData: { data: string[][]; mergeData: { [key: string]: [number, number]; } }) => void;
 }
 
 export const useTableSettingStore = create<TableSettingStore & { actions: TableSettingActions }>()(
@@ -61,6 +67,7 @@ export const useTableSettingStore = create<TableSettingStore & { actions: TableS
                 setSelectedPos: (selectedPos) => set({ selectedPos }),
                 setTitle: (title) => set({ title }),
                 setDemoTableOpen: (demoTableOpen) => set({ demoTableOpen }),
+                setEditModeData: (editModeData) => set({ editModeData }),
             }
         })),
         {
@@ -78,6 +85,7 @@ export const useTableSettingStore = create<TableSettingStore & { actions: TableS
                         'title',
                         'formData',
                         'headerCellPropsList',
+                        'editModeData',
                     ], key)
                 )
         }
@@ -91,7 +99,6 @@ export const getHeaderCellPropsListData = (address: string): HeaderCellConfig[] 
     const { headerCellPropsList, selectedPos, formData } = useTableSettingStore.getState();
     const prev = headerCellPropsList ?? [];
     if (!selectedPos) return prev;
-
     const idx = prev.findIndex((x) => x.address === address);
     const next: HeaderCellConfig = {
         address,

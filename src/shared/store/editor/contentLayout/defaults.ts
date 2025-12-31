@@ -137,7 +137,7 @@ function createP11SingleDetail(): Section[] {
       y: 0,
       width: DEFAULT_CANVAS_WIDTH,
       height: SEARCH_HEIGHT,
-      bg: "#f8fafc",
+      bg: "#ffffff",
       lock: true,
     }),
   );
@@ -172,7 +172,7 @@ function createP2MultiDetail(): Section[] {
       y: 0,
       width: DEFAULT_CANVAS_WIDTH,
       height: SEARCH_HEIGHT,
-      bg: "#f8fafc",
+      bg: "#ffffff",
       lock: true,
     }),
   );
@@ -208,7 +208,7 @@ function createP31MasterDetail(): Section[] {
       y: 0,
       width: DEFAULT_CANVAS_WIDTH,
       height: SEARCH_HEIGHT,
-      bg: "#f8fafc",
+      bg: "#ffffff",
       lock: true,
     }),
   );
@@ -258,7 +258,7 @@ function createP32MasterDetail(): Section[] {
       y: 0,
       width: DEFAULT_CANVAS_WIDTH,
       height: SEARCH_HEIGHT,
-      bg: "#f8fafc",
+      bg: "#ffffff",
       lock: true,
     }),
   );
@@ -307,7 +307,7 @@ function createP33MasterDetail(): Section[] {
       y: 0,
       width: DEFAULT_CANVAS_WIDTH,
       height: SEARCH_HEIGHT,
-      bg: "#f8fafc",
+      bg: "#ffffff",
       lock: true,
     }),
   );
@@ -355,7 +355,7 @@ function createP41Tab(): Section[] {
       y: 0,
       width: DEFAULT_CANVAS_WIDTH,
       height: SEARCH_HEIGHT,
-      bg: "#f8fafc",
+      bg: "#ffffff",
       lock: true,
     }),
   );
@@ -391,7 +391,7 @@ function createP42MasterTab(): Section[] {
       y: 0,
       width: DEFAULT_CANVAS_WIDTH,
       height: SEARCH_HEIGHT,
-      bg: "#f8fafc",
+      bg: "#ffffff",
       lock: true,
     }),
   );
@@ -448,7 +448,7 @@ function createP51Shuttle(): Section[] {
       y: 0,
       width: DEFAULT_CANVAS_WIDTH,
       height: SEARCH_HEIGHT,
-      bg: "#f8fafc",
+      bg: "#ffffff",
       lock: true,
     }),
   );
@@ -507,7 +507,7 @@ function createPX1Extra(): Section[] {
       y: 0,
       width: DEFAULT_CANVAS_WIDTH,
       height: DEFAULT_CANVAS_HEIGHT,
-      bg: "#f8fafc",
+      bg: "#ffffff",
     }),
   );
 

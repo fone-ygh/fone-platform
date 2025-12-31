@@ -339,3 +339,45 @@ export function buildColumnsFromJSS(
 	const level = getHeaderLevel(rowDatas);
 	return buildLevel(headers, rowDatas, mergeData, 0, headers.length, level, depth, cellPropsMap);
 }
+
+// ------------------------------
+// Worksheet population utilities
+// ------------------------------
+
+/**
+ * 주어진 워크시트에 headers 및 data를 채워 넣는다.
+ * - headers: 각 컬럼 인덱스별 헤더 텍스트
+ * - data: row-major 2차원 배열 데이터
+ */
+export function applyHeadersAndDataToWorksheet(
+	worksheet: any | undefined,
+	headers: { header: string; width?: number | string }[],
+	data: any[][]
+): void {
+	if (!worksheet) return;
+	// 헤더 입력
+	headers.forEach((h, colIdx) => {
+		worksheet.setHeader(colIdx, h.header);
+	});
+	// 데이터 입력
+	for (let row = 0; row < data.length; row++) {
+		for (let col = 0; col < (data[row]?.length ?? 0); col++) {
+			worksheet.setValueFromCoords(col, 2, data[row][col]);
+		}
+	}
+}
+
+/**
+ * headers, data, headerCellPropsList를 받아 워크시트에 반영하고,
+ * 그대로 headerCellPropsList를 반환한다.
+ * 컴포넌트 바깥에서 상태를 세팅해야 하므로 여기서는 반환만 한다.
+ */
+export function loadSheetByProps(
+	worksheet: any | undefined,
+	headers: { header: string; width?: number | string }[],
+	data: any[][],
+	// headerCellPropsList: HeaderCellConfig[]
+): void {
+	applyHeadersAndDataToWorksheet(worksheet, headers, data);
+	// return headerCellPropsList;
+}
