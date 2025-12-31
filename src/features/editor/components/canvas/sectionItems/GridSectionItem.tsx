@@ -33,7 +33,10 @@ export default function GridSectionItem({ item }: Props) {
         <JspreadSheet />
       )}
       {!scopeParentId && (
-        <Table2 isEditView={false} title={title ?? ""} columns={tableHeaders as any} data={[{},{},{},{},{}]} checkbox={checkbox} No={noDisplay} isTotal={totalDisplay} 
+        <Table2 isEditView={false} title={title ?? ""}
+          columns={tableHeaders as any}  
+          data={tableHeaders.length > 0 ? [{},{},{},{},{}] : []} 
+          checkbox={checkbox} No={noDisplay} isTotal={totalDisplay} 
           isPlusButton={plusButtonDisplay}
           pagination={paginationDisplay ? { page: 1, size: 10, totalElements: 100, totalPages: 10, onPageChange: (page) => { console.log(page); } } : undefined}
         />
