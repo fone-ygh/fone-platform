@@ -15,11 +15,11 @@ import { useJspreadSheetStore } from "@/features/table/store/jspreadSheetStore";
 import { useTableSettingStore } from "@/features/table/store/tableSettingStore";
 import Aside from "@/shared/components/layout/aside/Aside";
 import { AccordionCard } from "@/shared/components/ui/cardAccordion/CardAccordion";
+import { usePatternActions } from "@/shared/store";
 import {
   useContentLayoutActions,
   useContentLayoutStore,
 } from "@/shared/store/editor/contentLayout";
-import { usePatternActions } from "@/shared/store/pattern/store";
 
 import useCurrentAreaSection from "../../hooks/useCurrentAreaSection";
 import { useCurrentPatternMeta } from "../../hooks/useCurrentPatternMeta";

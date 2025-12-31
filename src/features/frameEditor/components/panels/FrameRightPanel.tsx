@@ -12,7 +12,7 @@ import {
   useFrameLayoutStore,
 } from "@/shared/store/editor/frameLayout/store";
 import type { FrameRegion } from "@/shared/store/editor/frameLayout/types";
-import { useFramePatternStore } from "@/shared/store/framePattern/store";
+import { useFramePatternStore } from "@/shared/store/framePatterns/store";
 
 const isRegion = (v: any): v is FrameRegion =>
   v === "header" || v === "sider" || v === "mdi" || v === "content";

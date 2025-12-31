@@ -13,7 +13,7 @@ import {
 import type {
   CustomFramePattern,
   FramePattern,
-} from "@/shared/store/framePattern/types";
+} from "@/shared/store/framePatterns/types";
 
 import LayoutThumbnail, { type FrameThumbNode } from "./LayoutThumbnail";
 

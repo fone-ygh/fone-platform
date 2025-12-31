@@ -1,3 +1,6 @@
 export * from "./editor/contentLayout";
-export * from "./pattern";
+export * from "./editor/frameLayout";
+export * from "./editor/control";
+export * from "./patterns";
+export * from "./framePatterns";
 export * from "./editor/control";
