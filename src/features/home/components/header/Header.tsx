@@ -25,7 +25,17 @@ export default function Header() {
           </Brand>
           <Nav aria-label="주요">
             {[
-              { id: "pattern", label: "화면패턴", href: "/pattern" },
+              {
+                id: "patterns",
+                label: "패턴(컨텐츠)",
+                href: "/patterns",
+              },
+              // { id: "screens", label: "화면(실체)", href: "/screens" },
+              {
+                id: "framePatterns",
+                label: "패턴(프레임)",
+                href: "/framePatterns",
+              },
               { id: "grid", label: "그리드", href: "/table" },
               { id: "resize", label: "리사이즈", href: "/resize" },
               {
@@ -51,6 +61,16 @@ export default function Header() {
                     id: "checkbox",
                     label: "Checkbox",
                     href: "/componentManagement/checkbox",
+                  },
+                  {
+                    id: "switch",
+                    label: "Switch",
+                    href: "/componentManagement/switch",
+                  },
+                  {
+                    id: "radio",
+                    label: "Radio",
+                    href: "/componentManagement/radio",
                   },
                 ],
                 onClick: handleClick,

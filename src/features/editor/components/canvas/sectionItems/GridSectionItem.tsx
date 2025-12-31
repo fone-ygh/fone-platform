@@ -2,20 +2,27 @@
 "use client";
 
 import React from "react";
-
-import { useLayoutStore, type GridSection } from "@/shared/store";
-import JspreadSheet from "@/features/table/ui/JspreadSheet";
 import { Table2 } from "fone-design-system_v1";
+
 import { useTableSettingStore } from "@/features/table/store/tableSettingStore";
+import JspreadSheet from "@/features/table/ui/JspreadSheet";
+import { useContentLayoutStore, type GridSection } from "@/shared/store";
 
 type Props = {
   item: GridSection;
 };
 
 export default function GridSectionItem({ item }: Props) {
-
-  const { scopeParentId } = useLayoutStore();
-  const { title, checkbox, noDisplay, totalDisplay, plusButtonDisplay, paginationDisplay, tableHeaders } = useTableSettingStore();
+  const { scopeParentId } = useContentLayoutStore();
+  const {
+    title,
+    checkbox,
+    noDisplay,
+    totalDisplay,
+    plusButtonDisplay,
+    paginationDisplay,
+    tableHeaders,
+  } = useTableSettingStore();
 
   return (
     <div
@@ -29,16 +36,26 @@ export default function GridSectionItem({ item }: Props) {
       }}
     >
       {/* Grid 영역 내용 */}
-      {scopeParentId && (
-        <JspreadSheet />
-      )}
+      {scopeParentId && <JspreadSheet />}
       {!scopeParentId && (
         <Table2 isEditView={false} title={title ?? ""}
           columns={tableHeaders as any}  
           data={tableHeaders.length > 0 ? [{},{},{},{},{}] : []} 
           checkbox={checkbox} No={noDisplay} isTotal={totalDisplay} 
           isPlusButton={plusButtonDisplay}
-          pagination={paginationDisplay ? { page: 1, size: 10, totalElements: 100, totalPages: 10, onPageChange: (page) => { console.log(page); } } : undefined}
+          pagination={
+            paginationDisplay
+              ? {
+                  page: 1,
+                  size: 10,
+                  totalElements: 100,
+                  totalPages: 10,
+                  onPageChange: page => {
+                    console.log(page);
+                  },
+                }
+              : undefined
+          }
         />
       )}
     </div>

@@ -1,8 +1,6 @@
-// src/features/patterns/components/PatternList.tsx
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import {
   Box,
   Button,
@@ -13,18 +11,67 @@ import {
   Typography,
 } from "@mui/material";
 
-import { SCREEN_PATTERNS } from "@/shared/store/pattern/default";
-import { usePatternStore } from "@/shared/store/pattern/store";
-import { CustomPattern } from "@/shared/store/pattern/types";
+import { SCREEN_PATTERNS } from "@/shared/store/patterns/default";
+import { usePatternStore } from "@/shared/store/patterns/store";
+import type { CustomPattern } from "@/shared/store/patterns/types";
 
 import PatternCard from "./PatternCard";
 
 const TAB_BUILTIN = "builtin";
 const TAB_CUSTOM = "custom";
 
-export default function PatternList() {
-  const router = useRouter();
-  const customPatterns = usePatternStore(s => s.customPatterns);
+/** ✅ 썸네일 색상 설명(legend) */
+function PatternColorLegend() {
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
+      <LegendItem label="Search" dotSx={{ bgcolor: "primary.light" }} />
+      <LegendItem label="Single" dotSx={{ bgcolor: "success.light" }} />
+      <LegendItem label="Grid" dotSx={{ bgcolor: "warning.light" }} />
+      <LegendItem label="Tab" dotSx={{ bgcolor: "secondary.light" }} />
+    </Box>
+  );
+}
+
+function LegendItem({ label, dotSx }: { label: string; dotSx: any }) {
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 0.6 }}>
+      <Box
+        sx={{
+          width: 10,
+          height: 10,
+          borderRadius: "50%",
+          border: "1px solid",
+          borderColor: "divider",
+          ...dotSx,
+        }}
+      />
+      <Typography variant="caption" color="text.secondary">
+        {label}
+      </Typography>
+    </Box>
+  );
+}
+
+type PatternListProps = {
+  title?: string;
+
+  /** "빈 화면으로 시작하기" */
+  onCreateBlank?: () => void;
+
+  /** 패턴 선택(빌트인/커스텀 동일) */
+  onSelectPattern?: (patternId: string) => void;
+
+  /** (선택) blank 버튼 숨기고 싶으면 false */
+  showBlankButton?: boolean;
+};
+
+export default function PatternList({
+  title = "화면 패턴",
+  onCreateBlank,
+  onSelectPattern,
+  showBlankButton = true,
+}: PatternListProps) {
+  const { customPatterns } = usePatternStore();
 
   const [tab, setTab] = React.useState<string>(TAB_BUILTIN);
 
@@ -32,12 +79,8 @@ export default function PatternList() {
     setTab(value);
   };
 
-  const handleOpenScreen = (screen: CustomPattern) => {
-    router.push(`/editor/new?originPatternId=${encodeURIComponent(screen.id)}`);
-  };
-
-  const handleCreateBlank = () => {
-    router.push(`/editor/new?originPatternId=null`); // originPatternId 없음 = blank
+  const handlePick = (p: CustomPattern) => {
+    onSelectPattern?.(p.id);
   };
 
   const isBuiltinTab = tab === TAB_BUILTIN;
@@ -59,14 +102,21 @@ export default function PatternList() {
         >
           <Box>
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              화면 패턴
+              {title}
             </Typography>
           </Box>
 
           {/* Blank 시작 버튼 */}
-          <Button variant="outlined" size="small" onClick={handleCreateBlank}>
-            빈 화면으로 시작하기
-          </Button>
+          {showBlankButton && (
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => onCreateBlank?.()}
+              disabled={!onCreateBlank}
+            >
+              빈 화면으로 시작하기
+            </Button>
+          )}
         </Box>
 
         {/* 탭 헤더 */}
@@ -92,17 +142,24 @@ export default function PatternList() {
               sx={{
                 display: "flex",
                 alignItems: "center",
+                justifyContent: "space-between", // ✅ 오른쪽에 legend
                 mb: 1,
                 gap: 1,
               }}
             >
-              <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                기본 패턴
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                제품에서 제공하는 고정 레이아웃
-              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                  기본 패턴
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  제품에서 제공하는 고정 레이아웃
+                </Typography>
+              </Box>
+
+              {/* ✅ 색상 설명 */}
+              <PatternColorLegend />
             </Box>
+
             <Divider sx={{ mb: 2 }} />
 
             <div
@@ -112,11 +169,11 @@ export default function PatternList() {
                 gap: "20px",
               }}
             >
-              {SCREEN_PATTERNS.map(screen => (
+              {SCREEN_PATTERNS.map(p => (
                 <PatternCard
-                  key={screen.id}
-                  pattern={screen}
-                  onSelect={handleOpenScreen}
+                  key={p.id}
+                  pattern={p as any}
+                  onSelect={() => onSelectPattern?.(p.id)}
                 />
               ))}
             </div>
@@ -130,17 +187,24 @@ export default function PatternList() {
               sx={{
                 display: "flex",
                 alignItems: "center",
+                justifyContent: "space-between", // ✅ 오른쪽에 legend
                 mb: 1,
                 gap: 1,
               }}
             >
-              <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                사용자 지정 패턴
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                레이아웃 편집기에서 저장한 나만의 패턴
-              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                  사용자 지정 패턴
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  레이아웃 편집기에서 저장한 나만의 패턴
+                </Typography>
+              </Box>
+
+              {/* ✅ 색상 설명 */}
+              <PatternColorLegend />
             </Box>
+
             <Divider sx={{ mb: 2 }} />
 
             {customPatterns.length === 0 ? (
@@ -165,11 +229,11 @@ export default function PatternList() {
                   gap: "20px",
                 }}
               >
-                {customPatterns.map(screen => (
+                {customPatterns.map(p => (
                   <PatternCard
-                    key={screen.id}
-                    pattern={screen}
-                    onSelect={handleOpenScreen}
+                    key={p.id}
+                    pattern={p as any}
+                    onSelect={() => handlePick(p)}
                   />
                 ))}
               </div>
