@@ -4,11 +4,15 @@
 import React from "react";
 
 import ResizeContainer from "@/shared/components/ui/resize/ResizeContainer";
-import { useEDITORStore } from "@/shared/store/control";
-import type { AnySection, Section } from "@/shared/store/layout/types";
+import type {
+  AnySection,
+  Section,
+} from "@/shared/store/editor/contentLayout/types";
+import { useEDITORStore } from "@/shared/store/editor/control";
 
 import type { Rect } from "../../hooks/collision";
 import SectionItemView from "./SectionItemView";
+import { Dialog } from "fone-design-system_v1";
 
 /**
  * SectionsLayer
@@ -125,7 +129,8 @@ export default function SectionsLayer(props: SectionsLayerProps) {
     scopeContainer &&
     scopeContainer.id !== null &&
     editorMode.sectionId === scopeContainer.id;
-  console.log("scopeContainer : ", scopeContainer);
+
+  const [openDialog, setOpenDialog] = React.useState(false);
 
   return (
     <>
@@ -161,172 +166,181 @@ export default function SectionsLayer(props: SectionsLayerProps) {
         // 가독성을 위해 변수 짧게
         const s = section;
 
-
         return (
-          <ResizeContainer
-            key={`${scopeKey}-${s.id}`}
-            id={s.id}
-            active={isLocked ? false : isActive}
-            onActiveChange={act => {
-              if (act) {
-                setSelectedIds([s.id]);
-              }
-            }}
-            // 여기서의 x, y, width, height 는 "현재 스코프 기준 로컬 좌표"
-            width={s.width}
-            height={s.height}
-            x={s.x}
-            y={s.y}
-            draggable={isActive && !blockDrag}
-            resizable
-            containerEl={containerEl as any}
-            targets={selectedEls.length > 1 ? selectedEls : undefined}
-            snappable={snappable}
-            snapGridWidth={snapGridSize}
-            snapGridHeight={snapGridSize}
-            elementGuidelines={guidelineEls}
-            onDragStart={e => {
-              if (blockDrag) {
-                e.stop?.();
-                return;
-              }
-            }}
-            /* ===== 드래그 중 (move) ===== */
-            onDrag={(e: any) => {
-              if (isPanning || isLocked) return;
-
-              const target = e.target as HTMLElement;
-              const cs = getComputedStyle(target);
-
-              const w = parseFloat(cs.width || "") || s.width;
-              const h = parseFloat(cs.height || "") || s.height;
-
-              // moveable이 주는 left/top 은 현재 스코프 기준 로컬 좌표
-              const cand: Rect = { x: e.left, y: e.top, w, h };
-              setIsOOB(isOutOfBounds(cand));
-            }}
-            /* ===== 리사이즈 중 ===== */
-            onResize={(e: any) => {
-              if (isPanning || isLocked) return;
-
-              const target = e.target as HTMLElement;
-              const l =
-                e.drag?.left ?? parseFloat(target.style.left || "") ?? s.x;
-              const t =
-                e.drag?.top ?? parseFloat(target.style.top || "") ?? s.y;
-              const w =
-                e.width ?? parseFloat(target.style.width || "") ?? s.width;
-              const h =
-                e.height ?? parseFloat(target.style.height || "") ?? s.height;
-
-              const cand: Rect = { x: l, y: t, w, h };
-              setIsOOB(isOutOfBounds(cand));
-            }}
-            /* ===== 드래그 끝 (drop) ===== */
-            onDragEnd={(e: any) => {
-              if (isPanning || isLocked) return;
-
-              const el = e.target as HTMLElement;
-              const cs = getComputedStyle(el);
-
-              const nx = e.lastEvent?.left ?? parseFloat(cs.left || "") ?? s.x;
-              const ny = e.lastEvent?.top ?? parseFloat(cs.top || "") ?? s.y;
-              const w = parseFloat(cs.width || "") || s.width;
-              const h = parseFloat(cs.height || "") || s.height;
-
-              const proposalLocal: Rect = { x: nx, y: ny, w, h };
-              const prevLocal: Rect = {
-                x: s.x,
-                y: s.y,
-                w: s.width,
-                h: s.height,
-              };
-
-              // 경계를 벗어나면 이전 위치로 롤백
-              const fixedLocal = isOutOfBounds(proposalLocal)
-                ? prevLocal
-                : proposalLocal;
-
-              // DOM 위치도 고정된 값으로 맞춰줌
-              el.style.left = `${fixedLocal.x}px`;
-              el.style.top = `${fixedLocal.y}px`;
-
-              // 저장은 전역 좌표로
-              const world = toWorldRect(fixedLocal);
-              setUpdateFrame(s.id, { x: world.x, y: world.y });
-              setCommitAfterTransform();
-              setIsOOB(false);
-            }}
-            /* ===== 리사이즈 끝 ===== */
-            onResizeEnd={(e: any) => {
-              if (isPanning || isLocked) return;
-
-              const el = e.target as HTMLElement;
-              const cs = getComputedStyle(el);
-
-              const l = parseFloat(cs.left || "") || s.x;
-              const t = parseFloat(cs.top || "") || s.y;
-              const w =
-                e.lastEvent?.width ?? parseFloat(cs.width || "") ?? s.width;
-              const h =
-                e.lastEvent?.height ?? parseFloat(cs.height || "") ?? s.height;
-
-              const proposalLocal: Rect = { x: l, y: t, w, h };
-              const prevLocal: Rect = {
-                x: s.x,
-                y: s.y,
-                w: s.width,
-                h: s.height,
-              };
-
-              const fixedLocal = isOutOfBounds(proposalLocal)
-                ? prevLocal
-                : proposalLocal;
-
-              el.style.left = `${fixedLocal.x}px`;
-              el.style.top = `${fixedLocal.y}px`;
-              el.style.width = `${fixedLocal.w}px`;
-              el.style.height = `${fixedLocal.h}px`;
-
-              const world = toWorldRect(fixedLocal);
-
-              setUpdateFrame(s.id, {
-                x: world.x,
-                y: world.y,
-                width: fixedLocal.w,
-                height: fixedLocal.h,
-              });
-              setCommitAfterTransform();
-              setIsOOB(false);
+          <div key={`${scopeKey}-${s.id}`} style={{ border:"1px solid red", backgroundColor:"blue"}}
+            onDoubleClick={() => {
+              setOpenDialog(true);
             }}
           >
-            {/* 실제 섹션 안쪽 내용 + 더블클릭 드릴다운 */}
-            <div
-              style={{ width: "100%", height: "100%" }}
-              onDoubleClick={e => {
-                e.stopPropagation();
+            <ResizeContainer
+              key={`${scopeKey}-${s.id}`}
+              id={s.id}
+              active={isLocked ? false : isActive}
+              onActiveChange={act => {
+                if (act) {
+                  setSelectedIds([s.id]);
+                }
+              }}
+              // 여기서의 x, y, width, height 는 "현재 스코프 기준 로컬 좌표"
+              width={s.width}
+              height={s.height}
+              x={s.x}
+              y={s.y}
+              draggable={isActive && !blockDrag}
+              resizable
+              containerEl={containerEl as any}
+              targets={selectedEls.length > 1 ? selectedEls : undefined}
+              snappable={snappable}
+              snapGridWidth={snapGridSize}
+              snapGridHeight={snapGridSize}
+              elementGuidelines={guidelineEls}
+              onDragStart={e => {
+                if (blockDrag) {
+                  e.stop?.();
+                  return;
+                }
+              }}
+              /* ===== 드래그 중 (move) ===== */
+              onDrag={(e: any) => {
+                if (isPanning || isLocked) return;
 
-                // 이 섹션을 "현재 스코프"로 설정 → 드릴다운
-                setScopeParentId(s.id);
-                setSelectedIds([s.id]);
+                const target = e.target as HTMLElement;
+                const cs = getComputedStyle(target);
+
+                const w = parseFloat(cs.width || "") || s.width;
+                const h = parseFloat(cs.height || "") || s.height;
+
+                // moveable이 주는 left/top 은 현재 스코프 기준 로컬 좌표
+                const cand: Rect = { x: e.left, y: e.top, w, h };
+                setIsOOB(isOutOfBounds(cand));
+              }}
+              /* ===== 리사이즈 중 ===== */
+              onResize={(e: any) => {
+                if (isPanning || isLocked) return;
+
+                const target = e.target as HTMLElement;
+                const l =
+                  e.drag?.left ?? parseFloat(target.style.left || "") ?? s.x;
+                const t =
+                  e.drag?.top ?? parseFloat(target.style.top || "") ?? s.y;
+                const w =
+                  e.width ?? parseFloat(target.style.width || "") ?? s.width;
+                const h =
+                  e.height ?? parseFloat(target.style.height || "") ?? s.height;
+
+                const cand: Rect = { x: l, y: t, w, h };
+                setIsOOB(isOutOfBounds(cand));
+              }}
+              /* ===== 드래그 끝 (drop) ===== */
+              onDragEnd={(e: any) => {
+                if (isPanning || isLocked) return;
+
+                const el = e.target as HTMLElement;
+                const cs = getComputedStyle(el);
+
+                const nx = e.lastEvent?.left ?? parseFloat(cs.left || "") ?? s.x;
+                const ny = e.lastEvent?.top ?? parseFloat(cs.top || "") ?? s.y;
+                const w = parseFloat(cs.width || "") || s.width;
+                const h = parseFloat(cs.height || "") || s.height;
+
+                const proposalLocal: Rect = { x: nx, y: ny, w, h };
+                const prevLocal: Rect = {
+                  x: s.x,
+                  y: s.y,
+                  w: s.width,
+                  h: s.height,
+                };
+
+                // 경계를 벗어나면 이전 위치로 롤백
+                const fixedLocal = isOutOfBounds(proposalLocal)
+                  ? prevLocal
+                  : proposalLocal;
+
+                // DOM 위치도 고정된 값으로 맞춰줌
+                el.style.left = `${fixedLocal.x}px`;
+                el.style.top = `${fixedLocal.y}px`;
+
+                // 저장은 전역 좌표로
+                const world = toWorldRect(fixedLocal);
+                setUpdateFrame(s.id, { x: world.x, y: world.y });
+                setCommitAfterTransform();
+                setIsOOB(false);
+              }}
+              /* ===== 리사이즈 끝 ===== */
+              onResizeEnd={(e: any) => {
+                if (isPanning || isLocked) return;
+
+                const el = e.target as HTMLElement;
+                const cs = getComputedStyle(el);
+
+                const l = parseFloat(cs.left || "") || s.x;
+                const t = parseFloat(cs.top || "") || s.y;
+                const w =
+                  e.lastEvent?.width ?? parseFloat(cs.width || "") ?? s.width;
+                const h =
+                  e.lastEvent?.height ?? parseFloat(cs.height || "") ?? s.height;
+
+                const proposalLocal: Rect = { x: l, y: t, w, h };
+                const prevLocal: Rect = {
+                  x: s.x,
+                  y: s.y,
+                  w: s.width,
+                  h: s.height,
+                };
+
+                const fixedLocal = isOutOfBounds(proposalLocal)
+                  ? prevLocal
+                  : proposalLocal;
+
+                el.style.left = `${fixedLocal.x}px`;
+                el.style.top = `${fixedLocal.y}px`;
+                el.style.width = `${fixedLocal.w}px`;
+                el.style.height = `${fixedLocal.h}px`;
+
+                const world = toWorldRect(fixedLocal);
+
+                setUpdateFrame(s.id, {
+                  x: world.x,
+                  y: world.y,
+                  width: fixedLocal.w,
+                  height: fixedLocal.h,
+                });
+                setCommitAfterTransform();
+                setIsOOB(false);
               }}
             >
-              <SectionItemView
-                item={s}
-                selected={isSelected}
-                onRequestSelect={multi => {
-                  // shift/meta 선택 멀티 셀렉션
-                  setSelectedIds(
-                    multi
-                      ? isSelected
-                        ? selectedIds.filter(id => id !== s.id)
-                        : [...selectedIds, s.id]
-                      : [s.id],
-                  );
+              {/* 실제 섹션 안쪽 내용 + 더블클릭 드릴다운 */}
+              <div
+                style={{ width: "100%", height: "100%" }}
+                onDoubleClick={e => { 
+                  console.log("더블클릭 : ", s.type ?? "unknown", s);
+                  e.stopPropagation();
+                  // 여기서 n*n 입력 받아서 섹션 생성 
+                  
+
+                  // 이 섹션을 "현재 스코프"로 설정 → 드릴다운
+                  setScopeParentId(s.id);
+                  setSelectedIds([s.id]);
                 }}
-              />
-            </div>
-          </ResizeContainer>
+              >
+                <SectionItemView
+                  item={s}
+                  selected={isSelected}
+                  onRequestSelect={multi => {
+                    // shift/meta 선택 멀티 셀렉션
+                    setSelectedIds(
+                      multi
+                        ? isSelected
+                          ? selectedIds.filter(id => id !== s.id)
+                          : [...selectedIds, s.id]
+                        : [s.id],
+                    );
+                  }}
+                />
+              </div>
+            </ResizeContainer>
+            <Dialog open={openDialog} onClose={() => setOpenDialog(false)} />
+          </div>
         );
       })}
     </>

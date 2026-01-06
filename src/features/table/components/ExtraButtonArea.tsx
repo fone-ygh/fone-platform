@@ -3,11 +3,11 @@ import styled from 'styled-components'
 import { useTableSettingStore, useTableSettingActions } from '../store/tableSettingStore';
 import { Button } from 'fone-design-system_v1';
 import { useJspreadSheetStore } from '../store/jspreadSheetStore';
-import { colIndexToLetter } from '../util/tableUtil';
+import { colIndexToLetter, loadSheetByProps } from '../util/tableUtil';
 import { HeaderCellConfig } from '../interface/type';
 
 const MergeButtonArea = () => {
-    // const { demoTableOpen } = useTableSettingStore();
+    const { headerCellPropsList } = useTableSettingStore();
     const { setDemoTableOpen, setHeaderCellPropsList } = useTableSettingActions();
     const { spreadsheet } = useJspreadSheetStore();
 
@@ -40,14 +40,14 @@ const MergeButtonArea = () => {
         if (typeof window === "undefined") return; // 브라우저 전용
 
         const tabular: any = await ensureTabularjs();
-        console.log("tabular : ", tabular);
         const result = await tabular(file);
-        console.log("result : ", result);
 
         // jspreadsheet-ce 인스턴스에 데이터 주입
         const inst = spreadsheet?.worksheets?.[0];
         const ws = result?.worksheets?.[0];
         if (inst && ws) {
+            // inst.setHeaders(ws.columns ?? []);
+            // inst.setWidth(ws.width ?? 100);
             inst.setData(ws.data ?? []);
             const merge = ws.mergeCells ?? {};
             Object.entries(merge).forEach(([cell, span]: any) => {
@@ -204,23 +204,10 @@ const MergeButtonArea = () => {
                                 }
                             ];
 
-                            // 1. sheet에 실제 데이터 집어넣기
+                            // 유틸 사용: sheet에 headers/data 반영 후, 헤더셀 설정 반환
                             const inst = spreadsheet?.worksheets?.[0];
-                            if (inst) {
-                                // 헤더 입력
-                                dummyHeaders.forEach((h, colIdx) => {
-                                    inst.setHeader(colIdx, h.header);
-                                });
-                                // 데이터 입력
-                                for (let row = 0; row < dummyData.length; row++) {
-                                    for (let col = 0; col < dummyData[row].length; col++) {
-                                        inst.setValueFromCoords(col, row, dummyData[row][col]);
-                                    }
-                                }
-                            }
-
-                            // 2. headerCellPropsList도 반영
-                            setHeaderCellPropsList(dummyHeaderCellPropsList);
+                            loadSheetByProps(inst, dummyHeaders, dummyData);
+                            // setHeaderCellPropsList(dummyHeaderCellPropsList);
 
                             // // 3. Table2 용 헤더도 재생성
                             // recomputeTable2Headers();

@@ -3,9 +3,12 @@
 
 import React, { useMemo, useRef, useState } from "react";
 
-import { useEDITORActions, useEDITORStore } from "@/shared/store/control/store";
-import type { Section } from "@/shared/store/layout/types";
-import { useLayoutVM } from "@/shared/store/layout/useLayoutVM";
+import type { Section } from "@/shared/store/editor/contentLayout/types";
+import { useLayoutVM } from "@/shared/store/editor/contentLayout/useLayoutVM";
+import {
+  useEDITORActions,
+  useEDITORStore,
+} from "@/shared/store/editor/control/store";
 
 import type { Rect } from "../../hooks/collision";
 import { useDomHandles } from "../../hooks/useDomHandles";

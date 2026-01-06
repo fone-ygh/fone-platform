@@ -14,7 +14,7 @@ import {
 import type { InsertTool, LayoutState, Section, SectionType } from "./types";
 import { applyZChange, cloneSection, maxZ, normalizeZ } from "./utils";
 
-export const useLayoutStore = create<LayoutState>()(
+export const useContentLayoutStore = create<LayoutState>()(
   immer(
     persist(
       (set, get) => ({
@@ -210,4 +210,5 @@ export const useLayoutStore = create<LayoutState>()(
 );
 
 // Editor 스토어와 동일한 헬퍼 훅 제공
-export const useLayoutActions = () => useLayoutStore(s => s.actions);
+export const useContentLayoutActions = () =>
+  useContentLayoutStore(s => s.actions);
