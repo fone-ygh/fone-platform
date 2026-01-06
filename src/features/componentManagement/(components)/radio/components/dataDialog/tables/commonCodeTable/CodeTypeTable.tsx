@@ -1,15 +1,16 @@
 import { Table2 } from "fone-design-system_v1";
 
-import useCodeTypeStore from "@/features/componentManagement/(components)/select/store/codeType";
-import useDialogStore from "@/features/componentManagement/(components)/select/store/dialog";
-import useIdxStore from "@/features/componentManagement/(components)/select/store/idx";
 import useComponentStore from "@/features/componentManagement/store/component";
 
+import useCodeTypeStore from "../../../../store/codeType";
+import useDialogStore from "../../../../store/dialog";
+import useIdxStore from "../../../../store/idx";
+
 export default function CodeTypeTable() {
-  const { dialogIdx: idx, setDialogIdx: setIdx } = useIdxStore();
+  const { idx, setIdx } = useIdxStore();
   const { codeTypeData, setCodeTypeData } = useComponentStore();
   const { setCheckedRows, setSelectedCheckedRows } = useCodeTypeStore();
-  const { setIsOpen } = useDialogStore();
+  const { setIsDataOpen } = useDialogStore();
 
   const columns = [
     {
@@ -74,7 +75,7 @@ export default function CodeTypeTable() {
 
   const onRowDoubleClickHandler = (row: any) => {
     setCheckedRows([row]);
-    setIsOpen(false);
+    setIsDataOpen(false);
   };
 
   const onCheckedHandler = (checkedRows: any[]) => {
