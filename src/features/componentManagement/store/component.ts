@@ -48,6 +48,10 @@ export interface SwitchStyleData {
     | "default";
 }
 
+export interface RadioStyleData {
+  color: string;
+}
+
 interface SelectData {
   crud?: string;
   componentId: string;
@@ -101,12 +105,25 @@ export interface SwitchData {
   defaultChecked: string;
 }
 
+export interface RadioData {
+  crud?: string;
+  componentId: string;
+  name: string;
+  title: string;
+  style: RadioStyleData;
+  required: string;
+  dataType: string;
+  dataSourceCd: string;
+  dataSourceNm: string;
+}
+
 interface State {
   buttonData: ButtonData[];
   selectData: SelectData[];
   inputData: InputData[];
   checkboxData: CheckboxData[];
   switchData: SwitchData[];
+  radioData: RadioData[];
 
   codeTypeData: CodeTypeData[];
   apiData: ApiData[];
@@ -116,12 +133,28 @@ interface State {
   setInputData: (inputData: InputData[]) => void;
   setCheckboxData: (checkboxData: CheckboxData[]) => void;
   setSwitchData: (switchData: SwitchData[]) => void;
+  setRadioData: (radioData: RadioData[]) => void;
 
   setCodeTypeData: (codeTypeData: CodeTypeData[]) => void;
   setApiData: (apiData: ApiData[]) => void;
 }
 
 const useComponentStore = create<State>(set => ({
+  radioData: [
+    {
+      componentId: "sex",
+      name: "성별",
+      title: "성별",
+      style: {
+        color: "#1976d2",
+      },
+      required: "Y",
+      dataType: "commonCode",
+      dataSourceCd: "CT0003",
+      dataSourceNm: "성별",
+    },
+  ],
+
   switchData: [
     {
       componentId: "darkMode",
@@ -281,6 +314,23 @@ const useComponentStore = create<State>(set => ({
         },
       ],
     },
+    {
+      groupCode: "CT0003",
+      groupName: "성별",
+      groupDescription: "성별을 나타냄",
+      commonCodeData: [
+        {
+          code: "01",
+          codeName: "남성",
+          codeDescription: "남성",
+        },
+        {
+          code: "02",
+          codeName: "여성",
+          codeDescription: "여성",
+        },
+      ],
+    },
   ],
 
   apiData: [
@@ -302,6 +352,7 @@ const useComponentStore = create<State>(set => ({
   setCheckboxData: (checkboxData: CheckboxData[]) =>
     set({ checkboxData: checkboxData }),
   setSwitchData: (switchData: SwitchData[]) => set({ switchData: switchData }),
+  setRadioData: (radioData: RadioData[]) => set({ radioData: radioData }),
 
   setCodeTypeData: (codeTypeData: CodeTypeData[]) =>
     set({ codeTypeData: codeTypeData }),
