@@ -72,6 +72,11 @@ export default function Header() {
                     label: "Radio",
                     href: "/componentManagement/radio",
                   },
+                  {
+                    id: "tab",
+                    label: "Tab",
+                    href: "/componentManagement/tab",
+                  },
                 ],
                 onClick: handleClick,
               },

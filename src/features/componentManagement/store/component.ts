@@ -117,6 +117,15 @@ export interface RadioData {
   dataSourceNm: string;
 }
 
+export interface TabData {
+  crud?: string;
+  componentId: string;
+  name: string;
+  dataType: string;
+  dataSourceCd: string;
+  dataSourceNm: string;
+}
+
 interface State {
   buttonData: ButtonData[];
   selectData: SelectData[];
@@ -124,6 +133,7 @@ interface State {
   checkboxData: CheckboxData[];
   switchData: SwitchData[];
   radioData: RadioData[];
+  tabData: TabData[];
 
   codeTypeData: CodeTypeData[];
   apiData: ApiData[];
@@ -134,12 +144,23 @@ interface State {
   setCheckboxData: (checkboxData: CheckboxData[]) => void;
   setSwitchData: (switchData: SwitchData[]) => void;
   setRadioData: (radioData: RadioData[]) => void;
+  setTabData: (tabData: TabData[]) => void;
 
   setCodeTypeData: (codeTypeData: CodeTypeData[]) => void;
   setApiData: (apiData: ApiData[]) => void;
 }
 
 const useComponentStore = create<State>(set => ({
+  tabData: [
+    {
+      componentId: "tableTab",
+      name: "테이블탭",
+      dataType: "commonCode",
+      dataSourceCd: "CT0004",
+      dataSourceNm: "테이블탭",
+    },
+  ],
+
   radioData: [
     {
       componentId: "sex",
@@ -331,6 +352,23 @@ const useComponentStore = create<State>(set => ({
         },
       ],
     },
+    {
+      groupCode: "CT0004",
+      groupName: "테이블탭",
+      groupDescription: "테이블탭을 나타냄",
+      commonCodeData: [
+        {
+          code: "01",
+          codeName: "테이블",
+          codeDescription: "테이블",
+        },
+        {
+          code: "02",
+          codeName: "컬럼",
+          codeDescription: "컬럼",
+        },
+      ],
+    },
   ],
 
   apiData: [
@@ -353,6 +391,7 @@ const useComponentStore = create<State>(set => ({
     set({ checkboxData: checkboxData }),
   setSwitchData: (switchData: SwitchData[]) => set({ switchData: switchData }),
   setRadioData: (radioData: RadioData[]) => set({ radioData: radioData }),
+  setTabData: (tabData: TabData[]) => set({ tabData: tabData }),
 
   setCodeTypeData: (codeTypeData: CodeTypeData[]) =>
     set({ codeTypeData: codeTypeData }),
