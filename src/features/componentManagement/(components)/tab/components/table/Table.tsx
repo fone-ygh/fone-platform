@@ -1,7 +1,6 @@
 import { useState } from "react";
 import styled from "@emotion/styled";
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import { Button, Dialog, Table2 } from "fone-design-system_v1";
+import { Dialog, Table2 } from "fone-design-system_v1";
 
 import useComponentStore from "@/features/componentManagement/store/component";
 
@@ -12,8 +11,8 @@ import useIdxStore from "../../store/idx";
 
 export default function Table() {
   const [isWarningOpen, setIsWarningOpen] = useState(false);
-  const { radioData: data, setRadioData: setData } = useComponentStore();
-  const { setIsStyleOpen, setIsDataOpen } = useDialogStore();
+  const { tabData: data, setTabData: setData } = useComponentStore();
+  const { setIsDataOpen } = useDialogStore();
   const { idx, setIdx } = useIdxStore();
   const { selectedData, setSelectedData } = useDataStore();
   const { checkedRows, setCheckedRows, setDataType } = useCodeTypeStore();
@@ -42,34 +41,6 @@ export default function Table() {
       editable: true,
       type: "input",
       required: true,
-    },
-    {
-      accessorKey: "style",
-      header: "스타일",
-      editable: true,
-      type: "custom",
-      component: (
-        <div
-          style={{
-            width: "100%",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <Button onClick={() => setIsStyleOpen(true)} size="sm" fullWidth>
-            <AddCircleOutlineIcon sx={{ fontSize: 18, color: "#4D4D4D" }} />
-          </Button>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "required",
-      header: "필수여부",
-      editable: true,
-      type: "checkbox",
-      required: true,
-      defaultChecked: false,
     },
     {
       role: "group",

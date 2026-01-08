@@ -1,15 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styled from "@emotion/styled";
-import { Radio } from "fone-design-system_v1";
+import { Tab, Tabs } from "@mui/material";
 
 import useComponentStore from "@/features/componentManagement/store/component";
 
 import useDataStore from "../../store/data";
 
 export default function ComponentView() {
-  const [value, setValue] = useState("01");
+  const [value, setValue] = useState("");
+  console.log(value);
   const { selectedData } = useDataStore();
   const { codeTypeData } = useComponentStore();
   const commonCode = codeTypeData.find(
@@ -21,21 +22,38 @@ export default function ComponentView() {
     value: code.code,
   }));
 
+  useEffect(() => {
+    if (!options?.length) return;
+
+    // options가 비동기로 들어오는 경우, value가 비어있으면 첫 번째 옵션으로 초기화
+    // (또는 기존 value가 현재 options에 없으면 첫 번째 옵션으로 보정)
+    const nextValue = !value
+      ? options[0].value
+      : options.some(o => o.value === value)
+        ? value
+        : options[0].value;
+
+    if (nextValue === value) return;
+
+    const timer = setTimeout(() => {
+      setValue(nextValue);
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [options, value]);
+
+  if (value !== options?.[0]?.value) return null;
+
   return (
     <ComponentViewStyle>
       <span className="name">{selectedData?.name}</span>
-      <InputStyle>
-        {options?.map(option => (
-          <Radio
-            key={option.value}
-            name={selectedData?.name}
-            value={option.value}
-            label={option.label}
-            checked={value === option.value}
-            onChange={e => setValue(e.target.value)}
-          />
-        ))}
-      </InputStyle>
+      <TabStyle>
+        <Tabs value={value} onChange={(_, newValue) => setValue(newValue)}>
+          {options?.map(option => (
+            <Tab key={option.value} label={option.label} value={option.value} />
+          ))}
+        </Tabs>
+      </TabStyle>
     </ComponentViewStyle>
   );
 }
@@ -61,7 +79,7 @@ const ComponentViewStyle = styled.div`
   }
 `;
 
-const InputStyle = styled.div`
+const TabStyle = styled.div`
   position: relative;
   gap: 0.6rem;
   display: flex;
