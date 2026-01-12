@@ -31,6 +31,7 @@ const defaultValue: Pick<TableSettingStore, 'checkbox' | 'noDisplay' | 'paginati
     editModeData: {
         data: [],
         mergeData: {},
+        minDimensions: [0, 0],
     },
 };
 
@@ -47,7 +48,8 @@ interface TableSettingActions {
     setSelectedPos: (selectedPos: { startCol: number, startRow: number, endCol: number, endRow: number } | null) => void;
     setTitle: (title: string) => void;
     setDemoTableOpen: (demoTableOpen: boolean) => void;
-    setEditModeData: (editModeData: { data: string[][]; mergeData: { [key: string]: [number, number]; } }) => void;
+    setEditModeData: (editModeData: { data: string[][]; mergeData: { [key: string]: [number, number]; }, minDimensions?: [number, number] }) => void;
+    setEditModeMinDimensions: (minDimensions: [number, number]) => void;
 }
 
 export const useTableSettingStore = create<TableSettingStore & { actions: TableSettingActions }>()(
@@ -67,7 +69,8 @@ export const useTableSettingStore = create<TableSettingStore & { actions: TableS
                 setSelectedPos: (selectedPos) => set({ selectedPos }),
                 setTitle: (title) => set({ title }),
                 setDemoTableOpen: (demoTableOpen) => set({ demoTableOpen }),
-                setEditModeData: (editModeData) => set({ editModeData }),
+                setEditModeData: (editModeData) => set({ editModeData: { ...editModeData, minDimensions: editModeData?.minDimensions ?? [0, 0] } as any }),
+                setEditModeMinDimensions: (minDimensions) => set((state) => ({ editModeData: { ...state.editModeData, minDimensions } })),
             }
         })),
         {
