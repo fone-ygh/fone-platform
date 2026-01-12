@@ -4,11 +4,9 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Spreadsheet, Worksheet } from "@jspreadsheet-ce/react";
 import "jsuites/dist/jsuites.css";
 import "jspreadsheet-ce/dist/jspreadsheet.css";
-import { Box, Button, Dialog, Table2 } from "fone-design-system_v1";
-import TableSettingArea from "../components/TableSettingArea";
+import { Box, Dialog, Table2 } from "fone-design-system_v1";
 import { getHeaderCellPropsListData, useTableSettingActions, useTableSettingStore } from "../store/tableSettingStore";
-import { HeaderCellConfig, ColumnNode } from "../interface/type";
-import CellSettingArea from "../components/CellSettingArea";
+import { ColumnNode } from "../interface/type";
 import {
     buildColumnsFromJSS,
     colIndexToLetter,
@@ -23,16 +21,16 @@ import { useJspreadSheetActions, useJspreadSheetStore } from "../store/jspreadSh
 
 export default function JspreadSheet() {
 
-    // Spreadsheet array of worksheets
-    const spreadsheet = useRef<Spreadsheet>(null);
     // Table Setting 값을 담는 store
     const { checkbox, noDisplay, paginationDisplay, totalDisplay, plusButtonDisplay, headerCellPropsList, title, formData, demoTableOpen, editModeData, tableHeaders } = useTableSettingStore();
     const { setSelectedCellAddress, setFormData, setSelectedPos, setHeaderCellPropsList, setTableHeaders, setDemoTableOpen, setEditModeData } = useTableSettingActions();
+    const { spreadsheet: spreadsheetStore } = useJspreadSheetStore();
     const { setSpreadsheet } = useJspreadSheetActions();
+    
+    // Spreadsheet array of worksheets
+    const spreadsheet = useRef<Spreadsheet>(null);
 
-    const [table2Headers, setTable2Headers] = useState<ColumnNode[]>([]);
-
-    // const [demoTableOpen, setDemoTableOpen] = useState(false);
+    // const [table2Headers, setTable2Headers] = useState<ColumnNode[]>([]);
 
     const toCellPropsMapRef = useRef(toCellPropsMap);
     const buildColumnsFromJSSRef = useRef(buildColumnsFromJSS);
@@ -41,8 +39,16 @@ export default function JspreadSheet() {
 
 
     const recomputeTable2Headers = useCallback(() => {
-        const inst = spreadsheet?.current?.[0];
+        console.log("spreadsheetStore : ", spreadsheetStore)
+        // spreadsheet Ref를 store에서 가져오는 경우 체크하는 변수
+        const getSpreadsheet = spreadsheetStore !== null;
+        const inst = getSpreadsheet ? spreadsheetStore?.current?.[0] : spreadsheet?.current?.[0];
         if (!inst) return;
+
+        console.log("inst = ", inst)
+        console.log("getData = ", inst.getData())
+        console.log("getHeaders = ", inst.getHeaders())
+
 
         const rawData = inst.getData();
         const headers = inst.getHeaders().split(",").map((header:string, index:number) => {
@@ -86,6 +92,7 @@ export default function JspreadSheet() {
             }
         });
         const mergeData = inst.getMerge();
+        console.log("exception  headers : ", headers, headerCellPropsListRef.current)
         const cellPropsMap = toCellPropsMapRef.current(headers, headerCellPropsListRef.current);
         
         const resultHeaders = buildColumnsFromJSSRef.current(headers, rawData, mergeData, undefined, cellPropsMap) as ColumnNode[];
@@ -94,9 +101,13 @@ export default function JspreadSheet() {
             // 기본 버튼 클릭 핸들러 (필요시 교체 가능)
         });
 
+        if(getSpreadsheet){
+            spreadsheet.current?.[0]?.setData(rawData);
+
+        }
         setTableHeaders(hydrated as ColumnNode[]);
-        setTable2Headers(hydrated as ColumnNode[]);
-    }, [setTableHeaders]);
+        // setTable2Headers(hydrated as ColumnNode[]);
+    }, [setTableHeaders, spreadsheetStore]);
 
 
     const handleEvent = useCallback((eventName: string, worksheet: Worksheet) => {
@@ -109,7 +120,7 @@ export default function JspreadSheet() {
             }
             return;
         }
-        
+           
         if(eventName === "onresizecolumn") { 
             const inst = spreadsheet?.current?.[0];
             const selectedCell = inst?.selectedContainer;
@@ -263,7 +274,7 @@ export default function JspreadSheet() {
                     header.width ?? 100
                 );
             });
-
+            console.log("editModeData : ", editModeData)
             inst?.setData(editModeData.data);
             Object.entries(editModeData.mergeData).forEach(([cell, span]: any) => {
                 if (Array.isArray(span) && span.length >= 2) {
@@ -277,7 +288,9 @@ export default function JspreadSheet() {
          const inst = spreadsheet?.current?.[0];
          const data = inst?.getData();
          const mergeData = inst?.getMerge();
-          setEditModeData({ data: data ?? [], mergeData: mergeData ?? {} });
+         console.log( "spreadsheet : ", spreadsheet)
+         setSpreadsheet(spreadsheet);
+        //   setEditModeData({ data: data ?? [], mergeData: mergeData ?? {}, minDimensions: editModeData?.minDimensions});
 		};
 	  }, []);
 
@@ -295,31 +308,47 @@ export default function JspreadSheet() {
         return (screenHeight - 50) / n;
     };
 
+    console.log("exception  tableHeaders : ", tableHeaders)
+    console.log("exception  editModeData : ", editModeData)
+
     return (
         <div style={{display:"flex", flexDirection:"column", gap:"10px"}}>
             <div>
                 <div style={{width:"100%", height:"100%", display:"flex", alignItems:"start", gap:"40px" }}>
                     <div style={{display:"flex", flexDirection:"column", gap:"40px", }}>
-                       
-                        <Spreadsheet onload={(instance: Spreadsheet) => {
-                                // ✅ 이게 "진짜 jspreadsheet 인스턴스"
-                                setSpreadsheet(instance);
-                            }}
-                            ref={spreadsheet} 
-                            onevent={handleEvent} 
-                            contextMenu={() => {
-                                // e.preventDefault();
-                                return false;
-                            }}
-                        >
-                            <Worksheet 
-                                minDimensions={[10,15]} 
-                                defaultColWidth={splitScreenWidth(10)} 
-                                defaultRowHeight={splitScreenHeight(20)} 
-                                selectionCopy={false}
-                            />
-                        </Spreadsheet>
-                     
+                       { editModeData?.minDimensions && editModeData?.minDimensions[0] > 0 && editModeData?.minDimensions[1] > 0 ? (
+                        <>
+                            {Array.isArray(editModeData?.minDimensions) &&
+                              editModeData.minDimensions[0] > 0 &&
+                              editModeData.minDimensions[1] > 0 ? (
+                                <Spreadsheet
+                                    key={`jspreadsheet_${editModeData.minDimensions[0]}x${editModeData.minDimensions[1]}`}
+                                    onload={(instance: Spreadsheet) => {
+                                        setSpreadsheet(instance);
+                                    }}
+                                    ref={spreadsheet}
+                                    onevent={handleEvent}
+                                    contextMenu={() => {
+                                        return false;
+                                    }}
+                                >
+                                    {/* 조건은 만족하지만, 그래도 안나온다면 렌더 이슈일 확률이 높다 */}
+                                    <Worksheet
+                                        minDimensions={editModeData?.minDimensions}
+                                        defaultColWidth={splitScreenWidth(10)}
+                                        defaultRowHeight={splitScreenHeight(20)}
+                                        selectionCopy={false}
+                                    />
+                                </Spreadsheet>
+                            ) : (
+                                <div style={{color: "red"}}>
+                                  (테이블 미생성) minDimensions가 불완전하거나 0 이하 값입니다: <pre>{JSON.stringify(editModeData?.minDimensions)}</pre>
+                                </div>
+                            )}
+                        </>
+                       ) : (
+                        <div>테이블 크기를 입력해주세요.</div>
+                       )}
                     </div>
                 </div>
             </div>
@@ -330,7 +359,7 @@ export default function JspreadSheet() {
                 dialogContent={
                     <Box sx={{width:"100%", minHeight:"400px", padding: "20px 5px"}}>
                         <Table2 isEditView={false} title={title} 
-                                columns={table2Headers as any} 
+                                columns={tableHeaders as any} 
                                 data={[{},{},{},{},{}]} 
                                 checkbox={checkbox} No={noDisplay} isTotal={totalDisplay} 
                             isPlusButton={plusButtonDisplay}

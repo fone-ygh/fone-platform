@@ -16,6 +16,7 @@ export interface TableSettingStore {
         mergeData: {
             [key: string]: [number, number];
         };
+        minDimensions: [number, number];
     };
 }
 
