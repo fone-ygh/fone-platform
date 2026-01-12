@@ -39,7 +39,7 @@ export default function GridSectionItem({ item }: Props) {
       {scopeParentId && <JspreadSheet />}
       {!scopeParentId && (
         <Table2 isEditView={false} title={title ?? ""}
-          columns={tableHeaders as any}  
+          columns={tableHeaders as any}
           data={tableHeaders.length > 0 ? [{},{},{},{},{}] : []} 
           checkbox={checkbox} No={noDisplay} isTotal={totalDisplay} 
           isPlusButton={plusButtonDisplay}

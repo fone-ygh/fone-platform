@@ -4,15 +4,14 @@
 import * as React from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Spreadsheet } from "@jspreadsheet-ce/react";
-import { TextField } from "@mui/material";
-import { Button, Label, Switch } from "fone-design-system_v1";
+
+import { Box, Button, Label, Switch, TextField2, Tabs } from "fone-design-system_v1";
 
 import CellSettingArea from "@/features/table/components/CellSettingArea";
 import ExtraButtonArea from "@/features/table/components/ExtraButtonArea";
 import MergeButtonArea from "@/features/table/components/MergeButtonArea";
 import TableSettingArea from "@/features/table/components/TableSettingArea";
 import { useJspreadSheetStore } from "@/features/table/store/jspreadSheetStore";
-import { useTableSettingStore } from "@/features/table/store/tableSettingStore";
 import Aside from "@/shared/components/layout/aside/Aside";
 import { AccordionCard } from "@/shared/components/ui/cardAccordion/CardAccordion";
 import { usePatternActions } from "@/shared/store";
@@ -24,6 +23,7 @@ import {
 import useCurrentAreaSection from "../../hooks/useCurrentAreaSection";
 import { useCurrentPatternMeta } from "../../hooks/useCurrentPatternMeta";
 import { LayoutCard } from "./right/LayoutCard";
+import { useTableSettingActions, useTableSettingStore } from "@/features/table/store/tableSettingStore";
 
 function buildEditorUrl(
   editorId: string,
@@ -68,7 +68,10 @@ export default function RightPanel() {
   } = useContentLayoutActions();
 
   const { spreadsheet } = useJspreadSheetStore();
-  console.log("spreadsheet : ", spreadsheet);
+  const { editModeData, tableHeaders } = useTableSettingStore();
+  const { setEditModeMinDimensions } = useTableSettingActions();
+  const [editModeTableRangeData, setEditModeTableRangeData] = React.useState<[number, number]>([0, 0]);
+  const [tabValue, setTabValue] = React.useState(0);
   /* -------- patterns (zustand) -------- */
   const { addPattern } = usePatternActions();
 
@@ -188,6 +191,15 @@ export default function RightPanel() {
     router,
   ]);
 
+console.log("editModeData : ", editModeData)
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+
   return (
     <Aside position="right" defaultWidth={340} minWidth={0} maxWidth={560}>
       {isDetailMode === false && (
@@ -203,8 +215,7 @@ export default function RightPanel() {
             <label htmlFor="" style={{ flexShrink: 0 }}>
               페이지명 :
             </label>
-            <TextField
-              size="small"
+            <TextField2
               value={pageTitle}
               onChange={e => setPageTitle(e.target.value)}
               sx={{ "& input": { fontWeight: "bold" } }}
@@ -267,40 +278,67 @@ export default function RightPanel() {
         <div>
           {/* 셀 설정 영역 */}
           {spreadsheet && (
-            <AccordionCard
-              title="Cell Setting"
-              allowMultiple
-              defaultOpenAll
-              hideControls
-              items={[
-                {
-                  id: "cell-setting",
-                  title: "선택 셀 설정",
-                  content: (
-                    <CellSettingArea
-                      spreadsheet={
-                        spreadsheet as unknown as React.RefObject<Spreadsheet>
-                      }
-                    />
-                  ),
-                },
-                {
-                  id: "table-setting",
-                  title: "테이블 설정",
-                  content: <TableSettingArea />,
-                },
-                {
-                  id: "table-merge-setting",
-                  title: "셀 병합 설정",
-                  content: <MergeButtonArea />,
-                },
-                {
-                  id: "extra-button-area",
-                  title: "추가 버튼 영역",
-                  content: <ExtraButtonArea />,
-                },
-              ]}
-            />
+            tableHeaders.length > 0 && (
+              <div>
+                <Tabs value={tabValue} onChange={(event, newValue) => setTabValue(newValue)}
+                  items={[
+                    {
+                      label: "Cell Setting",
+                      key: "cell-setting",
+                      content: <AccordionCard
+                                  title="Cell Setting"
+                                  allowMultiple
+                                  defaultOpenAll
+                                  hideControls
+                                  items={[
+                                    {
+                                      id: "cell-setting",
+                                      title: "선택 셀 설정",
+                                      content: (
+                                        <CellSettingArea
+                                          spreadsheet={
+                                            spreadsheet as unknown as React.RefObject<Spreadsheet>
+                                          }
+                                        />
+                                      ),
+                                    },
+                                    {
+                                      id: "table-setting",
+                                      title: "테이블 설정",
+                                      content: <TableSettingArea />,
+                                    },
+                                    {
+                                      id: "table-merge-setting",
+                                      title: "셀 병합 설정",
+                                      content: <MergeButtonArea />,
+                                    },
+                                    {
+                                      id: "extra-button-area",
+                                      title: "추가 버튼 영역",
+                                      content: <ExtraButtonArea />,
+                                    },
+                                    ]}
+                                />
+                    },
+                    {
+                      label: "Table Setting",
+                      key: "table-setting",
+                      content: <TableSettingArea />,
+                    },
+                  ]}
+                />
+              </div>
+            ) 
+          )}
+          {editModeData?.minDimensions && !(editModeData?.minDimensions[0] > 0 && editModeData?.minDimensions[1] > 0) && (
+          <div>
+                <TextField2 type="number"  value={editModeTableRangeData[0]} onChange={(e) => setEditModeTableRangeData(state => [Number(e.target.value), state[1]])} />
+                <TextField2 type="number"  value={editModeTableRangeData[1]} onChange={(e) => setEditModeTableRangeData(state => [state[0], Number(e.target.value)])} />
+                <Button variant="contained" onClick={() => {
+                  console.log("editModeTableRangeData : ", editModeTableRangeData);
+                  setEditModeMinDimensions(editModeTableRangeData as [number, number]);
+                }}>적용</Button>
+              </div>
           )}
         </div>
       )}

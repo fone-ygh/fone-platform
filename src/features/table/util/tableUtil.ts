@@ -48,7 +48,7 @@ export function getAddress(headers: string[], startCol: number, startRow: number
 }
 
 export function getAddressFromHeader(headers: { header: string; width?: number | string }[], col: number, row: number): string {
-	return `${headers[col].header}${row + 1}`;
+	return `${headers[col]?.header ?? ""}${row + 1}`;
 }
 
 export function toCellPropsMap(
