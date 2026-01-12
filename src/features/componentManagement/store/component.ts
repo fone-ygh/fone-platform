@@ -48,6 +48,10 @@ export interface SwitchStyleData {
     | "default";
 }
 
+export interface RadioStyleData {
+  color: string;
+}
+
 interface SelectData {
   crud?: string;
   componentId: string;
@@ -101,12 +105,35 @@ export interface SwitchData {
   defaultChecked: string;
 }
 
+export interface RadioData {
+  crud?: string;
+  componentId: string;
+  name: string;
+  title: string;
+  style: RadioStyleData;
+  required: string;
+  dataType: string;
+  dataSourceCd: string;
+  dataSourceNm: string;
+}
+
+export interface TabData {
+  crud?: string;
+  componentId: string;
+  name: string;
+  dataType: string;
+  dataSourceCd: string;
+  dataSourceNm: string;
+}
+
 interface State {
   buttonData: ButtonData[];
   selectData: SelectData[];
   inputData: InputData[];
   checkboxData: CheckboxData[];
   switchData: SwitchData[];
+  radioData: RadioData[];
+  tabData: TabData[];
 
   codeTypeData: CodeTypeData[];
   apiData: ApiData[];
@@ -116,12 +143,39 @@ interface State {
   setInputData: (inputData: InputData[]) => void;
   setCheckboxData: (checkboxData: CheckboxData[]) => void;
   setSwitchData: (switchData: SwitchData[]) => void;
+  setRadioData: (radioData: RadioData[]) => void;
+  setTabData: (tabData: TabData[]) => void;
 
   setCodeTypeData: (codeTypeData: CodeTypeData[]) => void;
   setApiData: (apiData: ApiData[]) => void;
 }
 
 const useComponentStore = create<State>(set => ({
+  tabData: [
+    {
+      componentId: "tableTab",
+      name: "테이블탭",
+      dataType: "commonCode",
+      dataSourceCd: "CT0004",
+      dataSourceNm: "테이블탭",
+    },
+  ],
+
+  radioData: [
+    {
+      componentId: "sex",
+      name: "성별",
+      title: "성별",
+      style: {
+        color: "#1976d2",
+      },
+      required: "Y",
+      dataType: "commonCode",
+      dataSourceCd: "CT0003",
+      dataSourceNm: "성별",
+    },
+  ],
+
   switchData: [
     {
       componentId: "darkMode",
@@ -281,6 +335,40 @@ const useComponentStore = create<State>(set => ({
         },
       ],
     },
+    {
+      groupCode: "CT0003",
+      groupName: "성별",
+      groupDescription: "성별을 나타냄",
+      commonCodeData: [
+        {
+          code: "01",
+          codeName: "남성",
+          codeDescription: "남성",
+        },
+        {
+          code: "02",
+          codeName: "여성",
+          codeDescription: "여성",
+        },
+      ],
+    },
+    {
+      groupCode: "CT0004",
+      groupName: "테이블탭",
+      groupDescription: "테이블탭을 나타냄",
+      commonCodeData: [
+        {
+          code: "01",
+          codeName: "테이블",
+          codeDescription: "테이블",
+        },
+        {
+          code: "02",
+          codeName: "컬럼",
+          codeDescription: "컬럼",
+        },
+      ],
+    },
   ],
 
   apiData: [
@@ -302,6 +390,8 @@ const useComponentStore = create<State>(set => ({
   setCheckboxData: (checkboxData: CheckboxData[]) =>
     set({ checkboxData: checkboxData }),
   setSwitchData: (switchData: SwitchData[]) => set({ switchData: switchData }),
+  setRadioData: (radioData: RadioData[]) => set({ radioData: radioData }),
+  setTabData: (tabData: TabData[]) => set({ tabData: tabData }),
 
   setCodeTypeData: (codeTypeData: CodeTypeData[]) =>
     set({ codeTypeData: codeTypeData }),
